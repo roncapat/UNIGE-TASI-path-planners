@@ -8,3 +8,6 @@
 out
 gen
 /cmake-build-debug/
+Makefile
+doc/
+/venv/
