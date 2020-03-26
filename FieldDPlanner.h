@@ -89,22 +89,20 @@ class FieldDPlanner {
   int step();
 
   void (*poses_cb)(std::vector<Pose>);
-  void (*expanded_cb)(std::tuple<pcl::PointCloud<pcl::PointXYZRGB>, int, int>);
+  void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float, float>>, int, int>);
   void set_poses_cb(void (*poses_cb)(std::vector<Pose>)) { this->poses_cb = poses_cb; };
-  void set_expanded_cb(void (*expanded_cb)(std::tuple<pcl::PointCloud<pcl::PointXYZRGB>, int, int>)) {
+  void set_expanded_cb(void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float, float>>, int, int>)) {
       this->expanded_cb = expanded_cb;
   };
 
-  pcl::PointCloud<pcl::PointXYZRGB> expanded_cloud;
-
   // launch parameters
   double maximum_distance_ = 100000;     // maximum distance to goal node before warning messages spit out
-  bool publish_expanded_ = false;       // publish an expanded pointcloud
+  bool publish_expanded_ = true;       // publish an expanded pointcloud
   double configuration_space_ = 0.2;  // configuration space
   double goal_range_ = 1;           // distance from goal at which a node is considered the goal
   bool follow_old_path_ = true;        // follow the previously generated path if no optimal path currently exists
   int lookahead_dist_ = 0;          // number of cell traversals to look ahead at when decising next position along path
-  float occupancy_threshold_ = 1;   // maximum occupancy probability before a cell is considered to have infinite
+  float occupancy_threshold_ = 0.8;   // maximum occupancy probability before a cell is considered to have infinite
   // traversal cost
 
   MapPtr map_;  // Most up-to-date map
@@ -119,7 +117,7 @@ class FieldDPlanner {
 
     @param[in] expanded_cloud the PCL pointcloud which expanded node indices should be stored in
   */
-  void publish_expanded_set(pcl::PointCloud<pcl::PointXYZRGB> &expanded_cloud);
+  void publish_expanded_set();
 
   /**
     Set the current map to be used by the D* Lite search problem. The initial

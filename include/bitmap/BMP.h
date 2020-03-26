@@ -75,6 +75,9 @@ struct BMP {
               }
           }
 
+          // BMP pixels rows are 4-bytes aligned, 0 padded at the end of each line
+          int padding = (bmp_info_header.width % 4 == 0) ? 0 : 4 - bmp_info_header.width % 4;
+
           // Jump to the pixel data location
           input.seekg(file_header.offset_data, std::ifstream::beg);
 
@@ -83,8 +86,18 @@ struct BMP {
                   "The program can treat only BMP images with the origin in the bottom left corner!");
           }
 
-          data.resize(extents[bmp_info_header.width][bmp_info_header.height]);
-          input.read((char *) data.data(), data.size());
+          for (int y = 0; y < bmp_info_header.height; y++) {
+              for (int x = 0; x < bmp_info_header.width + padding; x++) {
+                  std::cout << ((input.get() == 255) ? "x" : "o");
+              }
+              std::cout << std::endl;
+          }
+          input.seekg(file_header.offset_data, std::ifstream::beg);
+          data.resize(extents[bmp_info_header.height][bmp_info_header.width + padding]);
+          for (int y = bmp_info_header.height - 1; y >= 0; y--)
+              input.read((char *) data.data() + y * (bmp_info_header.width + padding), bmp_info_header.width + padding);
+          data.resize(extents[bmp_info_header.height][bmp_info_header.width]);
+          //BMP images pixels are specified from LOWER LEFT corner, we need TOP LEFT
       } else {
           throw std::runtime_error("Unable to open the input image file.");
       }

@@ -1,9 +1,7 @@
 #include "FieldDPlanner.h"
-#include "NodeUtils.hpp"
+#include <cmath>
 
-FieldDPlanner::FieldDPlanner() {
-    expanded_cloud.header.frame_id = "odom";
-}
+FieldDPlanner::FieldDPlanner() = default;
 
 void FieldDPlanner::init() {
     node_grid_.setConfigurationSpace(static_cast<float>(configuration_space_));
@@ -47,13 +45,12 @@ int FieldDPlanner::step() {
 
     publish_path();
     if (publish_expanded_)
-        publish_expanded_set(expanded_cloud);
+        publish_expanded_set();
 
     return LOOP_OK;
 }
 
-void FieldDPlanner::publish_expanded_set(pcl::PointCloud<pcl::PointXYZRGB> &expanded_cloud) {
-    expanded_cloud.clear();
+void FieldDPlanner::publish_expanded_set() {
 
     float max_g = -std::numeric_limits<float>::infinity();
 
@@ -64,27 +61,18 @@ void FieldDPlanner::publish_expanded_set(pcl::PointCloud<pcl::PointXYZRGB> &expa
         max_g = std::max(max_g, std::get<0>(e.second));
     }
 
+    std::vector<std::tuple<int, int, float, float>> expanded;
     for (std::pair<Node, std::tuple<float, float>> e : expanded_map_) {
-        pcl::PointXYZRGB p;
 
-        p.x = static_cast<float>(std::get<0>(e.first.getIndex()) - x_initial_) * map_->resolution;
-        p.y = static_cast<float>(std::get<1>(e.first.getIndex()) - y_initial_) * map_->resolution;
-        p.z = -0.05f;
+        auto x = static_cast<float>(std::get<0>(e.first.getIndex()) - x_initial_) * map_->resolution;
+        auto y = static_cast<float>(std::get<1>(e.first.getIndex()) - y_initial_) * map_->resolution;
+        auto g = std::get<0>(e.second);
+        auto rhs = std::get<1>(e.second);
 
-        // set the node color to red if its g-value is inf. Otherwise scale.
-        if (std::get<0>(e.second) == std::numeric_limits<float>::infinity()) {
-            p.r = 255;
-            p.g = 0;
-            p.b = 0;
-        } else {
-            p.r = 0;
-            p.g = 125;
-            p.b = static_cast<uint8_t>((std::get<0>(e.second) / max_g) * 255.0f);
-        }
-        expanded_cloud.points.push_back(p);
+        expanded.emplace_back(x, y, g, rhs);
     }
 
-    expanded_cb({expanded_cloud, num_nodes_expanded, num_nodes_updated});
+    expanded_cb({expanded, num_nodes_expanded, num_nodes_updated});
 }
 
 void FieldDPlanner::set_map(const MapPtr &msg) {
@@ -254,8 +242,8 @@ float FieldDPlanner::getEdgePositionCost(const Position &p) {
 
         assert(p_a != p_b);
 
-        float d_a = igvc::get_distance(p.x, p.y, p_a.x, p_a.y);  // distance to first neighbor
-        float d_b = igvc::get_distance(p.x, p.y, p_b.x, p_b.y);  // distance to second neighbor
+        float d_a = std::hypot(p_a.x - p.x, p_a.y - p.y); // distance to first neighbor
+        float d_b = std::hypot(p_b.x - p.x, p_b.y - p.y); // distance to second neighbor
 
         assert(((d_a + d_b) - 1.0f) < 1e-5);
 
@@ -380,7 +368,7 @@ void FieldDPlanner::constructOptimalPath() {
     path_additions pa;
 
     int curr_step = 0;
-    int max_steps = static_cast<int>(2000.00f / (this->node_grid_.resolution_));
+    int max_steps = static_cast<int>(20000.00f / (this->node_grid_.resolution_));
 
     do {
         // move one step and calculate the optimal path additions (min 1, max 2)
@@ -459,7 +447,6 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversal(const P
 FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p, int lookahead_dist_remaining) {
     float min_cost = std::numeric_limits<float>::infinity();
     path_additions min_pa;
-
     path_additions temp_pa;
     float lookahead_cost;
 
@@ -468,6 +455,10 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
         // look ahead `lookahead_dist_remaining` planning steps into the future for best action
         std::tie(p_a, p_b) = connbr;
         temp_pa = computeOptimalCellTraversal(p, p_a, p_b);
+        std::cout << "p     " << std::to_string(p.x) << "," << std::to_string(p.y) << std::endl;
+        std::cout << "p_a   " << std::to_string(p_a.x) << "," << std::to_string(p_a.y) << std::endl;
+        std::cout << "p_b   " << std::to_string(p_b.x) << "," << std::to_string(p_b.y) << std::endl;
+        std::cout << "cost: " << std::to_string(temp_pa.second) << std::endl;
         if ((lookahead_dist_remaining <= 0) || temp_pa.first.empty())
             lookahead_cost = temp_pa.second;
         else
@@ -482,9 +473,9 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
 }
 
 bool FieldDPlanner::isWithinRangeOfGoal(const Position &p) {
-    float distance_to_goal =
-        igvc::get_distance(std::make_tuple(p.x, p.y),
-                           static_cast<std::tuple<float, float>>(node_grid_.goal_.getIndex()));
+    int x, y;
+    std::tie(x, y) = node_grid_.goal_.getIndex();
+    float distance_to_goal = std::hypot(x - p.x, y - p.y);
     float goal_radius = goal_dist_ / node_grid_.resolution_;
     return distance_to_goal <= goal_radius;
 }

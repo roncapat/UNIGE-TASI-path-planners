@@ -1,5 +1,5 @@
 #include "Graph.h"
-#include "NodeUtils.hpp"
+#include <cmath>
 
 void Graph::setOccupancyThreshold(float occupancy_threshold) {
     this->occupancy_threshold_uchar_ = occupancy_threshold * 255.0f;
@@ -37,7 +37,8 @@ void Graph::updateGraph(MapPtr &msg) {
     std::tuple<float, float> old_start = this->start_.getIndex();
 
     // update the key modifier value to account for the robot's new pos
-    this->key_modifier_ += igvc::get_distance(old_start, new_start);
+    this->key_modifier_ +=
+        std::hypot(std::get<0>(new_start) - std::get<0>(old_start), std::get<1>(new_start) - std::get<1>(old_start));
     this->start_.setIndex(static_cast<std::tuple<int, int>>(new_start));
 
     this->updated_cells_.clear();  // clear the vector of cells that need updating
@@ -175,14 +176,10 @@ std::vector<std::pair<Position, Position>> Graph::nbrsContinuous(const Position 
     neighbors.emplace_back(std::make_tuple(p.x + 1.0f, p.y - 1.0f));  // bottom right
 
     // first 7 connbrs
-    for (size_t i = 0; i < neighbors.size() - 1; i++) {
-        if (isValidPosition(neighbors[i]) && isValidPosition(neighbors[i + 1]))
-            connbrs.emplace_back(neighbors[i], neighbors[i + 1]);
+    for (size_t i = 0; i < neighbors.size(); i++) {
+        if (isValidPosition(neighbors[i]) && isValidPosition(neighbors[(i + 1) % neighbors.size()]))
+            connbrs.emplace_back(neighbors[i], neighbors[(i + 1) % neighbors.size()]);
     }
-
-    // last connbrs pair [s8->s1]
-    if (isValidPosition(neighbors[neighbors.size() - 1]) && isValidPosition(neighbors[0]))
-        connbrs.emplace_back(neighbors[neighbors.size() - 1], neighbors[0]);
 
     return connbrs;
 }
@@ -387,14 +384,21 @@ float Graph::getTraversalCost(const Node &s, const Node &s_prime) {
         return getB(s, s_prime) * EDGE_DISTANCE;
 }
 
+template<typename T>
+T ceil0(const T &value) {
+    return (value < 0.0) ? std::floor(value) : std::ceil(value);
+}
+
 float Graph::getContinuousTraversalCost(const Position &p, const Position &p_prime) {
     // round p to get a reference node
     Node s = p.castToNode();
 
     // get relative distance between p_prime and p. Note: ceil0 is biased away from 0
     // i.e. ceil0(-0.35) = -1.00
-    float x_diff = igvc::ceil0(p_prime.x - p.x);
-    float y_diff = igvc::ceil0(p_prime.y - p.y);
+    float x_diff = ceil0(p_prime.x - p.x);
+    float y_diff = ceil0(p_prime.y - p.y);
+    if (x_diff != .0f) x_diff /= std::abs(x_diff);
+    if (y_diff != .0f) y_diff /= std::abs(y_diff);
 
     assert((x_diff != 0) || (y_diff != 0));
     assert((std::fabs(x_diff) <= 1) && (std::fabs(y_diff) <= 1));
@@ -418,8 +422,7 @@ float Graph::euclidianHeuristic(const Node &s) {
 float Graph::euclidianHeuristic(const std::tuple<int, int> &ind) {
     std::tuple<float, float> start = start_.getIndex();
     std::tuple<float, float> s = ind;
-
-    return igvc::get_distance(start, s);
+    return std::hypot(std::get<0>(start) - std::get<0>(s), std::get<1>(start) - std::get<1>(s));
 }
 
 std::vector<Node> Graph::getNodesAroundCellWithConfigurationSpace(const Cell &cell) {

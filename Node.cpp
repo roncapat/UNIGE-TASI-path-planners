@@ -1,5 +1,5 @@
 #include "Node.h"
-#include "NodeUtils.hpp"
+#include <cmath>
 
 Node::Node(bool valid) {
     this->valid = valid;
@@ -38,7 +38,7 @@ std::tuple<int, int> Node::getBptr() const {
 }
 
 float Node::distTo(std::tuple<float, float> position) {
-    return igvc::get_distance(static_cast<std::tuple<float, float>>(this->getIndex()), position);
+    return std::hypot(x_ - std::get<0>(position), y_ - std::get<1>(position));
 }
 
 bool Node::operator==(const Node &other) const {
