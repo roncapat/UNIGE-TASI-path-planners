@@ -48,10 +48,18 @@ void expanded_cb(std::tuple<std::vector<std::tuple<int, int, float, float>>, int
 
 int main(int, char **) {
     auto map = BMP("test.bmp");
+    // Flip color schema. In BMP, white is 255 and black 0.
+    // Here, obstacles (black) are 255 and free space is lighter
     std::transform(map.data.data(),
                    map.data.data() + map.data.num_elements(),
                    map.data.data(),
                    [](auto v) { return 255 - v; });
+    // Do not allow free paths
+    std::transform(map.data.data(),
+                   map.data.data() + map.data.num_elements(),
+                   map.data.data(),
+                   [](auto v) { return v == 0 ? 1 : v; });
+
 
     /*
     TODO: transform those lines in assertions on validity of start and goal positions
@@ -65,8 +73,8 @@ int main(int, char **) {
         .orientation = 0,
         .length = map.bmp_info_header.height,
         .width = map.bmp_info_header.width,
-        .x = 24,
-        .y = 8,
+        .x = 27,
+        .y = 2,
         .x_initial = 0,
         .y_initial = 0
     });

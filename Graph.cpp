@@ -165,17 +165,35 @@ std::vector<std::pair<Position, Position>> Graph::nbrsContinuous(const Position 
     std::vector<Position> neighbors;
     std::vector<std::pair<Position, Position>> connbrs;
 
-    // there are 8 consecutive neighbors for an edge node.
-    neighbors.emplace_back(std::make_tuple(p.x + 1.0f, p.y));         // right
-    neighbors.emplace_back(std::make_tuple(p.x + 1.0f, p.y + 1.0f));  // top right
-    neighbors.emplace_back(std::make_tuple(p.x, p.y + 1.0f));         // top
-    neighbors.emplace_back(std::make_tuple(p.x - 1.0f, p.y + 1.0f));  // top left
-    neighbors.emplace_back(std::make_tuple(p.x - 1.0f, p.y));         // left
-    neighbors.emplace_back(std::make_tuple(p.x - 1.0f, p.y - 1.0f));  // bottom left
-    neighbors.emplace_back(std::make_tuple(p.x, p.y - 1.0f));         // bottom
-    neighbors.emplace_back(std::make_tuple(p.x + 1.0f, p.y - 1.0f));  // bottom right
+    float intpartx, intparty, decpartx, decparty;
+    decpartx = std::modf(p.x, &intpartx);
+    decparty = std::modf(p.y, &intparty);
+    if (1e-4 < decpartx and decpartx < (1 - 1e-4)) { //non-integer, lies on horizontal edge - 6 neighbors (2 cells)
+        neighbors.emplace_back(std::make_tuple(std::floor(p.x), intparty));   // left
+        neighbors.emplace_back(std::make_tuple(std::floor(p.x), intparty - 1));  // bottom left
+        neighbors.emplace_back(std::make_tuple(std::ceil(p.x), intparty - 1)); // bottom right
+        neighbors.emplace_back(std::make_tuple(std::ceil(p.x), intparty));  // right
+        neighbors.emplace_back(std::make_tuple(std::ceil(p.x), intparty + 1));         // top right
+        neighbors.emplace_back(std::make_tuple(std::floor(p.x), intparty + 1));  // top left
+    } else if (1e-4 < decparty and decparty < (1 - 1e-4)) { //non-integer, lies on vertical edge - 6 neighbors (2 cells)
+        neighbors.emplace_back(std::make_tuple(intpartx, std::floor(p.y)));   // bottom
+        neighbors.emplace_back(std::make_tuple(intpartx + 1, std::floor(p.y)));  // bottom right
+        neighbors.emplace_back(std::make_tuple(intpartx + 1, std::ceil(p.y))); // top right
+        neighbors.emplace_back(std::make_tuple(intpartx, std::ceil(p.y)));  // top
+        neighbors.emplace_back(std::make_tuple(intpartx - 1, std::ceil(p.y)));         // top left
+        neighbors.emplace_back(std::make_tuple(intpartx - 1, std::floor(p.y)));  // bottom left
+    } else { // 8 neighbors (4 cells)
+        neighbors.emplace_back(std::make_tuple(intpartx + 1.0f, intparty));         // right
+        neighbors.emplace_back(std::make_tuple(intpartx + 1.0f, intparty + 1.0f));  // top right
+        neighbors.emplace_back(std::make_tuple(intpartx, intparty + 1.0f));         // top
+        neighbors.emplace_back(std::make_tuple(intpartx - 1.0f, intparty + 1.0f));  // top left
+        neighbors.emplace_back(std::make_tuple(intpartx - 1.0f, intparty));         // left
+        neighbors.emplace_back(std::make_tuple(intpartx - 1.0f, intparty - 1.0f));  // bottom left
+        neighbors.emplace_back(std::make_tuple(intpartx, intparty - 1.0f));         // bottom
+        neighbors.emplace_back(std::make_tuple(intpartx + 1.0f, intparty - 1.0f));  // bottom right
+    }
 
-    // first 7 connbrs
+    //TODO check best data structure for fast removal of invalid couples (instead of deep copy of almost all the list)
     for (size_t i = 0; i < neighbors.size(); i++) {
         if (isValidPosition(neighbors[i]) && isValidPosition(neighbors[(i + 1) % neighbors.size()]))
             connbrs.emplace_back(neighbors[i], neighbors[(i + 1) % neighbors.size()]);

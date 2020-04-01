@@ -254,7 +254,8 @@ class FieldDPlanner {
   @param[in] p_b consecutive neighbor of p
   @return vector containing the next positions(s) and movement cost
   */
-  path_additions computeOptimalCellTraversal(const Position &p, const Position &p_a, const Position &p_b);
+  path_additions computeOptimalCellTraversalFromEdge(const Position &p, const Position &p_a, const Position &p_b);
+  path_additions computeOptimalCellTraversalFromCorner(const Position &p, const Position &p_a, const Position &p_b);
   /**
   Helper method for path reconstruction process. Finds the next path position(s)
   when planning from a vertex or an edge position on the graph.
@@ -295,6 +296,7 @@ class FieldDPlanner {
   */
   float getRHS(const Node &s);
 
+  std::pair<float, float> getBC(const Position &p, const Position &p_1, const Position &p_2);
  private:
   // hashed map contains all nodes and <g,rhs> values in search
   std::unordered_map<Node, std::tuple<float, float>> expanded_map_;
