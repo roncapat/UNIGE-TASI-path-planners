@@ -82,9 +82,11 @@ struct BMP {
           input.seekg(file_header.offset_data, std::ifstream::beg);
 
           if (bmp_info_header.height < 0) {
-              throw std::runtime_error(
-                  "The program can treat only BMP images with the origin in the bottom left corner!");
+              throw std::runtime_error("The program can treat only BMP images with origin in the bottom left corner!");
           }
+
+          if (bmp_info_header.bit_count != 0x8)
+              throw std::runtime_error("The program can treat only 8-bit BMP images");
 
           for (int y = 0; y < bmp_info_header.height; y++) {
               for (int x = 0; x < bmp_info_header.width + padding; x++) {

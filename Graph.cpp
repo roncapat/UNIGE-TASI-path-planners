@@ -27,7 +27,7 @@ void Graph::initializeGraph(const MapPtr &msg) {
 
     // set the current map equal to the input message's map
     map_type::extent_gen extents;
-    map_.resize(extents[width_][length_]);
+    map_.resize(extents[length_][width_]);
     map_ = msg->image;
 }
 

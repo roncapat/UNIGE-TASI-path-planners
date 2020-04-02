@@ -46,8 +46,14 @@ void expanded_cb(std::tuple<std::vector<std::tuple<int, int, float, float>>, int
     logfile.close();
 }
 
-int main(int, char **) {
-    auto map = BMP("test.bmp");
+int main(int argc, char **argv) {
+    if (argc < 2) {
+        std::cerr << "Missing required argument." << std::endl;
+        std::cerr << "Usage:" << std::endl;
+        std::cerr << "\t" << argv[0] << " <mapfile.bmp>" << std::endl;
+        return 1;
+    }
+    auto map = BMP(argv[1]);
     // Flip color schema. In BMP, white is 255 and black 0.
     // Here, obstacles (black) are 255 and free space is lighter
     std::transform(map.data.data(),
@@ -74,14 +80,14 @@ int main(int, char **) {
         .length = map.bmp_info_header.height,
         .width = map.bmp_info_header.width,
         .x = 27,
-        .y = 2,
+        .y = 10,
         .x_initial = 0,
         .y_initial = 0
     });
     FieldDPlanner planner{};
     planner.init();
     planner.set_map(map_info);
-    planner.set_goal({24, 40});
+    planner.set_goal({10, 10});
     planner.set_poses_cb(poses_cb);
     planner.set_expanded_cb(expanded_cb);
     planner.step();
