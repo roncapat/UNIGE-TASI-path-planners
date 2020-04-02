@@ -380,17 +380,17 @@ float Graph::getValWithConfigurationSpace(const std::tuple<int, int> &ind) {
 
     int sep = configuration_space_ / resolution_ + 1;  // number of cells accounted for with configuration_space_
 
-    // get a slice around the cell (ind) with the desired configuration_space_
-    typedef map_type::index_range range;
-
-    //TODO check open/closed sets with debugging due to CV-Boost migration
     auto x_low = std::max(x - sep, 0);
-    auto x_high = std::min(x + sep + 1, length_);
+    auto x_high = std::min(x + sep, length_);
     auto y_low = std::max(y - sep, 0);
-    auto y_high = std::min(y + sep + 1, width_);
-    auto my_view = map_[boost::indices[range(x_low, x_high)][range(y_low, y_high)]];
+    auto y_high = std::min(y + sep, width_);
 
-    auto max_val = *std::max_element(my_view.origin(), my_view.origin() + my_view.num_elements());
+    unsigned char max_val = 0;
+    for (int i = x_low; i < x_high; ++i) {
+        for (int j = y_low; j < y_high; ++j) {
+            max_val = std::max(max_val, map_[i][j]);
+        }
+    }
 
     return static_cast<float>(max_val);
 }

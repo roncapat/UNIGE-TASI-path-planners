@@ -66,7 +66,6 @@ int main(int argc, char **argv) {
                    map.data.data(),
                    [](auto v) { return v == 0 ? 1 : v; });
 
-
     /*
     TODO: transform those lines in assertions on validity of start and goal positions
     std::cout << std::to_string(map.data[24][8]) << std::endl;
@@ -87,7 +86,7 @@ int main(int argc, char **argv) {
     FieldDPlanner planner{};
     planner.init();
     planner.set_map(map_info);
-    planner.set_goal({10, 10});
+    planner.set_goal({2, 10});
     planner.set_poses_cb(poses_cb);
     planner.set_expanded_cb(expanded_cb);
     planner.step();

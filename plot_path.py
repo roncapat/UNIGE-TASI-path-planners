@@ -4,7 +4,7 @@ from math import modf
 import cv2
 import numpy
 
-img = cv2.imread('test2.bmp', 0)
+img = cv2.imread('test3.bmp', 0)
 width = int(img.shape[1] * 11) + 1
 height = int(img.shape[0] * 11) + 1
 out_map = numpy.ones((height, width, 3), numpy.uint8) * 255
@@ -37,4 +37,7 @@ with open('logfile_0.json', 'r') as pathfile:
     y = int(poses[-1][0])
     cv2.circle(out_map, (11 * x, 11 * y), 5, (255, 0, 0), cv2.FILLED)  # BLUE - GOAL
 
+cv2.imshow('image', out_map)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 cv2.imwrite('test_result.bmp', out_map)

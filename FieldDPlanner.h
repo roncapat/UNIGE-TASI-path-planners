@@ -52,6 +52,13 @@ https://ocw.mit.edu/courses/aeronautics-and-astronautics/16-412j-cognitive-robot
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+extern const float INF;
+extern const float SQRT2;
+#define SQUARE(x) ((x)*(x))
+#define CATH(x, y) std::sqrt(SQUARE((x))-SQUARE((y)))
+#define INTERP_1(from, to, delta) ((from) + ((to)-(from))*(delta))
+#define INTERP_ABS(from, to, delta) ((from) + ((to)-(from))*(delta))
+
 /**
 The CostComputation struct contains the linearly interpolated path cost as
 computed by the computeCost method. Additionally, it stores the resulting x and
@@ -97,11 +104,10 @@ class FieldDPlanner {
 
   // launch parameters
   double maximum_distance_ = 100000;     // maximum distance to goal node before warning messages spit out
-  bool publish_expanded_ = true;       // publish an expanded pointcloud
-  double configuration_space_ = 0.2;  // configuration space
+  double configuration_space_ = 1;  // configuration space
   double goal_range_ = 1;           // distance from goal at which a node is considered the goal
   bool follow_old_path_ = true;        // follow the previously generated path if no optimal path currently exists
-  int lookahead_dist_ = 0;          // number of cell traversals to look ahead at when decising next position along path
+  int lookahead_dist_ = 1;          // number of cell traversals to look ahead at when decising next position along path
   float occupancy_threshold_ = 0.8;   // maximum occupancy probability before a cell is considered to have infinite
   // traversal cost
 

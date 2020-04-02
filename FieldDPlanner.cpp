@@ -2,6 +2,9 @@
 #include <cmath>
 #include <array>
 
+const float INF = std::numeric_limits<float>::infinity();
+const float SQRT2 = 1.41421356237309504880168872420969807856967187537694f;
+
 FieldDPlanner::FieldDPlanner() = default;
 
 void FieldDPlanner::init() {
@@ -30,94 +33,38 @@ int FieldDPlanner::step() {
     }
 
     // gather cells with updated edge costs and update affected nodes
-    num_nodes_updated = updateNodesAroundUpdatedCells();
-    if (num_nodes_updated > 0) std::cout << num_nodes_updated << " nodes updated" << std::endl;
+    updateNodesAroundUpdatedCells();
 
     // only update the graph if nodes have been updated
-    if ((num_nodes_updated > 0) || initialize_search) {
-        num_nodes_expanded = computeShortestPath();
-        if (num_nodes_expanded > 0) std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
+    if ((num_nodes_updated > 0) or initialize_search) {
+        computeShortestPath();
         initialize_search = false;
     } else {
         num_nodes_expanded = 0;
     }
 
-    if (publish_expanded_)
+    if (expanded_cb) {
         publish_expanded_set();
+    }
 
-    constructOptimalPath();
-    publish_path();
+    if (poses_cb) {
+        constructOptimalPath();
+        publish_path();
+    }
 
     return LOOP_OK;
 }
 
 void FieldDPlanner::publish_expanded_set() {
-
-    float max_g = -std::numeric_limits<float>::infinity();
-
-    for (std::pair<Node, std::tuple<float, float>> e : expanded_map_) {
-        // ignore infinite g-values when getting the max value
-        if (std::get<0>(e.second) == std::numeric_limits<float>::infinity())
-            continue;
-        max_g = std::max(max_g, std::get<0>(e.second));
-    }
-
     std::vector<std::tuple<int, int, float, float>> expanded;
-    for (std::pair<Node, std::tuple<float, float>> e : expanded_map_) {
-
+    for (auto e : expanded_map_) {
         auto x = static_cast<float>(std::get<0>(e.first.getIndex()) - x_initial_) * map_->resolution;
         auto y = static_cast<float>(std::get<1>(e.first.getIndex()) - y_initial_) * map_->resolution;
         auto g = std::get<0>(e.second);
         auto rhs = std::get<1>(e.second);
-
         expanded.emplace_back(x, y, g, rhs);
     }
-
     expanded_cb({expanded, num_nodes_expanded, num_nodes_updated});
-}
-
-void FieldDPlanner::set_map(const MapPtr &msg) {
-    map_ = msg;  // update current map
-
-    if (initialize_graph_) {
-        // initial x and y coordinates of the graph search problem
-        x_initial_ = map_->x_initial;
-        y_initial_ = map_->y_initial;
-        node_grid_.initializeGraph(map_);
-        initialize_graph_ = false;
-    } else {
-        node_grid_.updateGraph(map_);
-    }
-}
-
-void FieldDPlanner::set_goal(std::pair<float, float> point) {
-    int goal_x, goal_y;
-    goal_x = static_cast<int>(std::round(point.first / node_grid_.resolution_)) + x_initial_;
-    goal_y = static_cast<int>(std::round(point.second / node_grid_.resolution_)) + y_initial_;
-
-    Node new_goal(goal_x, goal_y);
-
-    // re-initialize graph search problem if goal has changed
-    if (node_grid_.goal_ != new_goal)
-        goal_changed_ = true;
-
-    node_grid_.setGoal(new_goal);
-
-    float distance_to_goal = node_grid_.euclidianHeuristic(new_goal) * node_grid_.resolution_;
-
-    std::cout << (goal_changed_ ? "New" : "Same") << " waypoint received. Search Problem Goal = " << node_grid_.goal_
-              << ". Distance: " << distance_to_goal << "m." << std::endl;
-
-    if (distance_to_goal > maximum_distance_) {
-        std::cout << "Planning to waypoint more than " << maximum_distance_
-                  << "m. away - distance = " << distance_to_goal << std::endl;
-        goal_set_ = false;
-    } else if (distance_to_goal < goal_range_) {
-        std::cout << "Waiting for new waypoint..." << std::endl;
-        goal_set_ = false;
-    } else {
-        goal_set_ = true;
-    }
 }
 
 void FieldDPlanner::publish_path() {
@@ -142,8 +89,49 @@ void FieldDPlanner::publish_path() {
         }
 
         poses.back().orientation = poses[num_poses - 2].orientation;
-
         poses_cb(poses);
+    }
+}
+
+void FieldDPlanner::set_map(const MapPtr &msg) {
+    map_ = msg;  // update current map
+
+    if (initialize_graph_) {
+        x_initial_ = map_->x_initial;
+        y_initial_ = map_->y_initial;
+        node_grid_.initializeGraph(map_);
+        initialize_graph_ = false;
+    } else {
+        node_grid_.updateGraph(map_);
+    }
+}
+
+void FieldDPlanner::set_goal(std::pair<float, float> point) {
+    int goal_x, goal_y;
+    goal_x = static_cast<int>(std::round(point.first / node_grid_.resolution_)) + x_initial_;
+    goal_y = static_cast<int>(std::round(point.second / node_grid_.resolution_)) + y_initial_;
+
+    Node new_goal(goal_x, goal_y);
+
+    if (node_grid_.goal_ != new_goal)
+        goal_changed_ = true;
+
+    node_grid_.setGoal(new_goal);
+
+    float distance_to_goal = node_grid_.euclidianHeuristic(new_goal) * node_grid_.resolution_;
+
+    std::cout << (goal_changed_ ? "New" : "Same") << " waypoint received. Search Problem Goal = " << node_grid_.goal_
+              << ". Distance: " << distance_to_goal << "m." << std::endl;
+
+    if (distance_to_goal > maximum_distance_) {
+        std::cout << "Planning to waypoint more than " << maximum_distance_
+                  << "m. away - distance = " << distance_to_goal << std::endl;
+        goal_set_ = false;
+    } else if (distance_to_goal < goal_range_) {
+        std::cout << "Waiting for new waypoint..." << std::endl;
+        goal_set_ = false;
+    } else {
+        goal_set_ = true;
     }
 }
 
@@ -192,9 +180,9 @@ CostComputation FieldDPlanner::computeCost(const Position &p, const Position &p_
     // path cost of node s
     float v_s;
 
-    if (std::max(c, b) == std::numeric_limits<float>::infinity()) {
+    if (std::max(c, b) == INF) {
         // infinite traversal cost, cells likely occupied
-        v_s = std::numeric_limits<float>::infinity();
+        v_s = INF;
     } else if (g_p1 <= g_p2) {
         // cheapest to travel directly to nearest neighbor (non-diagonal)
         x = d_p1;
@@ -257,7 +245,7 @@ float FieldDPlanner::getEdgePositionCost(const Position &p) {
 
 bool FieldDPlanner::isVertex(const Position &p) {
     bool is_vertex = (ceilf(p.x) == p.x) && (ceilf(p.y) == p.y);
-    bool satisfies_bounds = (p.x >= 0) && (p.x <= node_grid_.length_) && (p.y >= 0) && (p.y <= node_grid_.width_);
+    bool satisfies_bounds = node_grid_.isValidPosition(p);
     return is_vertex && satisfies_bounds;
 }
 
@@ -272,20 +260,20 @@ Key FieldDPlanner::calculateKey(const Node &s) {
 }
 
 void FieldDPlanner::initializeSearch() {
-    this->node_grid_.key_modifier_ = 0.0f;
+    node_grid_.key_modifier_ = 0.0f;
     expanded_map_.clear();
     priority_queue_.clear();
     node_grid_.updated_cells_.clear();
 
-    insert_or_assign(node_grid_.start_, std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
-    insert_or_assign(node_grid_.goal_, std::numeric_limits<float>::infinity(), 0.0f);
-    priority_queue_.insert(node_grid_.goal_, this->calculateKey(node_grid_.goal_));
+    insert_or_assign(node_grid_.start_, INF, INF);
+    insert_or_assign(node_grid_.goal_, INF, 0.0f);
+    priority_queue_.insert(node_grid_.goal_, calculateKey(node_grid_.goal_));
 }
 
 void FieldDPlanner::updateNode(const Node &s) {
     // s never visited before, add to unordered map with g(s) = rhs(s) = inf
     if (expanded_map_.find(s) == expanded_map_.end()) {
-        insert_or_assign(s, std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
+        insert_or_assign(s, INF, INF);
     } else {
         /**
         looks for a node in the priority queue and removes it if found
@@ -296,8 +284,8 @@ void FieldDPlanner::updateNode(const Node &s) {
 
     // update rhs value of Node s
     if (s != node_grid_.goal_) {
-        float min_rhs = std::numeric_limits<float>::infinity();
-        for (std::tuple<Node, Node> connbr : node_grid_.consecutiveNeighbors(s))
+        float min_rhs = INF;
+        for (auto connbr : node_grid_.consecutiveNeighbors(s))
             min_rhs = std::min(min_rhs, this->computeCost(s, std::get<0>(connbr), std::get<1>(connbr)).cost);
 
         insert_or_assign(s, getG(s), min_rhs);
@@ -311,8 +299,8 @@ void FieldDPlanner::updateNode(const Node &s) {
 
 int FieldDPlanner::computeShortestPath() {
     // if the start node is occupied, return immediately. No path exists
-    if (node_grid_.getMinTraversalCost(node_grid_.start_) == std::numeric_limits<float>::infinity()) {
-        std::cerr << "Start node occupied. No path is possible." << std::endl;
+    if (node_grid_.getMinTraversalCost(node_grid_.start_) == INF) {
+        std::cerr << "Start node occupied. No path is possible." << std::endl; //FIXME test
         return 0;
     }
 
@@ -335,13 +323,15 @@ int FieldDPlanner::computeShortestPath() {
             // locally underconsistent case. This node is now less favorable.
             // make node locally consistent or overconsistent by setting g = inf
             // and propagate changes to {neighbors} U {top_node}
-            insert_or_assign(top_node, std::numeric_limits<float>::infinity(), getRHS(top_node));
+            insert_or_assign(top_node, INF, getRHS(top_node));
             for (Node nbr : node_grid_.nbrs(top_node))
                 updateNode(nbr);
             updateNode(top_node);
         }
     }
-    return expanded;
+    num_nodes_expanded = expanded;
+    std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
+    return num_nodes_expanded;
 }
 
 int FieldDPlanner::updateNodesAroundUpdatedCells() {
@@ -358,7 +348,9 @@ int FieldDPlanner::updateNodesAroundUpdatedCells() {
             updateNode(n);
     }
 
-    return to_update.size();
+    num_nodes_updated = to_update.size();
+    std::cout << num_nodes_updated << " nodes updated" << std::endl;
+    return num_nodes_updated;
 }
 
 void FieldDPlanner::constructOptimalPath() {
@@ -393,30 +385,43 @@ void FieldDPlanner::constructOptimalPath() {
     }
 }
 
+std::tuple<float, float> cell_idx_bottom_left(const Position &p) { return {p.x - 1, p.y - 1}; }
+std::tuple<float, float> cell_idx_bottom_right(const Position &p) { return {p.x, p.y - 1}; }
+std::tuple<float, float> cell_idx_top_left(const Position &p) { return {p.x - 1, p.y}; }
+std::tuple<float, float> cell_idx_top_right(const Position &p) { return {p.x, p.y}; }
+
+std::tuple<float, float> cell_idx_4n(const Position &p, bool bottom_TOP, bool left_RIGHT) {
+    if (bottom_TOP)
+        return left_RIGHT ? cell_idx_top_right(p) : cell_idx_top_left(p);
+    else
+        return left_RIGHT ? cell_idx_bottom_right(p) : cell_idx_bottom_left(p);
+}
+
 // p must be aligned with p_1, p_1 aligned with p_2, p and P_2 diagonal neighbors
 std::pair<float, float> FieldDPlanner::getBC(const Position &p, const Position &p_1, const Position &p_2) {
     std::tuple<int, int> cell_ind_b, cell_ind_c;
     float _b, _c;
+    /* Code for clear understanding of synteshis. Please KEEP (at least for some time)
     if (p.x == p_1.x) { // p lies on a vertical edge
         if (p_2.x > p_1.x) { // we need to traverse the cell on the right
             if (p.y > p_1.y) { // we are over the considered edge
                 // "b" is the cost of the cell on the top-left of p_1
-                cell_ind_b = std::make_tuple(p_1.x - 1, p_1.y);
-                cell_ind_c = std::make_tuple(p_1.x, p_1.y);
+                cell_ind_b = cell_idx_top_left(p_1);
+                cell_ind_c = cell_idx_top_right(p_1);
             } else { // we are under the considered edge
                 // "b" is the cost of the cell on the bottom-left of p_1
-                cell_ind_b = std::make_tuple(p_1.x - 1, p_1.y - 1);
-                cell_ind_c = std::make_tuple(p_1.x, p_1.y - 1);
+                cell_ind_b = cell_idx_bottom_left(p_1);
+                cell_ind_c = cell_idx_bottom_right(p_1);
             }
         } else { // we need to traverse the cell on the left
             if (p.y > p_1.y) { // we are over the considered edge
                 // "b" is the cost of the cell on the top-right of p_1
-                cell_ind_b = std::make_tuple(p_1.x, p_1.y);
-                cell_ind_c = std::make_tuple(p_1.x - 1, p_1.y);
+                cell_ind_b = cell_idx_top_right(p_1);
+                cell_ind_c = cell_idx_top_left(p_1);
             } else { // we are under the considered edge
                 // "b" is the cost of the cell on the bottom-right of p_1
-                cell_ind_b = std::make_tuple(p_1.x, p_1.y - 1);
-                cell_ind_c = std::make_tuple(p_1.x - 1, p_1.y - 1);
+                cell_ind_b = cell_idx_bottom_right(p_1);
+                cell_ind_c = cell_idx_bottom_left(p_1);
             }
         }
 
@@ -424,25 +429,34 @@ std::pair<float, float> FieldDPlanner::getBC(const Position &p, const Position &
         if (p_2.y > p_1.y) { // we need to traverse the cell at the top
             if (p.x > p_1.x) { // we are on the right of the considered edge
                 // "b" is the cost of the cell on the bottom-right of p_1
-                cell_ind_b = std::make_tuple(p_1.x, p_1.y - 1);
-                cell_ind_c = std::make_tuple(p_1.x, p_1.y);
+                cell_ind_b = cell_idx_bottom_right(p_1);
+                cell_ind_c = cell_idx_top_right(p_1);
             } else { // we are on the left of the considered edge
                 // "b" is the cost of the cell on the bottom-left of p_1
-                cell_ind_b = std::make_tuple(p_1.x - 1, p_1.y - 1);
-                cell_ind_c = std::make_tuple(p_1.x, p_1.y - 1);
+                cell_ind_b = cell_idx_bottom_left(p_1);
+                cell_ind_c = cell_idx_top_left(p_1);
             }
         } else { // we need to traverse the cell at the bottom
             if (p.x > p_1.x) { // we are on the right of the considered edge
                 // "b" is the cost of the cell on the top-right of p_1
-                cell_ind_b = std::make_tuple(p_1.x, p_1.y);
-                cell_ind_c = std::make_tuple(p_1.x - 1, p_1.y);
+                cell_ind_b = cell_idx_top_right(p_1);
+                cell_ind_c = cell_idx_bottom_right(p_1);
             } else { // we are on the left of the considered edge
                 // "b" is the cost of the cell on the top-left of p_1
-                cell_ind_b = std::make_tuple(p_1.x, p_1.y - 1);
-                cell_ind_c = std::make_tuple(p_1.x - 1, p_1.y - 1);
+                cell_ind_b = cell_idx_top_left(p_1);
+                cell_ind_c = cell_idx_bottom_left(p_1);
             }
         }
     }
+    */
+    if (p.x == p_1.x) { // p lies on a vertical edge
+        cell_ind_b = cell_idx_4n(p_1, p.y > p_1.y, p_2.x < p_1.x);
+        cell_ind_c = cell_idx_4n(p_1, p.y > p_1.y, p_2.x > p_1.x);
+    } else { // p lies on a horizontal edge
+        cell_ind_b = cell_idx_4n(p_1, p_2.y < p_1.y, p.x < p_1.x);
+        cell_ind_c = cell_idx_4n(p_1, p_2.y > p_1.y, p.x < p_1.x);
+    }
+
     _b = node_grid_.getValWithConfigurationSpace(cell_ind_b);
     _c = node_grid_.getValWithConfigurationSpace(cell_ind_c);
     return {_b, _c};
@@ -451,89 +465,104 @@ std::pair<float, float> FieldDPlanner::getBC(const Position &p, const Position &
 FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorner(const Position &p,
                                                                                    const Position &p_a,
                                                                                    const Position &p_b) {
-    std::vector<Position> positions;  // positions to add to path
-    float min_cost = std::numeric_limits<float>::infinity();
+    std::vector<Position> positions;
+    float min_cost = INF;
 
-    Position p_1, p_2;
+    assert(isVertex(p));
+    assert(isVertex(p_a));
+    assert(isVertex(p_b));
+
+    float _b, _c, _f, _g_s1, _g_s2;
     bool cond = node_grid_.isDiagonalContinuous(p, p_a);
-    p_1 = cond ? p_b : p_a;
-    p_2 = cond ? p_a : p_b;
+    const Position &p_1 = cond ? p_b : p_a;
+    const Position &p_2 = cond ? p_a : p_b;
 
-    // ensure that p and p1 are neighbors along an edge and that p and p2 are continuously diagonal
     assert((p.x == p_1.x) || (p.y == p_1.y));
     assert((p.x != p_2.x) && (p.y != p_2.y));
 
-    float _b1, _c, _f, _g_s1, _g_s2;
-    std::tie(_b1, _c) = getBC(p, p_1, p_2);
     _g_s1 = getG(p_1.castToNode());
     _g_s2 = getG(p_2.castToNode());
-    if (_g_s1 == std::numeric_limits<float>::infinity() && _g_s2 == std::numeric_limits<float>::infinity())
+    if (_g_s1 == INF && _g_s2 == INF)
         return std::make_pair(positions, min_cost);
+    std::tie(_b, _c) = getBC(p, p_1, p_2);
     _f = _g_s1 - _g_s2;
-    int type;
 
-    if (_c > _b1) {
-        float t = std::min(_f, _b1);
-        min_cost = _g_s2 + _c * std::sqrt(2);
-        type = 3;                     // Type A
-        if (_f < 0 or _f * _f < (_c * _c - _b1 * _b1)) {
-            min_cost = _g_s1 + _b1;
-            type = 2;                           // Type III
-        } else if (_c > t * std::sqrt(2)) {
-            min_cost = _g_s2 + t + std::sqrt(_c * _c - t * t);
-            type = _f < _b1;     // Type I or II (check _f>_b)
+    int type;
+#define TYPE_I 0
+#define TYPE_II 1
+#define TYPE_III 2
+#define TYPE_A 3
+#define TYPE_B 4
+
+    if (_c > _b) {
+        if ((_f < 0) or (SQUARE(_f) < CATH(_c, _b))) {
+            min_cost = _g_s1 + _b;
+            type = TYPE_III;
+        } else if ((_f < _b) and (_c > (_f * SQRT2))) {
+            min_cost = _g_s2 + _f + CATH(_c, _f);
+            type = TYPE_II;
+        } else if ((_f > _b) and (_c > (_b * SQRT2))) {
+            min_cost = _g_s2 + _b + CATH(_c, _b);
+            type = TYPE_I;
+        } else {
+            min_cost = _g_s2 + _c * SQRT2;
+            type = TYPE_A;
         }
     } else {
-        if (_f > _c / std::sqrt(2)) {
-            min_cost = _g_s2 + _c * std::sqrt(2);
-            type = 3;                 // Type A
+        if ((_f * SQRT2) > _c) {
+            min_cost = _g_s2 + _c * SQRT2;
+            type = TYPE_A;
         } else if (_f < 0) {
             min_cost = _g_s1 + _c;
-            type = 4;                            // Type B
+            type = TYPE_B;
         } else {
-            min_cost = _g_s1 + std::sqrt(_c * _c - _f * _f);
-            type = 1;   // Type II
+            min_cost = _g_s1 + CATH(_c, _f);
+            type = TYPE_II;
         }
     }
 
     float _x, _y;
     switch (type) {
-        case 0: // Type I
-            _x = 1 - _b1 / std::sqrt(_c * _c - _b1 * _b1);
+        case TYPE_I:_x = 1 - _b / CATH(_c, _b);
             if (p.x == p_1.x) { // p lies on a vertical edge
-                positions.emplace_back(p.x, p.y + (p_1.y - p.y) * _x);
+                positions.emplace_back(p.x, INTERP_1(p.y, p_1.y, _x));
             } else {            // p lies on a horizontal edge
-                positions.emplace_back(p.x + (p_1.x - p.x) * _x, p.y);
+                positions.emplace_back(INTERP_1(p.x, p_1.x, _x), p.y);
             }
             positions.push_back(p_2);
             break;
-        case 1: // Type II
-            _y = _f / std::sqrt(_c * _c - _f * _f);
+        case TYPE_II:_y = _f / CATH(_c, _f);
             if (p.x == p_1.x) { // p lies on a vertical edge
-                positions.emplace_back(p_1.x + (p_2.x - p_1.x) * _y, p_1.y);
+                positions.emplace_back(INTERP_1(p_1.x, p_2.x, _y), p_1.y);
             } else {            // p lies on a horizontal edge
-                positions.emplace_back(p_1.x, p_1.y + (p_2.y - p_1.y) * _y);
+                positions.emplace_back(p_1.x, INTERP_1(p_1.y, p_2.y, _y));
             }
             break;
-        case 2: // Type III
-            positions.push_back(p_1);
+        case TYPE_III:positions.push_back(p_1);
             break;
-        case 3: // Type A
-            positions.push_back(p_2);
+        case TYPE_A:positions.push_back(p_2);
             break;
-        case 4: // Type B
-            positions.push_back(p_1);
+        case TYPE_B:positions.push_back(p_1);
             break;
     }
-
+#undef TYPE_I
+#undef TYPE_II
+#undef TYPE_III
+#undef TYPE_A
+#undef TYPE_B
     return std::make_pair(positions, min_cost);
 }
 
 FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge(const Position &p, const Position &p_a,
                                                                                  const Position &p_b) {
-    std::vector<Position> positions;  // positions to add to path
+    std::vector<Position> positions;
+    float min_cost = INF;
 
-    float _b1, _c, _b2, _f, _p, _q, _g_s1, _g_s2, min_cost;
+    assert(!isVertex(p));
+    assert(isVertex(p_a));
+    assert(isVertex(p_b));
+
+    float _b1, _c, _b2, _f, _p, _q, _g_s1, _g_s2;
     bool cond_1 = (p.x == p_a.x || p.y == p_a.y);
     bool cond_2 = (p.x == p_b.x || p.y == p_b.y);
     if (cond_1 || cond_2) { // "contiguous" edge case
@@ -542,57 +571,62 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
         assert((p.x == p_1.x) || (p.y == p_1.y));
         assert((p.x != p_2.x) && (p.y != p_2.y));
 
-        std::tie(_b1, _c) = getBC(p, p_1, p_2);
-        _q = 1 - std::abs(p_1.y - p.y) - std::abs(p_1.x - p.x);
         _g_s1 = getG(p_1.castToNode());
         _g_s2 = getG(p_2.castToNode());
+        if (_g_s1 == INF && _g_s2 == INF)
+            return std::make_pair(positions, min_cost);
+        std::tie(_b1, _c) = getBC(p, p_1, p_2);
         _f = _g_s1 - _g_s2;
+        _q = 1 - std::abs(p_1.y - p.y) - std::abs(p_1.x - p.x);
 
-        //c1, c2, c3, cA, cB;
+#define TYPE_I 0
+#define TYPE_II 1
+#define TYPE_III 2
+#define TYPE_A 3
+#define TYPE_B 4
         std::array<float, 5> costs{};
-        costs.fill(std::numeric_limits<float>::infinity());
-        if (_c > _b1 * std::sqrt(1 + (1 / ((1 - _q) * (1 - _q)))))
-            costs[0] = _g_s2 + (1 - _q) * _b1 + std::sqrt(_c * _c - _b1 * _b1); // Type I
-        if (_f > 0 and _c > _f * std::sqrt(1 + ((1 - _q) * (1 - _q))))
-            costs[1] = _g_s2 + (1 - _q) * std::sqrt(_c * _c - _f * _f) + _f; // Type II
+        costs.fill(INF);
+
+        if (_c > (_b1 * std::sqrt(1 + (1 / (SQUARE(1 - _q))))))
+            costs[TYPE_I] = _g_s2 + (1 - _q) * _b1 + CATH(_c, _b1);
+        if ((_f > 0) and (_c > _f * std::sqrt(1 + (SQUARE(1 - _q)))))
+            costs[TYPE_II] = _g_s1 + (1 - _q) * CATH(_c, _f);
         if (_c > _b1)
-            costs[2] = _g_s2 + (1 - _q) * _b1 + _f;                          // Type III
-        costs[3] = _g_s2 + _c * std::sqrt(1 - ((1 - _q) * (1 - _q)));         // Type A
-        costs[4] = _g_s2 + _c * std::sqrt(1 - (_q * _q)) + _f;            // Type B
+            costs[TYPE_III] = _g_s2 + (1 - _q) * _b1 + _f;
+        costs[TYPE_A] = _g_s2 + _c * std::sqrt(1 - SQUARE(1 - _q));
+        costs[TYPE_B] = _g_s1 + _c * std::sqrt(1 - SQUARE(_q));
 
         auto min = std::min_element(costs.begin(), costs.end());
+        int type = std::distance(costs.begin(), min);
         min_cost = *min;
-        int min_idx = std::distance(costs.begin(), min);
 
         // Compute spatial parameters if either Type I or II
         // "x" can be seen as displacement from s towards s_1
         // "y" can be seen as displacement from s_1 towards s_2
         // Append path points to the result set
         float _x = 0, _y = 0;
-        switch (min_idx) {
-            case 0: // Type I
-                _x = 1 - _q - _b1 / std::sqrt(_c * _c - _b1 * _b1);
+        switch (type) {
+            case TYPE_I:_x = 1 - _q - _b1 / CATH(_c, _b1);
                 break;
-            case 1: // Type II
-                _y = (1 - _q) * _f / std::sqrt(_c + _c - _f * _f);
+            case TYPE_II:_y = (1 - _q) * _f / CATH(_c, _f);
                 break;
             default: break;
         }
 
-        switch (min_idx) {
-            case 0:
+        switch (type) {
+            case TYPE_I:
                 if (p.x == p_1.x) { // p lies on a vertical edge
-                    positions.emplace_back(p.x, p.y + (p_1.y - p.y) / std::abs((p_1.y - p.y)) * _x);
+                    positions.emplace_back(p.x, INTERP_ABS(p.y, p_1.y, _x));
                 } else {            // p lies on a horizontal edge
-                    positions.emplace_back(p.x + (p_1.x - p.x) / std::abs((p_1.x - p.x)) * _x, p.y);
+                    positions.emplace_back(INTERP_ABS(p.x, p_1.x, _x), p.y);
                 }
                 positions.push_back(p_2);
                 break;
             case 1:
                 if (p.x == p_1.x) { // p lies on a vertical edge
-                    positions.emplace_back(p_1.x + (p_2.x - p_1.x) * _y, p_1.y);
+                    positions.emplace_back(INTERP_ABS(p_1.x, p_2.x, _y), p_1.y);
                 } else {            // p lies on a horizontal edge
-                    positions.emplace_back(p_1.x, p_1.y + (p_2.y - p_1.y) * _y);
+                    positions.emplace_back(p_1.x, INTERP_ABS(p_1.y, p_2.y, _y));
                 }
                 break;
             case 2:positions.push_back(p_1);
@@ -602,6 +636,11 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
             case 4:positions.push_back(p_1);
                 break;
         }
+#undef TYPE_I
+#undef TYPE_II
+#undef TYPE_III
+#undef TYPE_A
+#undef TYPE_B
     } else { // "opposite" edge case
         const Position &p_1 = p_a;
         const Position &p_2 = p_b;
@@ -609,49 +648,62 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
         assert((p.x != p_2.x) && (p.y != p_2.y));
 
         // align p with p_1 and p_2 before getBC();
+        // vertical edge, p must move up or down
+        // horizontal edge, p must move left or right
+
         Position pb = p, pd = p;
-        if (p_1.x == p_2.x) { // vertical edge, p must move up or down
+        bool vertical = p_1.x == p_2.x;
+        if (vertical) {
             pb.y = p_1.y;
             pd.y = p_2.y;
-        } else {              // horizontal edge, p must move left or right
+        } else {
             pb.x = p_1.x;
             pd.x = p_2.x;
         }
 
+        _g_s1 = getG(p_1.castToNode());
+        _g_s2 = getG(p_2.castToNode());
+        if (_g_s1 == INF && _g_s2 == INF)
+            return std::make_pair(positions, min_cost);
         float __c;
         std::tie(_b1, _c) = getBC(pb, p_1, p_2);
         std::tie(_b2, __c) = getBC(pd, p_2, p_1);
         assert(_c == __c);
-
-        _p = std::abs(p_1.y - pb.y) + std::abs(p_1.x - pb.x);
-        _g_s1 = getG(p_1.castToNode());
-        _g_s2 = getG(p_2.castToNode());
         _f = _g_s1 - _g_s2;
+        _p = std::abs(p_1.y - pb.y) + std::abs(p_1.x - pb.x);
+
 
         // Use _f, _p, _b1, _g_s2;
         // Use neg(_f), 1-_p, _b2, _g_s1;
 
-        //c1, c2, c3, cA, cB;
+#define TYPE_I__1 0
+#define TYPE_I__2 1
+#define TYPE_II 2
+#define TYPE_III__1 3
+#define TYPE_III__2 4
+#define TYPE_A 5
+#define TYPE_B 6
+
         std::array<float, 7> costs{};
-        costs.fill(std::numeric_limits<float>::infinity());
-        if (_c > _b1 * std::sqrt(1 + ((1 + _p) * (1 + _p))))
-            costs[0] = _g_s2 + _b1 + (1 + _p) * std::sqrt(_c * _c - _b1 * _b1);    // Type I
-        if (_c > _b2 * std::sqrt(1 + ((2 - _p) * (2 - _p))))
-            costs[1] = _g_s1 + _b2 + (2 - _p) * std::sqrt(_c * _c - _b2 * _b2);    // Type I
-        if (_f > 0 and _c > _f * std::sqrt(1 + (1 / ((1 - _p) * (1 - _p)))))
-            costs[2] = _g_s2 + std::sqrt(_c * _c - _f * _f) + (1 - _p) * _f;       // Type II
-        else if (_f < 0 and _c > -_f * std::sqrt(1 + (1 / (_p * _p))))
-            costs[2] = _g_s2 + std::sqrt(_c * _c - _f * _f) + (1 - _p) * _f;       // Type II
-        if (_c > _b1 * std::sqrt(1 + _p * _p))
-            costs[3] = _g_s2 + _b1 + _p * std::sqrt(_c * _c - _b1 * _b1) + _f;     // Type III
-        if (_c > _b2 * std::sqrt(1 + (1 - _p) * (1 - _p)))
-            costs[4] = _g_s1 + _b2 + (1 - _p) * std::sqrt(_c * _c - _b2 * _b2) - _f; // Type III
-        costs[5] = _g_s2 + _c * std::sqrt((1 - _p) * (1 - _p) - 1);                 // Type A
-        costs[6] = _g_s2 + _c * std::sqrt(_p * _p - 1) + _f;                    // Type B
+        costs.fill(INF);
+        if (_c > (_b1 * std::sqrt(1 + SQUARE(1 + _p))))
+            costs[TYPE_I__1] = _g_s2 + _b1 + (1 + _p) * CATH(_c, _b1);
+        if (_c > (_b2 * std::sqrt(1 + SQUARE(2 - _p))))
+            costs[TYPE_I__2] = _g_s1 + _b2 + (2 - _p) * CATH(_c, _b2);
+        if ((_f > 0) and (_c > (_f * std::sqrt(1 + (1 / SQUARE(1 - _p))))))
+            costs[TYPE_II] = _g_s2 + CATH(_c, _f) + (1 - _p) * _f;
+        else if ((_f < 0) and (_c > (-_f * std::sqrt(1 + (1 / (SQUARE(_p)))))))
+            costs[TYPE_II] = _g_s2 + CATH(_c, _f) + (1 - _p) * _f;
+        if (_c > _b1 * std::sqrt(1 + SQUARE(_p)))
+            costs[TYPE_III__1] = _g_s1 + _b1 + _p * CATH(_c, _b1);
+        if (_c > _b2 * std::sqrt(1 + SQUARE(1 - _p)))
+            costs[TYPE_III__2] = _g_s2 + _b2 + (1 - _p) * CATH(_c, _b2);
+        costs[TYPE_A] = _g_s2 + _c * std::sqrt(SQUARE(1 - _p) - 1);
+        costs[TYPE_B] = _g_s1 + _c * std::sqrt(SQUARE(_p) - 1);
 
         auto min = std::min_element(costs.begin(), costs.end());
+        int type = std::distance(costs.begin(), min);
         min_cost = *min;
-        int min_idx = std::distance(costs.begin(), min);
 
         // Compute spatial parameters if either Type I II or III
         // "x" can be seen:
@@ -660,76 +712,76 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
         // "y" can be seen as displacement from s_1 towards s_2
         // Append path points to the result set
         float _x = 0, _y = 0;
-        switch (min_idx) {
-            case 0: // Type I
-                _x = 1 - (1 + _p) * _b1 / std::sqrt(_c * _c - _b1 * _b1);
+        switch (type) {
+            case TYPE_I__1:_x = 1 - (1 + _p) * _b1 / CATH(_c, _b1);
                 break;
-            case 1: // Type I
-                _x = 1 - (2 - _p) * _b2 / std::sqrt(_c * _c - _b2 * _b2);
+            case TYPE_I__2:_x = 1 - (2 - _p) * _b2 / CATH(_c, _b2);
                 break;
-            case 2: // Type II
-                _y = _p + _f / std::sqrt(__c * _c - _f * _f);
+            case TYPE_II:_y = _p + _f / CATH(_c, _f);
                 break;
-            case 3: // Type III
-                _x = _p * _b1 / std::sqrt(_c * _c - _b1 * _b1);
+            case TYPE_III__1:_x = _p * _b1 / CATH(_c, _b1);
                 break;
-            case 4: // Type III
-                _x = (1 - _p) * _b2 / std::sqrt(_c * _c - _b2 * _b2);
+            case TYPE_III__2:_x = (1 - _p) * _b2 / CATH(_c, _b2);
                 break;
             default: break;
         }
 
-        switch (min_idx) {
-            case 0: // Type I
+        switch (type) {
+            case TYPE_I__1:
                 if (p.x == pb.x) { // p lies on a vertical edge
-                    positions.emplace_back(pb.x + (p_1.x - pb.x) * (1 - _x) * _p, p_1.y);
-                    positions.emplace_back(pb.x + (p_1.x - pb.x) * (1 - _x) * _p + _x, p_1.y);
+                    positions.emplace_back(INTERP_1(pb.x, p_1.x, (1 - _x) * _p), p_1.y);
+                    positions.emplace_back(INTERP_1(pb.x, p_1.x, (1 - _x) * _p + _x), p_1.y);
                 } else {            // p lies on a horizontal edge
-                    positions.emplace_back(p_1.x, pb.y + (p_1.y - pb.y) * (1 - _x) * _p);
-                    positions.emplace_back(p_1.x, pb.y + (p_1.y - pb.y) * (1 - _x) * _p + _x);
+                    positions.emplace_back(p_1.x, INTERP_1(pb.y, p_1.y, (1 - _x) * _p));
+                    positions.emplace_back(p_1.x, INTERP_1(pb.y, p_1.y, (1 - _x) * _p + _x));
                 }
                 positions.push_back(p_2);
                 break;
-            case 1: // Type I
+            case TYPE_I__2:
                 if (p.x == pd.x) { // p lies on a vertical edge
-                    positions.emplace_back(pd.x + (p_2.x - pd.x) * (1 - _x) * (1 - _p), p_2.y);
-                    positions.emplace_back(pd.x + (p_2.x - pd.x) * (1 - _x) * (1 - _p) + _x, p_2.y);
+                    positions.emplace_back(INTERP_1(pd.x, p_2.x, (1 - _x) * (1 - _p)), p_2.y);
+                    positions.emplace_back(INTERP_1(pd.x, p_2.x, (1 - _x) * (1 - _p) + _x), p_2.y);
                 } else {            // p lies on a horizontal edge
-                    positions.emplace_back(p_2.x, pd.y + (p_2.y - pd.y) * (1 - _x) * (1 - _p));
-                    positions.emplace_back(p_2.x, pd.y + (p_2.y - pd.y) * (1 - _x) * (1 - _p) + _x);
+                    positions.emplace_back(p_2.x, INTERP_1(pd.y, p_2.y, (1 - _x) * (1 - _p)));
+                    positions.emplace_back(p_2.x, INTERP_1(pd.y, p_2.y, (1 - _x) * (1 - _p) + _x));
                 }
                 positions.push_back(p_1);
                 break;
-            case 2: // Type II
+            case TYPE_II:
                 if (p.x == pb.x) { // p lies on a vertical edge
-                    positions.emplace_back(p_1.x + (p_2.x - p_1.x) * _y, p_1.y);
+                    positions.emplace_back(INTERP_1(p_1.x, p_2.x, _y), p_1.y);
                 } else {           // p lies on a horizontal edge
-                    positions.emplace_back(p_1.x, p_1.y + (p_2.y - p_1.y) * _y);
+                    positions.emplace_back(p_1.x, INTERP_1(p_1.y, p_2.y, _y));
                 }
                 break;
-            case 3: // Type III
+            case TYPE_III__1:
                 if (p.x == pb.x) { // p lies on a vertical edge
-                    positions.emplace_back(pb.x + (p_1.x - pb.x) * _x, pb.y);
+                    positions.emplace_back(INTERP_1(pb.x, p_1.x, _x), pb.y);
                 } else {            // p lies on a horizontal edge
-                    positions.emplace_back(pb.x, pb.y + (p_1.y - pb.y) * _x);
+                    positions.emplace_back(pb.x, INTERP_1(pb.y, p_1.y, _x));
                 }
                 positions.push_back(p_1);
                 break;
-            case 4: // Type III
+            case TYPE_III__2:
                 if (p.x == pd.x) { // p lies on a vertical edge
-                    positions.emplace_back(pd.x + (p_2.x - pd.x) * _x, pd.y);
+                    positions.emplace_back(INTERP_1(pd.x, p_2.x, _x), pd.y);
                 } else {            // p lies on a horizontal edge
-                    positions.emplace_back(pd.x, pd.y + (p_2.y - pd.y) * _x);
+                    positions.emplace_back(pd.x, INTERP_1(pd.y, p_2.y, _x));
                 }
                 positions.push_back(p_2);
                 break;
-            case 5: // Type A
-                positions.push_back(p_2);
+            case TYPE_A:positions.push_back(p_2);
                 break;
-            case 6: // Type B
-                positions.push_back(p_1);
+            case TYPE_B:positions.push_back(p_1);
                 break;
         }
+#undef TYPE_I__1
+#undef TYPE_I__2
+#undef TYPE_II
+#undef TYPE_III__1
+#undef TYPE_III__2
+#undef TYPE_A
+#undef TYPE_B
     }
     return std::make_pair(positions, min_cost);
 }
@@ -739,20 +791,21 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
     path_additions min_pa;
     path_additions temp_pa;
     float lookahead_cost;
-    std::cout << "\np     " << std::to_string(p.x) << ", " << std::to_string(p.y) << std::endl << std::endl;
+    //std::cout << "\np     " << std::to_string(p.x) << ", " << std::to_string(p.y) << std::endl << std::endl;
     for (const auto &[p_a, p_b] : node_grid_.nbrsContinuous(p)) {
         // look ahead `lookahead_dist_remaining` planning steps into the future for best action
         if (isVertex(p))
             temp_pa = computeOptimalCellTraversalFromCorner(p, p_a, p_b);
         else
             temp_pa = computeOptimalCellTraversalFromEdge(p, p_a, p_b);
+/*
         std::cout << "\np_a   " << std::to_string(p_a.x) << ", " << std::to_string(p_a.y) << std::endl;
         std::cout << "p_b   " << std::to_string(p_b.x) << ", " << std::to_string(p_b.y) << std::endl;
         std::cout << "cost: " << std::to_string(temp_pa.second) << std::endl;
         for (auto addition: temp_pa.first) {
             std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl;
         }
-
+*/
         if ((lookahead_dist_remaining <= 0) || temp_pa.first.empty())
             lookahead_cost = temp_pa.second;
         else
@@ -763,12 +816,14 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
             min_pa = temp_pa;
         }
     }
+/*
     std::cout << "\nfinal choice: " << std::endl;
     std::cout << "cost: " << std::to_string(min_pa.second) << std::endl;
     std::cout << "p     " << std::to_string(p.x) << ", " << std::to_string(p.y) << std::endl;
     for (auto addition: min_pa.first) {
         std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl;
     }
+*/
     return min_pa;
 }
 
