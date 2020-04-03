@@ -588,7 +588,7 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
         _f1 = _g_s1 - _g_s2;
         _q = 1 - std::abs(p_1.y - p.y) - std::abs(p_1.x - p.x);
         assert(_q > 0 and _q < 1);
-        assert(_g_s1 > 0 and _g_s2 > 0);
+        assert(_g_s1 >= 0 and _g_s2 >= 0); //Goal has g=0
         assert(_b1 > 0 and _c > 0);
 
 #define TYPE_I 0
@@ -692,7 +692,7 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
         _p2 = 1 - _p1;
         assert(_c == __c);
         assert(_p1 > 0 and _p1 < 1);
-        assert(_g_s1 > 0 and _g_s2 > 0);
+        assert(_g_s1 >= 0 and _g_s2 >= 0); // goal has g=0
         assert(_b1 > 0 and _b2 > 0 and _c > 0);
 
         // Use _f1, _p1, _b1, _g_s2;
@@ -759,11 +759,11 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
                 break;
             case TYPE_III__1:
                 _x = _p1 * _b1 / CATH(_c, _b1);
-                assert(_x >= 0 and _x <= (1 - _p1));
+                assert(_x >= 0 and _x <= 1);
                 break;
             case TYPE_III__2:
                 _x = _p2 * _b2 / CATH(_c, _b2);
-                assert(_x >= 0 and _x <= (1 - _p2));
+                assert(_x >= 0 and _x <= 1);
                 break;
             default:
                 break;

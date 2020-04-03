@@ -1,10 +1,17 @@
 import json
+import sys
 from math import modf
 
 import cv2
 import numpy
 
-img = cv2.imread('test3.bmp', 0)
+if len(sys.argv) < 2:
+    import sys
+
+    sys.stderr.write("Usage:\n\t %s <mapfile.bmp>\n" % sys.argv[0])
+    exit()
+
+img = cv2.imread(sys.argv[1], 0)
 width = int(img.shape[1] * 11) + 1
 height = int(img.shape[0] * 11) + 1
 out_map = numpy.ones((height, width, 3), numpy.uint8) * 255

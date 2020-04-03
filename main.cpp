@@ -47,10 +47,10 @@ void expanded_cb(std::tuple<std::vector<std::tuple<int, int, float, float>>, int
 }
 
 int main(int argc, char **argv) {
-    if (argc < 2) {
+    if (argc < 7) {
         std::cerr << "Missing required argument." << std::endl;
         std::cerr << "Usage:" << std::endl;
-        std::cerr << "\t" << argv[0] << " <mapfile.bmp>" << std::endl;
+        std::cerr << "\t" << argv[0] << " <mapfile.bmp> <from_x> <from_y> <to_x> <to_y> lookahead" << std::endl;
         return 1;
     }
     auto map = BMP(argv[1]);
@@ -78,17 +78,21 @@ int main(int argc, char **argv) {
         .orientation = 0,
         .length = map.bmp_info_header.height,
         .width = map.bmp_info_header.width,
-        .x = 27,
-        .y = 10,
+        .x = std::stoi(argv[2]),//27,
+        .y = std::stoi(argv[3]),// 10,
         .x_initial = 0,
         .y_initial = 0
     });
     FieldDPlanner planner{};
+    planner.lookahead_dist_ = std::stoi(argv[6]);
     planner.init();
     planner.set_map(map_info);
-    planner.set_goal({2, 10});
+    planner.set_goal({std::stoi(argv[4]), std::stoi(argv[5])});
     planner.set_poses_cb(poses_cb);
     planner.set_expanded_cb(expanded_cb);
     planner.step();
+    std::string cmd = "python3 plot_path.py ";
+    cmd.append(argv[1]);
+    std::system(cmd.data());
     return 0;
 }
