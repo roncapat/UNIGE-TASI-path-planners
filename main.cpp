@@ -24,7 +24,7 @@ void poses_cb(std::vector<Pose> poses) {
     logfile.close();
 }
 
-void expanded_cb(std::tuple<std::vector<std::tuple<int, int, float, float>>, int, int> exp_info) {
+void expanded_cb(std::tuple<std::vector<std::tuple<int, int, float>>, int, int> exp_info) {
 
     std::ofstream logfile;
     std::string filename = "dbgfile_" + std::to_string(logcount) + ".json";
@@ -37,8 +37,6 @@ void expanded_cb(std::tuple<std::vector<std::tuple<int, int, float, float>>, int
                 << ", " << std::to_string(std::get<1>(node))
                 << ", "
                 << std::to_string(std::get<2>(node) == std::numeric_limits<float>::infinity() ? -1 : std::get<2>(node))
-                << ", "
-                << std::to_string(std::get<3>(node) == std::numeric_limits<float>::infinity() ? -1 : std::get<3>(node))
                 << "],";
     }
     logfile.seekp(-1, std::ios::cur);

@@ -56,13 +56,22 @@ int FieldDPlanner::step() {
 }
 
 void FieldDPlanner::publish_expanded_set() {
-    std::vector<std::tuple<int, int, float, float>> expanded;
+
+    float max_g = -INF;
+
+    for (std::pair<Node, std::tuple<float, float>> e : expanded_map_) {
+        // ignore infinite g-values when getting the max value
+        if (std::get<0>(e.second) == INF)
+            continue;
+        max_g = std::max(max_g, std::get<0>(e.second));
+    }
+
+    std::vector<std::tuple<int, int, float>> expanded;
     for (auto e : expanded_map_) {
         auto x = static_cast<float>(std::get<0>(e.first.getIndex()) - x_initial_) * map_->resolution;
         auto y = static_cast<float>(std::get<1>(e.first.getIndex()) - y_initial_) * map_->resolution;
-        auto g = std::get<0>(e.second);
-        auto rhs = std::get<1>(e.second);
-        expanded.emplace_back(x, y, g, rhs);
+        auto g = std::get<0>(e.second) / max_g * 255.f;
+        expanded.emplace_back(x, y, g);
     }
     expanded_cb({expanded, num_nodes_expanded, num_nodes_updated});
 }

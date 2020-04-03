@@ -97,9 +97,9 @@ class FieldDPlanner {
   int step();
 
   void (*poses_cb)(std::vector<Pose>);
-  void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float, float>>, int, int>);
+  void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>>, int, int>);
   void set_poses_cb(void (*poses_cb)(std::vector<Pose>)) { this->poses_cb = poses_cb; };
-  void set_expanded_cb(void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float, float>>, int, int>)) {
+  void set_expanded_cb(void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>>, int, int>)) {
       this->expanded_cb = expanded_cb;
   };
 
