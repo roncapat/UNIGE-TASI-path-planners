@@ -168,14 +168,14 @@ std::vector<std::pair<Position, Position>> Graph::nbrsContinuous(const Position 
     float intpartx, intparty, decpartx, decparty;
     decpartx = std::modf(p.x, &intpartx);
     decparty = std::modf(p.y, &intparty);
-    if (1e-4 < decpartx and decpartx < (1 - 1e-4)) { //non-integer, lies on horizontal edge - 6 neighbors (2 cells)
+    if (0 < decpartx and decpartx < 1) { //non-integer, lies on horizontal edge - 6 neighbors (2 cells)
         neighbors.emplace_back(std::make_tuple(std::floor(p.x), intparty));   // left
         neighbors.emplace_back(std::make_tuple(std::floor(p.x), intparty - 1));  // bottom left
         neighbors.emplace_back(std::make_tuple(std::ceil(p.x), intparty - 1)); // bottom right
         neighbors.emplace_back(std::make_tuple(std::ceil(p.x), intparty));  // right
         neighbors.emplace_back(std::make_tuple(std::ceil(p.x), intparty + 1));         // top right
         neighbors.emplace_back(std::make_tuple(std::floor(p.x), intparty + 1));  // top left
-    } else if (1e-4 < decparty and decparty < (1 - 1e-4)) { //non-integer, lies on vertical edge - 6 neighbors (2 cells)
+    } else if (0 < decparty and decparty < 1) { //non-integer, lies on vertical edge - 6 neighbors (2 cells)
         neighbors.emplace_back(std::make_tuple(intpartx, std::floor(p.y)));   // bottom
         neighbors.emplace_back(std::make_tuple(intpartx + 1, std::floor(p.y)));  // bottom right
         neighbors.emplace_back(std::make_tuple(intpartx + 1, std::ceil(p.y))); // top right

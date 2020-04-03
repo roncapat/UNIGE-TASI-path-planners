@@ -286,7 +286,10 @@ void FieldDPlanner::updateNode(const Node &s) {
     if (s != node_grid_.goal_) {
         float min_rhs = INF;
         for (auto connbr : node_grid_.consecutiveNeighbors(s))
-            min_rhs = std::min(min_rhs, this->computeCost(s, std::get<0>(connbr), std::get<1>(connbr)).cost);
+            //min_rhs = std::min(min_rhs, this->computeCost(s, std::get<0>(connbr), std::get<1>(connbr)).cost);
+            min_rhs = std::min(min_rhs,
+                               computeOptimalCellTraversalFromCorner(s, std::get<0>(connbr), std::get<1>(connbr))
+                                   .second);;
 
         insert_or_assign(s, getG(s), min_rhs);
     }
@@ -495,11 +498,11 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorn
 #define TYPE_B 4
 
     if (_c > _b) {
-        if ((_f < 0) or (SQUARE(_f) < CATH(_c, _b))) {
+        if ((_f <= 0) or (SQUARE(_f) <= CATH(_c, _b))) {
             min_cost = _g_s1 + _b;
             type = TYPE_III;
-        } else if ((_f < _b) and (_c > (_f * SQRT2))) {
-            min_cost = _g_s2 + _f + CATH(_c, _f);
+        } else if ((_f <= _b) and (_c > (_f * SQRT2))) {
+            min_cost = _g_s1 + CATH(_c, _f);
             type = TYPE_II;
         } else if ((_f > _b) and (_c > (_b * SQRT2))) {
             min_cost = _g_s2 + _b + CATH(_c, _b);
@@ -509,21 +512,23 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorn
             type = TYPE_A;
         }
     } else {
-        if ((_f * SQRT2) > _c) {
-            min_cost = _g_s2 + _c * SQRT2;
-            type = TYPE_A;
-        } else if (_f < 0) {
+        if (_f <= 0) {
             min_cost = _g_s1 + _c;
             type = TYPE_B;
-        } else {
+        } else if ((_f * SQRT2) < _c) {
             min_cost = _g_s1 + CATH(_c, _f);
             type = TYPE_II;
+        } else {
+            min_cost = _g_s2 + _c * SQRT2;
+            type = TYPE_A;
         }
     }
 
     float _x, _y;
     switch (type) {
-        case TYPE_I:_x = 1 - _b / CATH(_c, _b);
+        case TYPE_I:
+            _x = 1 - _b / CATH(_c, _b);
+            assert(_x >= 0 and _x <= 1);
             if (p.x == p_1.x) { // p lies on a vertical edge
                 positions.emplace_back(p.x, INTERP_1(p.y, p_1.y, _x));
             } else {            // p lies on a horizontal edge
@@ -531,18 +536,23 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorn
             }
             positions.push_back(p_2);
             break;
-        case TYPE_II:_y = _f / CATH(_c, _f);
+        case TYPE_II:
+            _y = _f / CATH(_c, _f);
+            assert(_y >= 0 and _y <= 1);
             if (p.x == p_1.x) { // p lies on a vertical edge
                 positions.emplace_back(INTERP_1(p_1.x, p_2.x, _y), p_1.y);
             } else {            // p lies on a horizontal edge
                 positions.emplace_back(p_1.x, INTERP_1(p_1.y, p_2.y, _y));
             }
             break;
-        case TYPE_III:positions.push_back(p_1);
+        case TYPE_III:
+            positions.push_back(p_1);
             break;
-        case TYPE_A:positions.push_back(p_2);
+        case TYPE_A:
+            positions.push_back(p_2);
             break;
-        case TYPE_B:positions.push_back(p_1);
+        case TYPE_B:
+            positions.push_back(p_1);
             break;
     }
 #undef TYPE_I
@@ -562,22 +572,24 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
     assert(isVertex(p_a));
     assert(isVertex(p_b));
 
-    float _b1, _c, _b2, _f, _p, _q, _v, _g_s1, _g_s2;
+    float _c, _b1, _b2, _f1, _f2, _p1, _p2, _q, _v, _g_s1, _g_s2;
     bool cond_1 = (p.x == p_a.x || p.y == p_a.y);
     bool cond_2 = (p.x == p_b.x || p.y == p_b.y);
     if (cond_1 || cond_2) { // "contiguous" edge case
+        assert(cond_1 xor cond_2);
         const Position &p_1 = cond_1 ? p_a : p_b; // lies on the same edge of p
         const Position &p_2 = cond_1 ? p_b : p_a;
-        assert((p.x == p_1.x) || (p.y == p_1.y));
-        assert((p.x != p_2.x) && (p.y != p_2.y));
 
         _g_s1 = getG(p_1.castToNode());
         _g_s2 = getG(p_2.castToNode());
         if (_g_s1 == INF && _g_s2 == INF)
             return std::make_pair(positions, min_cost);
         std::tie(_b1, _c) = getBC(p, p_1, p_2);
-        _f = _g_s1 - _g_s2;
+        _f1 = _g_s1 - _g_s2;
         _q = 1 - std::abs(p_1.y - p.y) - std::abs(p_1.x - p.x);
+        assert(_q > 0 and _q < 1);
+        assert(_g_s1 > 0 and _g_s2 > 0);
+        assert(_b1 > 0 and _c > 0);
 
 #define TYPE_I 0
 #define TYPE_II 1
@@ -587,14 +599,14 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
         std::array<float, 5> costs{};
         costs.fill(INF);
 
-        if (_c > (_b1 * std::sqrt(1 + (1 / (SQUARE(1 - _q))))))
+        if (_c > (_b1 * HYPOT(1, 1 / (1 - _q))))
             costs[TYPE_I] = _g_s2 + (1 - _q) * _b1 + CATH(_c, _b1);
-        if ((_f > 0) and (_c > _f * std::sqrt(1 + (SQUARE(1 - _q)))))
-            costs[TYPE_II] = _g_s1 + (1 - _q) * CATH(_c, _f);
+        if ((_f1 > 0) and (_c > _f1 * HYPOT(1, 1 - _q)))
+            costs[TYPE_II] = _g_s1 + (1 - _q) * CATH(_c, _f1);
         if (_c > _b1)
-            costs[TYPE_III] = _g_s2 + (1 - _q) * _b1 + _f;
-        costs[TYPE_A] = _g_s2 + _c * std::sqrt(1 - SQUARE(1 - _q));
-        costs[TYPE_B] = _g_s1 + _c * std::sqrt(1 - SQUARE(_q));
+            costs[TYPE_III] = _g_s1 + (1 - _q) * _b1;
+        costs[TYPE_A] = _g_s2 + _c * HYPOT(1, 1 - _q);
+        costs[TYPE_B] = _g_s1 + _c * (1 - _q);
 
         auto min = std::min_element(costs.begin(), costs.end());
         int type = std::distance(costs.begin(), min);
@@ -606,11 +618,16 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
         // Append path points to the result set
         float _x = 0, _y = 0;
         switch (type) {
-            case TYPE_I:_x = 1 - _q - _b1 / CATH(_c, _b1);
+            case TYPE_I:
+                _x = 1 - _q - _b1 / CATH(_c, _b1);
+                assert(_x >= 0 and _x <= (1 - _q));
                 break;
-            case TYPE_II:_y = (1 - _q) * _f / CATH(_c, _f);
+            case TYPE_II:
+                _y = (1 - _q) * _f1 / CATH(_c, _f1);
+                assert(_y >= 0 and _y <= 1);
                 break;
-            default: break;
+            default:
+                break;
         }
 
         switch (type) {
@@ -622,18 +639,21 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
                 }
                 positions.push_back(p_2);
                 break;
-            case 1:
+            case TYPE_II:
                 if (p.x == p_1.x) { // p lies on a vertical edge
                     positions.emplace_back(INTERP_ABS(p_1.x, p_2.x, _y), p_1.y);
                 } else {            // p lies on a horizontal edge
                     positions.emplace_back(p_1.x, INTERP_ABS(p_1.y, p_2.y, _y));
                 }
                 break;
-            case 2:positions.push_back(p_1);
+            case TYPE_III:
+                positions.push_back(p_1);
                 break;
-            case 3:positions.push_back(p_2);
+            case TYPE_A:
+                positions.push_back(p_2);
                 break;
-            case 4:positions.push_back(p_1);
+            case TYPE_B:
+                positions.push_back(p_1);
                 break;
         }
 #undef TYPE_I
@@ -644,8 +664,6 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
     } else { // "opposite" edge case
         const Position &p_1 = p_a;
         const Position &p_2 = p_b;
-        assert((p.x != p_1.x) && (p.y != p_1.y));
-        assert((p.x != p_2.x) && (p.y != p_2.y));
 
         // align p with p_1 and p_2 before getBC();
         // vertical edge, p must move up or down
@@ -668,38 +686,44 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
         float __c;
         std::tie(_b1, _c) = getBC(pb, p_1, p_2);
         std::tie(_b2, __c) = getBC(pd, p_2, p_1);
+        _f1 = _g_s1 - _g_s2;
+        _f2 = -_f1;
+        _p1 = std::abs(p.y - pb.y) + std::abs(p.x - pb.x);
+        _p2 = 1 - _p1;
         assert(_c == __c);
-        _f = _g_s1 - _g_s2;
-        _p = std::abs(p_1.y - pb.y) + std::abs(p_1.x - pb.x);
+        assert(_p1 > 0 and _p1 < 1);
+        assert(_g_s1 > 0 and _g_s2 > 0);
+        assert(_b1 > 0 and _b2 > 0 and _c > 0);
 
-
-        // Use _f, _p, _b1, _g_s2;
-        // Use neg(_f), 1-_p, _b2, _g_s1;
+        // Use _f1, _p1, _b1, _g_s2;
+        // Use neg(_f), 1-_p1, _b2, _g_s1;
+        // NOTE: neg(_f1)=_f2, (1-_p1)=_p2
 
 #define TYPE_I__1 0
 #define TYPE_I__2 1
-#define TYPE_II 2
-#define TYPE_III__1 3
-#define TYPE_III__2 4
-#define TYPE_A 5
-#define TYPE_B 6
+#define TYPE_II__1 2
+#define TYPE_II__2 3
+#define TYPE_III__1 4
+#define TYPE_III__2 5
+#define TYPE_A 6
+#define TYPE_B 7
 
-        std::array<float, 7> costs{};
+        std::array<float, 8> costs{};
         costs.fill(INF);
-        if (_c > (_b1 * std::sqrt(1 + SQUARE(1 + _p))))
-            costs[TYPE_I__1] = _g_s2 + _b1 + (1 + _p) * CATH(_c, _b1);
-        if (_c > (_b2 * std::sqrt(1 + SQUARE(2 - _p))))
-            costs[TYPE_I__2] = _g_s1 + _b2 + (2 - _p) * CATH(_c, _b2);
-        if ((_f > 0) and (_c > (_f * std::sqrt(1 + (1 / SQUARE(1 - _p))))))
-            costs[TYPE_II] = _g_s2 + CATH(_c, _f) + (1 - _p) * _f;
-        else if ((_f < 0) and (_c > (-_f * std::sqrt(1 + (1 / (SQUARE(_p)))))))
-            costs[TYPE_II] = _g_s2 + CATH(_c, _f) + (1 - _p) * _f;
-        if (_c > _b1 * std::sqrt(1 + SQUARE(_p)))
-            costs[TYPE_III__1] = _g_s1 + _b1 + _p * CATH(_c, _b1);
-        if (_c > _b2 * std::sqrt(1 + SQUARE(1 - _p)))
-            costs[TYPE_III__2] = _g_s2 + _b2 + (1 - _p) * CATH(_c, _b2);
-        costs[TYPE_A] = _g_s2 + _c * std::sqrt(SQUARE(1 - _p) - 1);
-        costs[TYPE_B] = _g_s1 + _c * std::sqrt(SQUARE(_p) - 1);
+        if (_c > (_b1 * HYPOT(1, 1 + _p1)))
+            costs[TYPE_I__1] = _g_s2 + _b1 + (1 + _p1) * CATH(_c, _b1);
+        if (_c > (_b2 * HYPOT(1, 1 + _p2)))
+            costs[TYPE_I__2] = _g_s1 + _b2 + (1 + _p2) * CATH(_c, _b2);
+        if ((_f1 > 0) and (_c > (_f1 * HYPOT(1, 1 / (1 - _p1)))))
+            costs[TYPE_II__1] = _g_s2 + CATH(_c, _f1) + (1 - _p1) * _f1;
+        if ((_f2 > 0) and (_c > (_f2 * HYPOT(1, 1 / (1 - _p2)))))
+            costs[TYPE_II__2] = _g_s1 + CATH(_c, _f2) + (1 - _p2) * _f2;
+        if (_c > _b1 * HYPOT(1, _p1))
+            costs[TYPE_III__1] = _g_s1 + _b1 + _p1 * CATH(_c, _b1);
+        if (_c > _b2 * HYPOT(1, _p2))
+            costs[TYPE_III__2] = _g_s2 + _b2 + _p2 * CATH(_c, _b2);
+        costs[TYPE_A] = _g_s2 + _c * HYPOT(1 - _p1, 1);
+        costs[TYPE_B] = _g_s1 + _c * HYPOT(1 - _p2, 1);
 
         auto min = std::min_element(costs.begin(), costs.end());
         int type = std::distance(costs.begin(), min);
@@ -713,21 +737,40 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
         // Append path points to the result set
         float _x = 0, _y = 0;
         switch (type) {
-            case TYPE_I__1:_x = 1 - (1 + _p) * _b1 / CATH(_c, _b1);
+            case TYPE_I__1:
+                _x = 1 - (1 + _p1) * _b1 / CATH(_c, _b1);
+                _v = (1 - _x) * _p1 / (_p1 + 1);
+                assert(_x >= 0 and _x <= 1);
+                assert(_v >= 0 and _v <= 1);
                 break;
-            case TYPE_I__2:_x = 1 - (2 - _p) * _b2 / CATH(_c, _b2);
+            case TYPE_I__2:
+                _x = 1 - (1 + _p2) * _b2 / CATH(_c, _b2);
+                _v = (1 - _x) * _p2 / (_p2 + 1);
+                assert(_x >= 0 and _x <= 1);
+                assert(_v >= 0 and _v <= 1);
                 break;
-            case TYPE_II:_y = _p + _f / CATH(_c, _f);
+            case TYPE_II__1:
+                _y = _p1 + _f1 / CATH(_c, _f1);
+                assert(_y >= 0 and _y <= 1);
                 break;
-            case TYPE_III__1:_x = _p * _b1 / CATH(_c, _b1);
+            case TYPE_II__2:
+                _y = _p2 + _f2 / CATH(_c, _f2);
+                assert(_y >= 0 and _y <= 1);
                 break;
-            case TYPE_III__2:_x = (1 - _p) * _b2 / CATH(_c, _b2);
+            case TYPE_III__1:
+                _x = _p1 * _b1 / CATH(_c, _b1);
+                assert(_x >= 0 and _x <= (1 - _p1));
                 break;
-            default: break;
+            case TYPE_III__2:
+                _x = _p2 * _b2 / CATH(_c, _b2);
+                assert(_x >= 0 and _x <= (1 - _p2));
+                break;
+            default:
+                break;
         }
 
         switch (type) {
-            case TYPE_I__1:_v = (1 - _x) * _p / (_p + 1);
+            case TYPE_I__1:
                 if (p.x == pb.x) { // p lies on a vertical edge
                     positions.emplace_back(INTERP_1(pb.x, p_1.x, _v), p_1.y);
                     positions.emplace_back(INTERP_1(pb.x, p_1.x, _v + _x), p_1.y);
@@ -737,7 +780,7 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
                 }
                 positions.push_back(p_2);
                 break;
-            case TYPE_I__2:_v = (1 - _x) * (1 - _p) / (2 - _p);
+            case TYPE_I__2:
                 if (p.x == pd.x) { // p lies on a vertical edge
                     positions.emplace_back(INTERP_1(pd.x, p_2.x, _v), p_2.y);
                     positions.emplace_back(INTERP_1(pd.x, p_2.x, _v + _x), p_2.y);
@@ -747,11 +790,18 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
                 }
                 positions.push_back(p_1);
                 break;
-            case TYPE_II:
+            case TYPE_II__1:
                 if (p.x == pb.x) { // p lies on a vertical edge
                     positions.emplace_back(INTERP_1(p_1.x, p_2.x, _y), p_1.y);
                 } else {           // p lies on a horizontal edge
-                    positions.emplace_back(p_1.x, INTERP_1(p_1.y, p_2.y, _y));
+                    positions.emplace_back(p_1.x, INTERP_1(p_2.y, p_1.y, _y));
+                }
+                break;
+            case TYPE_II__2:
+                if (p.x == pb.x) { // p lies on a vertical edge
+                    positions.emplace_back(INTERP_1(p_2.x, p_1.x, _y), p_1.y);
+                } else {           // p lies on a horizontal edge
+                    positions.emplace_back(p_1.x, INTERP_1(p_2.y, p_1.y, _y));
                 }
                 break;
             case TYPE_III__1:
@@ -770,9 +820,11 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
                 }
                 positions.push_back(p_2);
                 break;
-            case TYPE_A:positions.push_back(p_2);
+            case TYPE_A:
+                positions.push_back(p_2);
                 break;
-            case TYPE_B:positions.push_back(p_1);
+            case TYPE_B:
+                positions.push_back(p_1);
                 break;
         }
 #undef TYPE_I__1
@@ -794,10 +846,11 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
     //std::cout << "\np     " << std::to_string(p.x) << ", " << std::to_string(p.y) << std::endl << std::endl;
     for (const auto &[p_a, p_b] : node_grid_.nbrsContinuous(p)) {
         // look ahead `lookahead_dist_remaining` planning steps into the future for best action
-        if (isVertex(p))
+        if (isVertex(p)) {
             temp_pa = computeOptimalCellTraversalFromCorner(p, p_a, p_b);
-        else
+        } else {
             temp_pa = computeOptimalCellTraversalFromEdge(p, p_a, p_b);
+        }
 /*
         std::cout << "\np_a   " << std::to_string(p_a.x) << ", " << std::to_string(p_a.y) << std::endl;
         std::cout << "p_b   " << std::to_string(p_b.x) << ", " << std::to_string(p_b.y) << std::endl;
