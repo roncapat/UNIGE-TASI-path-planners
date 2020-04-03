@@ -562,7 +562,7 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
     assert(isVertex(p_a));
     assert(isVertex(p_b));
 
-    float _b1, _c, _b2, _f, _p, _q, _g_s1, _g_s2;
+    float _b1, _c, _b2, _f, _p, _q, _v, _g_s1, _g_s2;
     bool cond_1 = (p.x == p_a.x || p.y == p_a.y);
     bool cond_2 = (p.x == p_b.x || p.y == p_b.y);
     if (cond_1 || cond_2) { // "contiguous" edge case
@@ -727,23 +727,23 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
         }
 
         switch (type) {
-            case TYPE_I__1:
+            case TYPE_I__1:_v = (1 - _x) * _p / (_p + 1);
                 if (p.x == pb.x) { // p lies on a vertical edge
-                    positions.emplace_back(INTERP_1(pb.x, p_1.x, (1 - _x) * _p), p_1.y);
-                    positions.emplace_back(INTERP_1(pb.x, p_1.x, (1 - _x) * _p + _x), p_1.y);
+                    positions.emplace_back(INTERP_1(pb.x, p_1.x, _v), p_1.y);
+                    positions.emplace_back(INTERP_1(pb.x, p_1.x, _v + _x), p_1.y);
                 } else {            // p lies on a horizontal edge
-                    positions.emplace_back(p_1.x, INTERP_1(pb.y, p_1.y, (1 - _x) * _p));
-                    positions.emplace_back(p_1.x, INTERP_1(pb.y, p_1.y, (1 - _x) * _p + _x));
+                    positions.emplace_back(p_1.x, INTERP_1(pb.y, p_1.y, _v));
+                    positions.emplace_back(p_1.x, INTERP_1(pb.y, p_1.y, _v + _x));
                 }
                 positions.push_back(p_2);
                 break;
-            case TYPE_I__2:
+            case TYPE_I__2:_v = (1 - _x) * (1 - _p) / (2 - _p);
                 if (p.x == pd.x) { // p lies on a vertical edge
-                    positions.emplace_back(INTERP_1(pd.x, p_2.x, (1 - _x) * (1 - _p)), p_2.y);
-                    positions.emplace_back(INTERP_1(pd.x, p_2.x, (1 - _x) * (1 - _p) + _x), p_2.y);
+                    positions.emplace_back(INTERP_1(pd.x, p_2.x, _v), p_2.y);
+                    positions.emplace_back(INTERP_1(pd.x, p_2.x, _v + _x), p_2.y);
                 } else {            // p lies on a horizontal edge
-                    positions.emplace_back(p_2.x, INTERP_1(pd.y, p_2.y, (1 - _x) * (1 - _p)));
-                    positions.emplace_back(p_2.x, INTERP_1(pd.y, p_2.y, (1 - _x) * (1 - _p) + _x));
+                    positions.emplace_back(p_2.x, INTERP_1(pd.y, p_2.y, _v));
+                    positions.emplace_back(p_2.x, INTERP_1(pd.y, p_2.y, _v + _x));
                 }
                 positions.push_back(p_1);
                 break;
