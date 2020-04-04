@@ -801,16 +801,16 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
                 break;
             case TYPE_II__1:
                 if (p.x == pb.x) { // p lies on a vertical edge
-                    positions.emplace_back(INTERP_1(p_1.x, p_2.x, _y), p_1.y);
-                } else {           // p lies on a horizontal edge
                     positions.emplace_back(p_1.x, INTERP_1(p_2.y, p_1.y, _y));
+                } else {           // p lies on a horizontal edge
+                    positions.emplace_back(INTERP_1(p_1.x, p_2.x, _y), p_1.y);
                 }
                 break;
             case TYPE_II__2:
                 if (p.x == pb.x) { // p lies on a vertical edge
-                    positions.emplace_back(INTERP_1(p_2.x, p_1.x, _y), p_1.y);
-                } else {           // p lies on a horizontal edge
                     positions.emplace_back(p_1.x, INTERP_1(p_2.y, p_1.y, _y));
+                } else {           // p lies on a horizontal edge
+                    positions.emplace_back(INTERP_1(p_2.x, p_1.x, _y), p_1.y);
                 }
                 break;
             case TYPE_III__1:
@@ -852,7 +852,8 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
     path_additions min_pa;
     path_additions temp_pa;
     float lookahead_cost;
-    //std::cout << "\np     " << std::to_string(p.x) << ", " << std::to_string(p.y) << std::endl << std::endl;
+    std::cout << "\np     " << std::to_string(p.x) << ", " << std::to_string(p.y)
+              << (isVertex(p) ? " (Corner)" : " (Edge)") << std::endl << std::endl;
     for (const auto &[p_a, p_b] : node_grid_.nbrsContinuous(p)) {
         // look ahead `lookahead_dist_remaining` planning steps into the future for best action
         if (isVertex(p)) {
@@ -860,14 +861,14 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
         } else {
             temp_pa = computeOptimalCellTraversalFromEdge(p, p_a, p_b);
         }
-/*
-        std::cout << "\np_a   " << std::to_string(p_a.x) << ", " << std::to_string(p_a.y) << std::endl;
-        std::cout << "p_b   " << std::to_string(p_b.x) << ", " << std::to_string(p_b.y) << std::endl;
-        std::cout << "cost: " << std::to_string(temp_pa.second) << std::endl;
+
+        std::cout << "p_a   " << p_a.x << ", " << p_a.y << ", g=" << getG(p_a.castToNode()) << std::endl;
+        std::cout << "p_b   " << p_b.x << ", " << p_b.y << ", g=" << getG(p_b.castToNode()) << std::endl;
+        std::cout << "cost: " << temp_pa.second << std::endl;
         for (auto addition: temp_pa.first) {
             std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl;
         }
-*/
+
         if ((lookahead_dist_remaining <= 0) || temp_pa.first.empty())
             lookahead_cost = temp_pa.second;
         else
@@ -878,14 +879,14 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
             min_pa = temp_pa;
         }
     }
-/*
+
     std::cout << "\nfinal choice: " << std::endl;
     std::cout << "cost: " << std::to_string(min_pa.second) << std::endl;
     std::cout << "p     " << std::to_string(p.x) << ", " << std::to_string(p.y) << std::endl;
     for (auto addition: min_pa.first) {
         std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl;
     }
-*/
+
     return min_pa;
 }
 

@@ -55,7 +55,7 @@ https://ocw.mit.edu/courses/aeronautics-and-astronautics/16-412j-cognitive-robot
 extern const float INF;
 extern const float SQRT2;
 #define SQUARE(x) ((x)*(x))
-#define CATH(x, y) std::sqrt(SQUARE((x))-SQUARE((y)))
+#define CATH(x, y) std::sqrt(SQUARE((x))- SQUARE((y)))
 #define HYPOT(x, y) std::hypot(x,y)
 #define INTERP_1(from, to, delta) ((from) + ((to)-(from))*(delta))
 #define INTERP_ABS(from, to, delta) ((from) + ((to)-(from))*(delta))
