@@ -36,7 +36,6 @@ int FieldDPlanner::step() {
     if ((num_nodes_updated > 0) or initialize_search) {
         //TODO if(initialize_search), use Update-reducing rhs' tweak to speed up first planning run
         computeShortestPath();
-        initialize_search = false;
     } else {
         num_nodes_expanded = 0;
     }
@@ -49,7 +48,7 @@ int FieldDPlanner::step() {
         constructOptimalPath();
         publish_path();
     }
-
+    initialize_search = false;
     return LOOP_OK;
 }
 
@@ -205,7 +204,7 @@ void FieldDPlanner::updateNode(const Node &s) {
 
 int FieldDPlanner::computeShortestPath() {
     // if the start node is occupied, return immediately. No path exists
-    if (node_grid_.getMinTraversalCost(node_grid_.start_) == INFINITY) {
+    if (node_grid_.getValWithConfigurationSpace(node_grid_.start_.getIndex()) == INFINITY) {
         std::cerr << "Start node occupied. No path is possible." << std::endl; //FIXME test
         return 0;
     }
@@ -386,8 +385,13 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorn
     assert((cell.p0.x == cell.p1.x) || (cell.p0.y == cell.p1.y));
     assert((cell.p0.x != cell.p2.x) && (cell.p0.y != cell.p2.y));
 
-    cell.g1 = getG(cell.p1.castToNode());
-    cell.g2 = getG(cell.p2.castToNode());
+    if (first_run_trick and initialize_search) {
+        cell.g1 = getRHS(cell.p1.castToNode());
+        cell.g2 = getRHS(cell.p2.castToNode());
+    } else {
+        cell.g1 = getG(cell.p1.castToNode());
+        cell.g2 = getG(cell.p2.castToNode());
+    }
     if (cell.g1 == INFINITY && cell.g2 == INFINITY)
         return {{/*EMPTY*/}, INFINITY};
     getBC(cell);
@@ -449,8 +453,13 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCont
     cell1.p1 = cond ? p_a : p_b; // lies on the same edge of p
     cell1.p2 = cond ? p_b : p_a;
 
-    cell1.g1 = getG(cell1.p1.castToNode());
-    cell1.g2 = getG(cell1.p2.castToNode());
+    if (first_run_trick and initialize_search) {
+        cell1.g1 = getRHS(cell1.p1.castToNode());
+        cell1.g2 = getRHS(cell1.p2.castToNode());
+    } else {
+        cell1.g1 = getG(cell1.p1.castToNode());
+        cell1.g2 = getG(cell1.p2.castToNode());
+    }
     if (cell1.g1 == INFINITY && cell1.g2 == INFINITY)
         return {{/*EMPTY*/}, INFINITY};
     getBC(cell1);
@@ -512,8 +521,14 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromOppo
         cell2.p0.x = p_b.x;
     }
 
-    cell1.g1 = cell2.g2 = getG(p_a.castToNode());
-    cell1.g2 = cell2.g1 = getG(p_b.castToNode());
+    if (first_run_trick and initialize_search) {
+        cell1.g1 = cell2.g2 = getRHS(p_a.castToNode());
+        cell1.g2 = cell2.g1 = getRHS(p_b.castToNode());
+    } else {
+        cell1.g1 = cell2.g2 = getG(p_a.castToNode());
+        cell1.g2 = cell2.g1 = getG(p_b.castToNode());
+    }
+
     if (cell1.g1 == INFINITY && cell2.g2 == INFINITY)
         return {{/*EMPTY*/}, INFINITY};
     getBC(cell1);
@@ -601,8 +616,10 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
             temp_pa = computeOptimalCellTraversalFromEdge(p, p_a, p_b);
         }
 
-        std::cout << "p_a   " << p_a.x << ", " << p_a.y << ", g=" << getG(p_a.castToNode()) << std::endl;
-        std::cout << "p_b   " << p_b.x << ", " << p_b.y << ", g=" << getG(p_b.castToNode()) << std::endl;
+        std::cout << "p_a   " << p_a.x << ", " << p_a.y << ", g=" << getG(p_a.castToNode()) << ", rhs="
+                  << getRHS(p_a.castToNode()) << std::endl;
+        std::cout << "p_b   " << p_b.x << ", " << p_b.y << ", g=" << getG(p_b.castToNode()) << ", rhs="
+                  << getRHS(p_a.castToNode()) << std::endl;
         std::cout << "cost: " << temp_pa.second << std::endl;
         for (auto addition: temp_pa.first) {
             std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl;

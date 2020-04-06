@@ -94,13 +94,14 @@ class FieldDPlanner {
   };
 
   // launch parameters
-  double maximum_distance_ = 100000;     // maximum distance to goal node before warning messages spit out
-  double configuration_space_ = 1;  // configuration space
-  double goal_range_ = 1;           // distance from goal at which a node is considered the goal
-  bool follow_old_path_ = true;        // follow the previously generated path if no optimal path currently exists
-  int lookahead_dist_ = 1;          // number of cell traversals to look ahead at when decising next position along path
-  float occupancy_threshold_ = 0.8;   // maximum occupancy probability before a cell is considered to have infinite
-  // traversal cost
+  double maximum_distance_ = 100000;  // maximum distance to goal node before warning messages spit out
+  double configuration_space_ = 1;    // configuration space
+  double goal_range_ = 1;             // distance from goal at which a node is considered the goal
+  bool follow_old_path_ = true;       // follow the previously generated path if no optimal path currently exists
+  int lookahead_dist_ =
+      1;            // number of cell traversals to look ahead at when decising next position along path
+  bool first_run_trick = true;        // Zheng trick from Update-Reducing Field-D*
+  float occupancy_threshold_ = 0.8;   // maximum occupancy probability before a cell has infinite traversal cost
 
   MapPtr map_;  // Most up-to-date map
   int x_initial_, y_initial_;   // Index for initial x and y location in search space
