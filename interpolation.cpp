@@ -13,6 +13,14 @@ float cost(TraversalParams &t) {
     return t.g2 + t.b + CATH(t.c, t.b);
 }
 
+bool cond(TraversalParams &t) {
+    return t.c > (t.b * SQRT2);
+}
+
+float condcost(TraversalParams &t) {
+    return (cond(t)) ? cost(t) : INFINITY;
+}
+
 std::vector<Position> additions(TraversalParams &t) {
     float x = 1 - t.b / CATH(t.c, t.b);
     assert(x >= 0 and x <= 1);
@@ -68,13 +76,14 @@ std::vector<Position> additions(TraversalParams &t) {
     float v = (1 - x) * t.p / (t.p + 1);
     assert(x >= 0 and x <= 1);
     assert(v >= 0 and v <= 1);
-    if (t.p0.y == t.p1.y) { // p lies on a vertical edge
-        return {{INTERP_1(t.p0.x, t.p1.x, v), t.p1.y},
-                {INTERP_1(t.p0.x, t.p1.x, v + x), t.p1.y},
+    assert((x + v) <= 1);
+    if (t.p0.x == t.p1.x) {
+        return {{t.p0.x, INTERP_1(t.p0.y, t.p1.y, v)},
+                {t.p0.x, INTERP_1(t.p0.y, t.p1.y, v + x)},
                 t.p2};
-    } else {            // p lies on a horizontal edge
-        return {{t.p1.x, INTERP_1(t.p0.y, t.p1.y, v)},
-                {t.p1.x, INTERP_1(t.p0.y, t.p1.y, v + x)},
+    } else {
+        return {{INTERP_1(t.p0.x, t.p1.x, v), t.p0.y},
+                {INTERP_1(t.p0.x, t.p1.x, v + x), t.p0.y},
                 t.p2};
     }
 }
@@ -87,10 +96,18 @@ float cost(TraversalParams &t) {
     return t.g1 + CATH(t.c, t.f);
 }
 
+bool cond(TraversalParams &t) {
+    return t.c > (t.f * SQRT2);
+}
+
+float condcost(TraversalParams &t) {
+    return (cond(t)) ? cost(t) : INFINITY;
+}
+
 std::vector<Position> additions(TraversalParams &t) {
     float y = t.f / CATH(t.c, t.f);
     assert(y >= 0 and y <= 1);
-    if (t.p0.x == t.p1.x) { // p lies on a vertical edge
+    if (t.p0.x == t.p1.x) {
         assert(t.p1.x != t.p2.x);
         return {{INTERP_1(t.p1.x, t.p2.x, y), t.p1.y}};
     } else {            // p lies on a horizontal edge
@@ -115,10 +132,10 @@ float condcost(TraversalParams &t) {
 std::vector<Position> additions(TraversalParams &t) {
     float y = (1 - t.q) * t.f / CATH(t.c, t.f);
     assert(y >= 0 and y <= 1);
-    if (t.p0.x == t.p1.x) { // p lies on a vertical edge
+    if (t.p0.x == t.p1.x) {
         assert(t.p1.x != t.p2.x);
         return {{INTERP_ABS(t.p1.x, t.p2.x, y), t.p1.y}};
-    } else {            // p lies on a horizontal edge
+    } else {
         assert(t.p1.y != t.p2.y);
         return {{t.p1.x, INTERP_ABS(t.p1.y, t.p2.y, y)}};
     }
@@ -140,12 +157,12 @@ float condcost(TraversalParams &t) {
 std::vector<Position> additions(TraversalParams &t) {
     float y = t.p + t.f / CATH(t.c, t.f);
     assert(y >= 0 and y <= 1);
-    if (t.p0.y == t.p1.y) { // p lies on a vertical edge
-        assert(t.p1.y != t.p2.y);
-        return {{t.p1.x, INTERP_1(t.p2.y, t.p1.y, y)}};
-    } else {           // p lies on a horizontal edge
+    if (t.p0.x == t.p1.x) {
         assert(t.p1.x != t.p2.x);
         return {{INTERP_1(t.p1.x, t.p2.x, y), t.p1.y}};
+    } else {
+        assert(t.p1.y != t.p2.y);
+        return {{t.p1.x, INTERP_1(t.p1.y, t.p2.y, y)}};
     }
 }
 }
@@ -155,6 +172,14 @@ namespace TraversalTypeIII {
 namespace Corner {
 float cost(TraversalParams &t) {
     return t.g1 + t.b;
+}
+
+bool cond(TraversalParams &t) {
+    return t.c > t.b;
+}
+
+float condcost(TraversalParams &t) {
+    return (cond(t)) ? cost(t) : INFINITY;
 }
 
 std::vector<Position> additions(TraversalParams &t) {
@@ -178,6 +203,7 @@ std::vector<Position> additions(TraversalParams &t) {
     return {t.p1};
 }
 }
+
 namespace OppositeEdge {
 float cost(TraversalParams &t) {
     return t.g1 + t.b + t.p * CATH(t.c, t.b);
@@ -194,10 +220,10 @@ float condcost(TraversalParams &t) {
 std::vector<Position> additions(TraversalParams &t) {
     float x = t.p * t.b / CATH(t.c, t.b);
     assert(x >= 0 and x <= 1);
-    if (t.p0.y == t.p1.y) { // p lies on a vertical edge
-        return {{INTERP_1(t.p0.x, t.p1.x, x), t.p0.y}, t.p1};
-    } else {            // p lies on a horizontal edge
+    if (t.p0.x == t.p1.x) {
         return {{t.p0.x, INTERP_1(t.p0.y, t.p1.y, x)}, t.p1};
+    } else {            // p lies on a horizontal edge
+        return {{INTERP_1(t.p0.x, t.p1.x, x), t.p0.y}, t.p1};
     }
 }
 }
@@ -207,6 +233,14 @@ namespace TraversalTypeA {
 namespace Corner {
 float cost(TraversalParams &t) {
     return t.g2 + t.c * SQRT2;
+}
+
+bool cond(TraversalParams &) {
+    return true;
+}
+
+float condcost(TraversalParams &t) {
+    return (cond(t)) ? cost(t) : INFINITY;
 }
 
 std::vector<Position> additions(TraversalParams &t) {
@@ -219,6 +253,14 @@ float cost(TraversalParams &t) {
     return t.g2 + t.c * HYPOT(1, 1 - t.q);
 }
 
+bool cond(TraversalParams &) {
+    return true;
+}
+
+float condcost(TraversalParams &t) {
+    return (cond(t)) ? cost(t) : INFINITY;
+}
+
 std::vector<Position> additions(TraversalParams &t) {
     return {t.p2};
 }
@@ -226,6 +268,14 @@ std::vector<Position> additions(TraversalParams &t) {
 namespace OppositeEdge {
 float cost(TraversalParams &t) {
     return t.g2 + t.c * HYPOT(1 - t.p, 1);
+}
+
+bool cond(TraversalParams &) {
+    return true;
+}
+
+float condcost(TraversalParams &t) {
+    return (cond(t)) ? cost(t) : INFINITY;
 }
 
 std::vector<Position> additions(TraversalParams &t) {
@@ -240,6 +290,14 @@ float cost(TraversalParams &t) {
     return t.g1 + t.c;
 }
 
+bool cond(TraversalParams &) {
+    return true;
+}
+
+float condcost(TraversalParams &t) {
+    return (cond(t)) ? cost(t) : INFINITY;
+}
+
 std::vector<Position> additions(TraversalParams &t) {
     return {t.p1};
 }
@@ -250,11 +308,31 @@ float cost(TraversalParams &t) {
     return t.g1 + t.c * (1 - t.q);
 }
 
+bool cond(TraversalParams &) {
+    return true;
+}
+
+float condcost(TraversalParams &t) {
+    return (cond(t)) ? cost(t) : INFINITY;
+}
+
 std::vector<Position> additions(TraversalParams &t) {
     return {t.p1};
 }
 }
 namespace OppositeEdge {
+float cost(TraversalParams &t) {
+    return t.g1 + t.c * HYPOT(t.p, 1);
+}
+
+bool cond(TraversalParams &) {
+    return true;
+}
+
+float condcost(TraversalParams &t) {
+    return (cond(t)) ? cost(t) : INFINITY;
+}
+
 std::vector<Position> additions(TraversalParams &t) {
     return {t.p1};
 }
