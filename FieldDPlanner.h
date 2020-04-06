@@ -48,14 +48,7 @@ https://ocw.mit.edu/courses/aeronautics-and-astronautics/16-412j-cognitive-robot
 #include "PriorityQueue.h"
 #include "Map.h"
 #include "Pose.h"
-
-extern const float INF;
-extern const float SQRT2;
-#define SQUARE(x) ((x)*(x))
-#define CATH(x, y) std::sqrt(SQUARE((x))- SQUARE((y)))
-#define HYPOT(x, y) std::hypot(x,y)
-#define INTERP_1(from, to, delta) ((from) + ((to)-(from))*(delta))
-#define INTERP_ABS(from, to, delta) ((from) + ((to)-(from))*(delta))
+#include "interpolation.h"
 
 /**
 The CostComputation struct contains the linearly interpolated path cost as
@@ -306,7 +299,6 @@ class FieldDPlanner {
   */
   float getRHS(const Node &s);
 
-  std::pair<float, float> getBC(const Position &p, const Position &p_1, const Position &p_2);
  private:
   // hashed map contains all nodes and <g,rhs> values in search
   std::unordered_map<Node, std::tuple<float, float>> expanded_map_;
@@ -316,6 +308,7 @@ class FieldDPlanner {
   int num_nodes_updated = 0;
   int num_nodes_expanded = 0;
   bool initialize_search = true;  // set to true if the search problem must be initialized
+  std::pair<float, float> getBC(TraversalParams &t);
 };
 
 #endif

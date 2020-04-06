@@ -15,4 +15,5 @@ add_executable(field_d_planner
                main.cpp
                Graph.cpp
                Node.cpp
-               PriorityQueue.cpp)
+               PriorityQueue.cpp
+               interpolation.cpp)
