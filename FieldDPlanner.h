@@ -49,9 +49,6 @@ https://ocw.mit.edu/courses/aeronautics-and-astronautics/16-412j-cognitive-robot
 #include "Map.h"
 #include "Pose.h"
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-
 extern const float INF;
 extern const float SQRT2;
 #define SQUARE(x) ((x)*(x))
@@ -262,6 +259,12 @@ class FieldDPlanner {
   @return vector containing the next positions(s) and movement cost
   */
   path_additions computeOptimalCellTraversalFromEdge(const Position &p, const Position &p_a, const Position &p_b);
+  path_additions computeOptimalCellTraversalFromContiguousEdge(const Position &p,
+                                                               const Position &p_a,
+                                                               const Position &p_b);
+  path_additions computeOptimalCellTraversalFromOppositeEdge(const Position &p,
+                                                             const Position &p_a,
+                                                             const Position &p_b);
   path_additions computeOptimalCellTraversalFromCorner(const Position &p, const Position &p_a, const Position &p_b);
   /**
   Helper method for path reconstruction process. Finds the next path position(s)
