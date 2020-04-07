@@ -1,4 +1,4 @@
-#UNIGE-TASI Path Planners
+# UNIGE-TASI Path Planners
 
 This repository contains a generic implementation of the Field D* algorithm,
 [originally proposed by Dave Ferguson and Anthony Stentz](https://www.ri.cmu.edu/pub_files/pub4/ferguson_david_2005_3/ferguson_david_2005_3.pdf).
