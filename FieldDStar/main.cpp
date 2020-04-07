@@ -2,15 +2,16 @@
 #include <iostream>
 #include <string>
 #include "FieldDPlanner.h"
-#include "include/bitmap/BMP.h"
+#include "bitmap/BMP.h"
 #include "Graph.h"
+char **argv;
 
 std::shared_ptr<Map> map_info = nullptr;
 uint8_t logcount = 0;
 
 void poses_cb(std::vector<Pose> poses) {
     std::ofstream logfile;
-    std::string filename = "logfile_" + std::to_string(logcount) + ".json";
+    std::string filename(argv[7]);
     logfile.open(filename);
     logfile << "{\"poses\": [";
     for (auto pose : poses) {
@@ -27,7 +28,7 @@ void poses_cb(std::vector<Pose> poses) {
 void expanded_cb(std::tuple<std::vector<std::tuple<int, int, float>>, int, int> exp_info) {
 
     std::ofstream logfile;
-    std::string filename = "dbgfile_" + std::to_string(logcount) + ".json";
+    std::string filename(argv[8]);
     logfile.open(filename);
     logfile << "{\"num_expanded\": " << std::get<1>(exp_info)
             << ", \"num_updated\": " << std::get<2>(exp_info)
@@ -44,11 +45,14 @@ void expanded_cb(std::tuple<std::vector<std::tuple<int, int, float>>, int, int> 
     logfile.close();
 }
 
-int main(int argc, char **argv) {
-    if (argc < 7) {
+int main(int _argc, char **_argv) {
+    argv = _argv;
+    if (_argc < 8) {
         std::cerr << "Missing required argument." << std::endl;
         std::cerr << "Usage:" << std::endl;
-        std::cerr << "\t" << argv[0] << " <mapfile.bmp> <from_x> <from_y> <to_x> <to_y> lookahead" << std::endl;
+        std::cerr << "\t" << argv[0]
+                  << " <mapfile.bmp> <from_x> <from_y> <to_x> <to_y> lookahead <logfile.json> <dbgfile.json>"
+                  << std::endl;
         return 1;
     }
     auto map = BMP(argv[1]);
@@ -89,8 +93,8 @@ int main(int argc, char **argv) {
     planner.set_poses_cb(poses_cb);
     planner.set_expanded_cb(expanded_cb);
     planner.step();
-    std::string cmd = "python3 plot_path.py ";
-    cmd.append(argv[1]);
-    std::system(cmd.data());
+    //std::string cmd = "python3 plot_path.py ";
+    //cmd.append(argv[1]);
+    //std::system(cmd.data());
     return 0;
 }

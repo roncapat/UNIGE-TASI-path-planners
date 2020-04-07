@@ -5,10 +5,10 @@ from math import modf, ceil, floor
 import cv2
 import numpy
 
-if len(sys.argv) < 2:
+if len(sys.argv) < 5:
     import sys
 
-    sys.stderr.write("Usage:\n\t %s <mapfile.bmp>\n" % sys.argv[0])
+    sys.stderr.write("Usage:\n\t %s <mapfile.bmp> <logfile.json> <dbgfile.json> <outfile.bmp>\n" % sys.argv[0])
     exit()
 
 mult = 21
@@ -27,7 +27,7 @@ for y in range(0, img.shape[0]):
         cv2.rectangle(out_map, (mult * x + 1, mult * y + 1), (mult * x + (mult - 1), mult * y + (mult - 1)), (c, c, c),
                       cv2.FILLED)
 
-with open('dbgfile_0.json', 'r') as dbgfile:
+with open(sys.argv[3], 'r') as dbgfile:
     expanded = json.load(dbgfile)['expanded']
     for p in expanded:
         x = p[1]
@@ -37,13 +37,13 @@ with open('dbgfile_0.json', 'r') as dbgfile:
         else:
             cv2.circle(out_map, (mult * x, mult * y), floor(mult / 5), (30, 30, 255), cv2.FILLED)
 
-with open('logfile_0.json', 'r') as pathfile:
+with open(sys.argv[2], 'r') as pathfile:
     poses = json.load(pathfile)['poses']
     for a, b in zip(poses, poses[1:]):
         a_scaled = (
-        mult * int(a[1]) + int(modf(a[1])[0] * (mult - 1)), mult * int(a[0]) + int(modf(a[0])[0] * (mult - 1)))
+            mult * int(a[1]) + int(modf(a[1])[0] * (mult - 1)), mult * int(a[0]) + int(modf(a[0])[0] * (mult - 1)))
         b_scaled = (
-        mult * int(b[1]) + int(modf(b[1])[0] * (mult - 1)), mult * int(b[0]) + int(modf(b[0])[0] * (mult - 1)))
+            mult * int(b[1]) + int(modf(b[1])[0] * (mult - 1)), mult * int(b[0]) + int(modf(b[0])[0] * (mult - 1)))
         cv2.line(out_map, a_scaled, b_scaled, (255, 100, 0), floor(mult / 5))
     x = int(poses[0][1])
     y = int(poses[0][0])
@@ -52,7 +52,7 @@ with open('logfile_0.json', 'r') as pathfile:
     y = int(poses[-1][0])
     cv2.circle(out_map, (mult * x, mult * y), floor(mult / 2), (255, 0, 0), cv2.FILLED)  # BLUE - GOAL
 
-cv2.imshow('image', out_map)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-cv2.imwrite('test_result.bmp', out_map)
+# cv2.imshow('image', out_map)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+cv2.imwrite(sys.argv[4], out_map)
