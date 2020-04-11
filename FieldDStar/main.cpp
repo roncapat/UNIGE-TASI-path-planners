@@ -86,7 +86,7 @@ int main(int _argc, char **_argv) {
         .y_initial = 0
     });
     FieldDPlanner planner{};
-    planner.lookahead_dist_ = std::stoi(argv[6]);
+    planner.lookahead = bool(std::stoi(argv[6]));
     planner.init();
     planner.set_map(map_info);
     planner.set_goal({std::stoi(argv[4]), std::stoi(argv[5])});

@@ -44,9 +44,11 @@ def plot_path():
         poses = json.load(pathfile)['poses']
         for a, b in zip(poses, poses[1:]):
             a_scaled = (
-                mult * int(a[1]) + int(modf(a[1])[0] * (mult - 1)), mult * int(a[0]) + int(modf(a[0])[0] * (mult - 1)))
+                mult * int(a[1]) + int(round(modf(a[1])[0] * (mult - 1))),
+                mult * int(a[0]) + int(round(modf(a[0])[0] * (mult - 1))))
             b_scaled = (
-                mult * int(b[1]) + int(modf(b[1])[0] * (mult - 1)), mult * int(b[0]) + int(modf(b[0])[0] * (mult - 1)))
+                mult * int(b[1]) + int(round(modf(b[1])[0] * (mult - 1))),
+                mult * int(b[0]) + int(round(modf(b[0])[0] * (mult - 1))))
             cv2.line(out_map, a_scaled, b_scaled, (255, 100, 0), floor(mult / 5))
         x = int(poses[0][1])
         y = int(poses[0][0])

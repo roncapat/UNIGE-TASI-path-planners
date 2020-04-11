@@ -88,12 +88,6 @@ struct BMP {
           if (bmp_info_header.bit_count != 0x8)
               throw std::runtime_error("The program can treat only 8-bit BMP images");
 
-          for (int y = 0; y < bmp_info_header.height; y++) {
-              for (int x = 0; x < bmp_info_header.width + padding; x++) {
-                  std::cout << ((input.get() == 255) ? "x" : "o");
-              }
-              std::cout << std::endl;
-          }
           input.seekg(file_header.offset_data, std::ifstream::beg);
           data.resize(extents[bmp_info_header.height][bmp_info_header.width + padding]);
           for (int y = bmp_info_header.height - 1; y >= 0; y--)

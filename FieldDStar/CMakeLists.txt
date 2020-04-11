@@ -19,7 +19,6 @@ add_executable(field_d_planner
                PriorityQueue.cpp
                interpolation.cpp)
 
-add_definitions(-DFDSTAR_SHOW_RESULT)
 add_executable(field_d_planner_gui
                FieldDPlanner.cpp
                main.cpp
@@ -27,3 +26,5 @@ add_executable(field_d_planner_gui
                Node.cpp
                PriorityQueue.cpp
                interpolation.cpp)
+
+target_compile_definitions(field_d_planner_gui PRIVATE FDSTAR_SHOW_RESULT)

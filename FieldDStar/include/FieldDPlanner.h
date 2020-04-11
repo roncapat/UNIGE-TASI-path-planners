@@ -98,10 +98,9 @@ class FieldDPlanner {
   double configuration_space_ = 1;    // configuration space
   double goal_range_ = 1;             // distance from goal at which a node is considered the goal
   bool follow_old_path_ = true;       // follow the previously generated path if no optimal path currently exists
-  int lookahead_dist_ =
-      1;            // number of cell traversals to look ahead at when decising next position along path
+  bool lookahead = true;
   bool first_run_trick = true;        // Zheng trick from Update-Reducing Field-D*
-  float occupancy_threshold_ = 0.8;   // maximum occupancy probability before a cell has infinite traversal cost
+  float occupancy_threshold_ = 0.5;   // maximum occupancy probability before a cell has infinite traversal cost
 
   MapPtr map_;  // Most up-to-date map
   int x_initial_, y_initial_;   // Index for initial x and y location in search space
@@ -267,7 +266,7 @@ class FieldDPlanner {
   @param[in] p edge on graph to plan from
   @return vector containing the next positions(s) and movement cost
   */
-  path_additions getPathAdditions(const Position &p, int lookahead_dist_remaining);
+  path_additions getPathAdditions(const Position &p, bool do_lookahead);
   /**
   Checks whether a specified node is within range of the goal node. This 'range'
   is specified by the GOAL_RANGE instance variable.
@@ -310,6 +309,7 @@ class FieldDPlanner {
   int num_nodes_expanded = 0;
   bool initialize_search = true;  // set to true if the search problem must be initialized
   std::pair<float, float> getBC(TraversalParams &t);
+  bool consistent(const Node &s);
 };
 
 #endif

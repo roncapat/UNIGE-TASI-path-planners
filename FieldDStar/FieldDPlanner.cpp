@@ -34,7 +34,6 @@ int FieldDPlanner::step() {
 
     // only update the graph if nodes have been updated
     if ((num_nodes_updated > 0) or initialize_search) {
-        //TODO if(initialize_search), use Update-reducing rhs' tweak to speed up first planning run
         computeShortestPath();
     } else {
         num_nodes_expanded = 0;
@@ -273,7 +272,7 @@ void FieldDPlanner::constructOptimalPath() {
 
     do {
         // move one step and calculate the optimal path additions
-        pa = getPathAdditions(curr_pos, lookahead_dist_);
+        pa = getPathAdditions(curr_pos, lookahead);
         path_.insert(path_.end(), pa.first.begin(), pa.first.end());
         min_cost = pa.second;
         curr_pos = path_.back();
@@ -305,54 +304,7 @@ std::tuple<float, float> cell_idx_4n(const Position &p, bool bottom_TOP, bool le
 // p must be aligned with p_1, p_1 aligned with p_2, p and P_2 diagonal neighbors
 std::pair<float, float> FieldDPlanner::getBC(TraversalParams &t) {
     std::tuple<int, int> cell_ind_b, cell_ind_c;
-    /* Code for clear understanding of synteshis. Please KEEP (at least for some time)
-    if (p.x == p_1.x) { // p lies on a vertical edge
-        if (p_2.x > p_1.x) { // we need to traverse the cell on the right
-            if (p.y > p_1.y) { // we are over the considered edge
-                // "b" is the cost of the cell on the top-left of p_1
-                cell_ind_b = cell_idx_top_left(p_1);
-                cell_ind_c = cell_idx_top_right(p_1);
-            } else { // we are under the considered edge
-                // "b" is the cost of the cell on the bottom-left of p_1
-                cell_ind_b = cell_idx_bottom_left(p_1);
-                cell_ind_c = cell_idx_bottom_right(p_1);
-            }
-        } else { // we need to traverse the cell on the left
-            if (p.y > p_1.y) { // we are over the considered edge
-                // "b" is the cost of the cell on the top-right of p_1
-                cell_ind_b = cell_idx_top_right(p_1);
-                cell_ind_c = cell_idx_top_left(p_1);
-            } else { // we are under the considered edge
-                // "b" is the cost of the cell on the bottom-right of p_1
-                cell_ind_b = cell_idx_bottom_right(p_1);
-                cell_ind_c = cell_idx_bottom_left(p_1);
-            }
-        }
 
-    } else { // p lies on a horizontal edge
-        if (p_2.y > p_1.y) { // we need to traverse the cell at the top
-            if (p.x > p_1.x) { // we are on the right of the considered edge
-                // "b" is the cost of the cell on the bottom-right of p_1
-                cell_ind_b = cell_idx_bottom_right(p_1);
-                cell_ind_c = cell_idx_top_right(p_1);
-            } else { // we are on the left of the considered edge
-                // "b" is the cost of the cell on the bottom-left of p_1
-                cell_ind_b = cell_idx_bottom_left(p_1);
-                cell_ind_c = cell_idx_top_left(p_1);
-            }
-        } else { // we need to traverse the cell at the bottom
-            if (p.x > p_1.x) { // we are on the right of the considered edge
-                // "b" is the cost of the cell on the top-right of p_1
-                cell_ind_b = cell_idx_top_right(p_1);
-                cell_ind_c = cell_idx_bottom_right(p_1);
-            } else { // we are on the left of the considered edge
-                // "b" is the cost of the cell on the top-left of p_1
-                cell_ind_b = cell_idx_top_left(p_1);
-                cell_ind_c = cell_idx_bottom_left(p_1);
-            }
-        }
-    }
-    */
     if (t.p0.x == t.p1.x) { // p lies on a vertical edge
         cell_ind_b = cell_idx_4n(t.p1, t.p0.y > t.p1.y, t.p2.x < t.p1.x);
         cell_ind_c = cell_idx_4n(t.p1, t.p0.y > t.p1.y, t.p2.x > t.p1.x);
@@ -363,6 +315,8 @@ std::pair<float, float> FieldDPlanner::getBC(TraversalParams &t) {
 
     t.b = node_grid_.getValWithConfigurationSpace(cell_ind_b);
     t.c = node_grid_.getValWithConfigurationSpace(cell_ind_c);
+    if (t.b > 255 * occupancy_threshold_) t.b = INFINITY;
+    if (t.c > 255 * occupancy_threshold_) t.c = INFINITY;
     return {t.b, t.c};
 }
 
@@ -395,6 +349,8 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorn
     if (cell.g1 == INFINITY && cell.g2 == INFINITY)
         return {{/*EMPTY*/}, INFINITY};
     getBC(cell);
+    if (cell.c == INFINITY)
+        return {{/*EMPTY*/}, INFINITY};
     cell.f = cell.g1 - cell.g2;
 
     int type;
@@ -463,6 +419,8 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCont
     if (cell1.g1 == INFINITY && cell1.g2 == INFINITY)
         return {{/*EMPTY*/}, INFINITY};
     getBC(cell1);
+    if (cell1.c == INFINITY)
+        return {{/*EMPTY*/}, INFINITY};
     cell1.f = cell1.g1 - cell1.g2;
     cell1.q = 1 - std::abs(cell1.p1.y - p.y) - std::abs(cell1.p1.x - p.x);
     assert(cell1.q > 0 and cell1.q < 1);
@@ -533,6 +491,8 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromOppo
         return {{/*EMPTY*/}, INFINITY};
     getBC(cell1);
     getBC(cell2);
+    if (cell1.c == INFINITY)
+        return {{/*EMPTY*/}, INFINITY};
     cell1.f = cell1.g1 - cell1.g2;
     cell2.f = -cell1.f;
     cell1.p = std::abs(p.y - cell1.p0.y) + std::abs(p.x - cell1.p0.x);
@@ -600,49 +560,76 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
     }
 }
 
-FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p, int lookahead_dist_remaining) {
+FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p, bool do_lookahead) {
     float min_cost = INFINITY;
     path_additions min_pa;
     path_additions temp_pa;
     float lookahead_cost;
-    std::cout << "\np     " << std::to_string(p.x) << ", " << std::to_string(p.y)
+    #ifdef VERBOSE_EXTRACTION
+    if (lookahead and not do_lookahead) std::cout << "\t";
+    std::cout << "p     " << std::to_string(p.x) << ", " << std::to_string(p.y)
               << (isVertex(p) ? " (Corner)" : " (Edge)") << std::endl << std::endl;
-    //TODO use priority queue instead of 1-step-lookaed for ALL edges (Otte et al.)
-    for (const auto &[p_a, p_b] : node_grid_.nbrsContinuous(p)) {
-        // look ahead `lookahead_dist_remaining` planning steps into the future for best action
-        if (isVertex(p)) {
-            temp_pa = computeOptimalCellTraversalFromCorner(p, p_a, p_b);
-        } else {
-            temp_pa = computeOptimalCellTraversalFromEdge(p, p_a, p_b);
-        }
+    #endif
 
-        std::cout << "p_a   " << p_a.x << ", " << p_a.y << ", g=" << getG(p_a.castToNode()) << ", rhs="
-                  << getRHS(p_a.castToNode()) << std::endl;
-        std::cout << "p_b   " << p_b.x << ", " << p_b.y << ", g=" << getG(p_b.castToNode()) << ", rhs="
-                  << getRHS(p_a.castToNode()) << std::endl;
-        std::cout << "cost: " << temp_pa.second << std::endl;
+    //TODO use priority queue instead of 1-step-lookahead for ALL edges (Otte et al.)
+    for (const auto &[p_a, p_b] : node_grid_.nbrsContinuous(p)) {
+        /*
+        if (!((consistent(p_a.castToNode()) and (consistent(p_b.castToNode()) or getG(p_b.castToNode()) == INFINITY))
+            or (consistent(p_b.castToNode())
+                and (consistent(p_a.castToNode()) or getG(p_a.castToNode()) == INFINITY))))
+            continue;
+        */
+
+        if (isVertex(p))
+            temp_pa = computeOptimalCellTraversalFromCorner(p, p_a, p_b);
+        else
+            temp_pa = computeOptimalCellTraversalFromEdge(p, p_a, p_b);
+
+        #ifdef VERBOSE_EXTRACTION
+        if (lookahead and not do_lookahead) std::cout << "\t";
+        std::cout << "X:" << p_a.x << ", Y:" << p_a.y
+                  << ", G:" << getG(p_a.castToNode()) << ", RHS:" << getRHS(p_a.castToNode()) << " | "
+                  << "X:" << p_b.x << ", Y:" << p_b.y
+                  << ", G:" << getG(p_b.castToNode()) << ", RHS:" << getRHS(p_b.castToNode())
+                  << " || cost: " << temp_pa.second << std::endl;
         for (auto addition: temp_pa.first) {
+            if (lookahead and not do_lookahead) std::cout << "\t";
             std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl;
         }
+        std::cout << std::endl;
+        #endif
 
-        if ((lookahead_dist_remaining <= 0) || temp_pa.first.empty())
-            lookahead_cost = temp_pa.second;
-        else
-            lookahead_cost = getPathAdditions(temp_pa.first.back(), lookahead_dist_remaining - 1).second;
+        if (temp_pa.first.empty()) continue;
 
-        if (lookahead_cost < min_cost) {
-            min_cost = lookahead_cost;
+        // LOOKAHEAD PROCEDURE documented in
+        // Field D* path-finding on weighted triangulated and tetrahedral meshes (Perkins et al. 2013), Section 3
+        // Only needed if next point is on edge
+        if (do_lookahead and not isVertex(temp_pa.first.back())) {
+            lookahead_cost = getPathAdditions(temp_pa.first.back(), false).second;
+            if (lookahead_cost > temp_pa.second) { // Lookahead test failed
+                #ifdef VERBOSE_EXTRACTION
+                std::cout << "Lookahead test failed" << std::endl;
+                #endif
+                continue;
+            }
+        }
+
+        if (temp_pa.second < min_cost) { // Promote as best solution
+            min_cost = temp_pa.second;
             min_pa = temp_pa;
         }
     }
 
-    std::cout << "\nfinal choice: " << std::endl;
-    std::cout << "cost: " << std::to_string(min_pa.second) << std::endl;
-    std::cout << "p     " << std::to_string(p.x) << ", " << std::to_string(p.y) << std::endl;
+    #ifdef VERBOSE_EXTRACTION
+    if (lookahead and not do_lookahead) std::cout << "\t";
+    std::cout << "Final choice for X:" << std::to_string(p.x) << ", Y:" << std::to_string(p.y)
+              << " || cost: " << std::to_string(min_pa.second) << std::endl;
     for (auto addition: min_pa.first) {
-        std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl;
+        if (lookahead and not do_lookahead) std::cout << "\t";
+        std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl
+                  << std::endl;
     }
-
+    #endif
     return min_pa;
 }
 
@@ -678,4 +665,8 @@ float FieldDPlanner::getRHS(const Node &s) {
         return std::get<1>(expanded_map_.at(s));
     else
         return INFINITY;
+}
+
+bool FieldDPlanner::consistent(const Node &s) {
+    return getG(s) == getRHS(s);
 }
