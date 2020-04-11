@@ -3,7 +3,9 @@
 ### Example user template
 
 # IntelliJ project files
-.idea
+.idea/*
+!.idea/runConfigurations
+*__pycache__
 *.iml
 out
 gen
@@ -11,4 +13,3 @@ gen
 Makefile
 doc/
 /venv/
-.gitignore

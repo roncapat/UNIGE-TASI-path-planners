@@ -11,7 +11,7 @@ postprocessor="$src_dir/plot_path.py"
 rm -rf "$build_dir"
 mkdir "$build_dir"
 cd "$build_dir"
-cmake -G "Unix Makefiles" "$src_dir" | tee build.log
+cmake -G "Unix Makefiles" --target field_d_planner "$src_dir" | tee build.log
 make | tee -a build.log
 
 rm -rf "$out_dir"

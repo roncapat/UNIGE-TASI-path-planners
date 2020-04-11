@@ -18,3 +18,12 @@ add_executable(field_d_planner
                Node.cpp
                PriorityQueue.cpp
                interpolation.cpp)
+
+add_definitions(-DFDSTAR_SHOW_RESULT)
+add_executable(field_d_planner_gui
+               FieldDPlanner.cpp
+               main.cpp
+               Graph.cpp
+               Node.cpp
+               PriorityQueue.cpp
+               interpolation.cpp)

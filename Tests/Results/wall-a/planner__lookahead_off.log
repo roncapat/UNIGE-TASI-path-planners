@@ -2826,3 +2826,4 @@ final choice:
 cost: 1.138827
 p     2.544910, 11.000000
 step  2.000000, 10.000000
+python3: can't open file 'plot_path_gui.py': [Errno 2] No such file or directory

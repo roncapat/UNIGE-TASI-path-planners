@@ -93,8 +93,15 @@ int main(int _argc, char **_argv) {
     planner.set_poses_cb(poses_cb);
     planner.set_expanded_cb(expanded_cb);
     planner.step();
-    //std::string cmd = "python3 plot_path.py ";
-    //cmd.append(argv[1]);
-    //std::system(cmd.data());
+#ifdef FDSTAR_SHOW_RESULT
+    std::string cmd = "python3 plot_path_gui.py ";
+    cmd.append(argv[1]);
+    cmd.append(" ");
+    cmd.append(argv[7]);
+    cmd.append(" ");
+    cmd.append(argv[8]);
+    cmd.append(" result.bmp");
+    std::system(cmd.data());
+#endif
     return 0;
 }
