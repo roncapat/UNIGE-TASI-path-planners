@@ -12,7 +12,7 @@ rm -rf "$build_dir"
 mkdir "$build_dir"
 cd "$build_dir"
 cmake -G "Unix Makefiles" --target field_d_planner "$src_dir" | tee build.log
-make | tee -a build.log
+make -j8 | tee -a build.log
 
 rm -rf "$out_dir"
 mkdir "$out_dir"
@@ -40,5 +40,10 @@ for f in $files; do
   "$planner" $f $params 1 "logfile$type.json" "dbgfile$type.json" &> "planner$type.log"
   python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
   IFS=' '
+  echo "
+  # Lookahead OFF
+  ![Lookahead OFF](result__lookahead_off.jpg)
+  # Lookahead ON
+  ![Lookahead ON](result__lookahead_on.jpg)" > readme.md
   cd ..
 done
