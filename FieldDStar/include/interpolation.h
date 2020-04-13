@@ -20,116 +20,126 @@ struct TraversalParams {
 
 namespace TraversalTypeI {
 namespace Corner {
+bool cond(TraversalParams &t);
 float cost(TraversalParams &t);
-
+float stepcost(TraversalParams &t);
+float condcost(TraversalParams &t);
 std::vector<Position> additions(TraversalParams &t);
 }
 
 namespace ContiguousEdge {
-float cost(TraversalParams &t);
-
 bool cond(TraversalParams &t);
-
+float cost(TraversalParams &t);
+float stepcost(TraversalParams &t);
 float condcost(TraversalParams &t);
-
 std::vector<Position> additions(TraversalParams &t);
 }
 
 namespace OppositeEdge {
 bool cond(TraversalParams &t);
-
 float cost(TraversalParams &t);
-
+float stepcost(TraversalParams &t);
 float condcost(TraversalParams &t);
-
 std::vector<Position> additions(TraversalParams &t);
 }
 }
 
 namespace TraversalTypeII {
 namespace Corner {
+bool cond(TraversalParams &t);
 float cost(TraversalParams &t);
-
+float stepcost(TraversalParams &t);
+float condcost(TraversalParams &t);
 std::vector<Position> additions(TraversalParams &t);
 }
 namespace ContiguousEdge {
-float cost(TraversalParams &t);
-
 bool cond(TraversalParams &t);
-
+float cost(TraversalParams &t);
+float stepcost(TraversalParams &t);
 float condcost(TraversalParams &t);
-
 std::vector<Position> additions(TraversalParams &t);
 }
 namespace OppositeEdge {
-float cost(TraversalParams &t);
-
 bool cond(TraversalParams &t);
-
+float cost(TraversalParams &t);
+float stepcost(TraversalParams &t);
 float condcost(TraversalParams &t);
-
 std::vector<Position> additions(TraversalParams &t);
 }
 }
 
 namespace TraversalTypeIII {
 namespace Corner {
+bool cond(TraversalParams &t);
 float cost(TraversalParams &t);
-
+float stepcost(TraversalParams &t);
+float condcost(TraversalParams &t);
 std::vector<Position> additions(TraversalParams &t);
 }
 namespace ContiguousEdge {
-float cost(TraversalParams &t);
-
 bool cond(TraversalParams &t);
-
+float cost(TraversalParams &t);
+float stepcost(TraversalParams &t);
 float condcost(TraversalParams &t);
-
 std::vector<Position> additions(TraversalParams &t);
 }
 namespace OppositeEdge {
-float cost(TraversalParams &t);
-
 bool cond(TraversalParams &t);
-
+float cost(TraversalParams &t);
+float stepcost(TraversalParams &t);
 float condcost(TraversalParams &t);
-
 std::vector<Position> additions(TraversalParams &t);
 }
 }
 
 namespace TraversalTypeA {
 namespace Corner {
+bool cond(TraversalParams &t);
 float cost(TraversalParams &t);
-
+float stepcost(TraversalParams &t);
+float condcost(TraversalParams &t);
 std::vector<Position> additions(TraversalParams &t);
 }
+
 namespace ContiguousEdge {
-
+bool cond(TraversalParams &t);
 float cost(TraversalParams &t);
-
+float stepcost(TraversalParams &t);
+float condcost(TraversalParams &t);
 std::vector<Position> additions(TraversalParams &t);
 }
-namespace OppositeEdge {
-float cost(TraversalParams &t);
 
+namespace OppositeEdge {
+bool cond(TraversalParams &t);
+float cost(TraversalParams &t);
+float stepcost(TraversalParams &t);
+float condcost(TraversalParams &t);
 std::vector<Position> additions(TraversalParams &t);
 }
 }
 
 namespace TraversalTypeB {
 namespace Corner {
+bool cond(TraversalParams &t);
 float cost(TraversalParams &t);
-
+float stepcost(TraversalParams &t);
+float condcost(TraversalParams &t);
 std::vector<Position> additions(TraversalParams &t);
-
 }
+
 namespace ContiguousEdge {
+bool cond(TraversalParams &t);
 float cost(TraversalParams &t);
-
+float stepcost(TraversalParams &t);
+float condcost(TraversalParams &t);
 std::vector<Position> additions(TraversalParams &t);
 }
+
 namespace OppositeEdge {
+bool cond(TraversalParams &t);
+float cost(TraversalParams &t);
+float stepcost(TraversalParams &t);
+float condcost(TraversalParams &t);
 std::vector<Position> additions(TraversalParams &t);
 }
 }

@@ -94,7 +94,7 @@ void FieldDPlanner::publish_path() {
         }
 
         poses.back().orientation = poses[num_poses - 2].orientation;
-        poses_cb(poses);
+        poses_cb(poses, total_dist, total_cost);
     }
 }
 
@@ -156,7 +156,7 @@ Key FieldDPlanner::calculateKey(const Node &s) {
     // calculate the key to order the node in the priority_queue_ with. key_modifier_ is the
     // key modifier, a value which corrects for the distance traveled by the robot
     // since the search began (source: D* Lite)
-    return Key(std::round(cost_so_far + node_grid_.euclidianHeuristic(s.getIndex()) + node_grid_.key_modifier_),
+    return Key(std::round(cost_so_far + 100 * node_grid_.euclidianHeuristic(s.getIndex()) + node_grid_.key_modifier_),
                std::round(cost_so_far));
 }
 
@@ -186,10 +186,14 @@ void FieldDPlanner::updateNode(const Node &s) {
     // update rhs value of Node s
     if (s != node_grid_.goal_) {
         float min_rhs = INFINITY;
+        float dummy;
         for (auto connbr : node_grid_.consecutiveNeighbors(s))
             //min_rhs = std::min(min_rhs, this->computeCost(s, std::get<0>(connbr), std::get<1>(connbr)).cost);
             min_rhs = std::min(min_rhs,
-                               computeOptimalCellTraversalFromCorner(s, std::get<0>(connbr), std::get<1>(connbr))
+                               computeOptimalCellTraversalFromCorner(s,
+                                                                     std::get<0>(connbr),
+                                                                     std::get<1>(connbr),
+                                                                     dummy)
                                    .second);;
 
         insert_or_assign(s, getG(s), min_rhs);
@@ -259,6 +263,8 @@ int FieldDPlanner::updateNodesAroundUpdatedCells() {
 
 void FieldDPlanner::constructOptimalPath() {
     path_.clear();
+    total_cost = 0;
+    total_dist = 0;
 
     Position curr_pos(node_grid_.start_);
     path_.push_back(curr_pos);
@@ -270,11 +276,13 @@ void FieldDPlanner::constructOptimalPath() {
     // TODO do something better than this sh*t
     int max_steps = static_cast<int>(20000.00f / (this->node_grid_.resolution_));
 
+    float step_cost;
     do {
         // move one step and calculate the optimal path additions
-        pa = getPathAdditions(curr_pos, lookahead);
+        pa = getPathAdditions(curr_pos, lookahead, step_cost);
         path_.insert(path_.end(), pa.first.begin(), pa.first.end());
         min_cost = pa.second;
+        total_cost += step_cost;
         curr_pos = path_.back();
         curr_step += 1;
     } while (!isWithinRangeOfGoal(curr_pos) && (min_cost != INFINITY) &&
@@ -287,6 +295,11 @@ void FieldDPlanner::constructOptimalPath() {
         std::cerr << "[Extraction] Maximum step number reached" << std::endl;
         path_.clear();
     }
+
+    for (auto p = path_.begin(); p < path_.end() - 1; ++p) {
+        total_dist += std::hypot(p->x - (p + 1)->x, p->y - (p + 1)->y);
+    }
+    std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
 }
 
 std::tuple<float, float> cell_idx_bottom_left(const Position &p) { return {p.x - 1, p.y - 1}; }
@@ -322,7 +335,9 @@ std::pair<float, float> FieldDPlanner::getBC(TraversalParams &t) {
 
 FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorner(const Position &p,
                                                                                    const Position &p_a,
-                                                                                   const Position &p_b) {
+                                                                                   const Position &p_b,
+                                                                                   float &step_cost) {
+    step_cost = INFINITY;
     std::vector<Position> positions;
     float min_cost = INFINITY;
 
@@ -385,14 +400,19 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorn
 
     if (type == TYPE_I) {
         positions = TraversalTypeI::Corner::additions(cell);
+        step_cost = TraversalTypeI::Corner::stepcost(cell);
     } else if (type == TYPE_II) {
         positions = TraversalTypeII::Corner::additions(cell);
+        step_cost = TraversalTypeII::Corner::stepcost(cell);
     } else if (type == TYPE_III) {
         positions = TraversalTypeIII::Corner::additions(cell);
+        step_cost = TraversalTypeIII::Corner::stepcost(cell);
     } else if (type == TYPE_A) {
         positions = TraversalTypeA::Corner::additions(cell);
+        step_cost = TraversalTypeA::Corner::stepcost(cell);
     } else if (type == TYPE_B) {
         positions = TraversalTypeB::Corner::additions(cell);
+        step_cost = TraversalTypeB::Corner::stepcost(cell);
     }
 
     return {positions, min_cost};
@@ -400,7 +420,9 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorn
 
 FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromContiguousEdge(const Position &p,
                                                                                            const Position &p_a,
-                                                                                           const Position &p_b) {
+                                                                                           const Position &p_b,
+                                                                                           float &step_cost) {
+    step_cost = INFINITY;
     std::vector<Position> positions;
     float min_cost;
     TraversalParams cell1;
@@ -441,24 +463,31 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCont
     int type = std::distance(costs.begin(), min);
     min_cost = *min;
 
-    if (type == TYPE_I)
+    if (type == TYPE_I) {
         positions = TraversalTypeI::ContiguousEdge::additions(cell1);
-    else if (type == TYPE_II)
+        step_cost = TraversalTypeI::ContiguousEdge::stepcost(cell1);
+    } else if (type == TYPE_II) {
         positions = TraversalTypeII::ContiguousEdge::additions(cell1);
-    else if (type == TYPE_III)
+        step_cost = TraversalTypeII::ContiguousEdge::stepcost(cell1);
+    } else if (type == TYPE_III) {
         positions = TraversalTypeIII::ContiguousEdge::additions(cell1);
-    else if (type == TYPE_A)
+        step_cost = TraversalTypeIII::ContiguousEdge::stepcost(cell1);
+    } else if (type == TYPE_A) {
         positions = TraversalTypeA::ContiguousEdge::additions(cell1);
-    else if (type == TYPE_B)
+        step_cost = TraversalTypeA::ContiguousEdge::stepcost(cell1);
+    } else if (type == TYPE_B) {
         positions = TraversalTypeB::ContiguousEdge::additions(cell1);
-
+        step_cost = TraversalTypeB::ContiguousEdge::stepcost(cell1);
+    }
     return {positions, min_cost};
 }
 
 FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromOppositeEdge(const Position &p,
                                                                                          const Position &p_a,
-                                                                                         const Position &p_b) {
+                                                                                         const Position &p_b,
+                                                                                         float &step_cost) {
 
+    step_cost = INFINITY;
     std::vector<Position> positions;
     float min_cost;
     TraversalParams cell1, cell2;
@@ -522,29 +551,38 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromOppo
     int type = std::distance(costs.begin(), min);
     min_cost = *min;
 
-    if (type == TYPE_I__1)
+    if (type == TYPE_I__1) {
         positions = TraversalTypeI::OppositeEdge::additions(cell1);
-    else if (type == TYPE_I__2)
+        step_cost = TraversalTypeI::OppositeEdge::stepcost(cell1);
+    } else if (type == TYPE_I__2) {
         positions = TraversalTypeI::OppositeEdge::additions(cell2);
-    else if (type == TYPE_II__1)
+        step_cost = TraversalTypeI::OppositeEdge::stepcost(cell2);
+    } else if (type == TYPE_II__1) {
         positions = TraversalTypeII::OppositeEdge::additions(cell1);
-    else if (type == TYPE_II__2)
+        step_cost = TraversalTypeII::OppositeEdge::stepcost(cell1);
+    } else if (type == TYPE_II__2) {
         positions = TraversalTypeII::OppositeEdge::additions(cell2);
-    else if (type == TYPE_III__1)
+        step_cost = TraversalTypeII::OppositeEdge::stepcost(cell2);
+    } else if (type == TYPE_III__1) {
         positions = TraversalTypeIII::OppositeEdge::additions(cell1);
-    else if (type == TYPE_III__2)
+        step_cost = TraversalTypeIII::OppositeEdge::stepcost(cell1);
+    } else if (type == TYPE_III__2) {
         positions = TraversalTypeIII::OppositeEdge::additions(cell2);
-    else if (type == TYPE_A__1)
+        step_cost = TraversalTypeIII::OppositeEdge::stepcost(cell2);
+    } else if (type == TYPE_A__1) {
         positions = TraversalTypeA::OppositeEdge::additions(cell1);
-    else if (type == TYPE_A__2)
+        step_cost = TraversalTypeA::OppositeEdge::stepcost(cell1);
+    } else if (type == TYPE_A__2) {
         positions = TraversalTypeA::OppositeEdge::additions(cell2);
-
+        step_cost = TraversalTypeA::OppositeEdge::stepcost(cell2);
+    }
     return {positions, min_cost};
 }
 
 FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge(const Position &p,
                                                                                  const Position &p_a,
-                                                                                 const Position &p_b) {
+                                                                                 const Position &p_b,
+                                                                                 float &step_cost) {
 
     assert(!isVertex(p));
     assert(isVertex(p_a));
@@ -554,13 +592,15 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
     bool cond_2 = (p.x == p_b.x || p.y == p_b.y);
     if (cond_1 || cond_2) {
         assert(cond_1 xor cond_2);
-        return computeOptimalCellTraversalFromContiguousEdge(p, p_a, p_b);
+        return computeOptimalCellTraversalFromContiguousEdge(p, p_a, p_b, step_cost);
     } else {
-        return computeOptimalCellTraversalFromOppositeEdge(p, p_a, p_b);
+        return computeOptimalCellTraversalFromOppositeEdge(p, p_a, p_b, step_cost);
     }
 }
 
-FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p, bool do_lookahead) {
+FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
+                                                              const bool &do_lookahead,
+                                                              float &step_cost) {
     float min_cost = INFINITY;
     path_additions min_pa;
     path_additions temp_pa;
@@ -573,7 +613,8 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
 
     //TODO use priority queue instead of 1-step-lookahead for ALL edges (Otte et al.)
     for (const auto &[p_a, p_b] : node_grid_.nbrsContinuous(p)) {
-        /*
+
+        /* POSSIBLE WAY TO AVOID INCONSISTENT NODES IN EXTRACTION?
         if (!((consistent(p_a.castToNode()) and (consistent(p_b.castToNode()) or getG(p_b.castToNode()) == INFINITY))
             or (consistent(p_b.castToNode())
                 and (consistent(p_a.castToNode()) or getG(p_a.castToNode()) == INFINITY))))
@@ -581,9 +622,9 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
         */
 
         if (isVertex(p))
-            temp_pa = computeOptimalCellTraversalFromCorner(p, p_a, p_b);
+            temp_pa = computeOptimalCellTraversalFromCorner(p, p_a, p_b, step_cost);
         else
-            temp_pa = computeOptimalCellTraversalFromEdge(p, p_a, p_b);
+            temp_pa = computeOptimalCellTraversalFromEdge(p, p_a, p_b, step_cost);
 
         #ifdef VERBOSE_EXTRACTION
         if (lookahead and not do_lookahead) std::cout << "\t";
@@ -604,8 +645,9 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
         // LOOKAHEAD PROCEDURE documented in
         // Field D* path-finding on weighted triangulated and tetrahedral meshes (Perkins et al. 2013), Section 3
         // Only needed if next point is on edge
+        float dummy;
         if (do_lookahead and not isVertex(temp_pa.first.back())) {
-            lookahead_cost = getPathAdditions(temp_pa.first.back(), false).second;
+            lookahead_cost = getPathAdditions(temp_pa.first.back(), false, dummy).second;
             if (lookahead_cost > temp_pa.second) { // Lookahead test failed
                 #ifdef VERBOSE_EXTRACTION
                 std::cout << "Lookahead test failed" << std::endl;

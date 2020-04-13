@@ -7,9 +7,8 @@
 char **argv;
 
 std::shared_ptr<Map> map_info = nullptr;
-uint8_t logcount = 0;
 
-void poses_cb(std::vector<Pose> poses) {
+void poses_cb(std::vector<Pose> poses, float length, float cost) {
     std::ofstream logfile;
     std::string filename(argv[7]);
     logfile.open(filename);

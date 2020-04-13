@@ -13,6 +13,10 @@ float cost(TraversalParams &t) {
     return t.g2 + t.b + CATH(t.c, t.b);
 }
 
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
+}
+
 bool cond(TraversalParams &t) {
     return t.c > (t.b * SQRT2);
 }
@@ -33,9 +37,14 @@ std::vector<Position> additions(TraversalParams &t) {
     }
 }
 }
+
 namespace ContiguousEdge {
 float cost(TraversalParams &t) {
     return t.g2 + (1 - t.q) * t.b + CATH(t.c, t.b);
+}
+
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
 }
 
 bool cond(TraversalParams &t) {
@@ -65,6 +74,10 @@ bool cond(TraversalParams &t) {
 
 float cost(TraversalParams &t) {
     return t.g2 + t.b + (1 + t.p) * CATH(t.c, t.b);
+}
+
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
 }
 
 float condcost(TraversalParams &t) {
@@ -100,6 +113,10 @@ bool cond(TraversalParams &t) {
     return t.c > (t.f * SQRT2);
 }
 
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
+}
+
 float condcost(TraversalParams &t) {
     return (cond(t)) ? cost(t) : INFINITY;
 }
@@ -119,6 +136,10 @@ std::vector<Position> additions(TraversalParams &t) {
 namespace ContiguousEdge {
 float cost(TraversalParams &t) {
     return t.g1 + (1 - t.q) * CATH(t.c, t.f);
+}
+
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
 }
 
 bool cond(TraversalParams &t) {
@@ -144,6 +165,10 @@ std::vector<Position> additions(TraversalParams &t) {
 namespace OppositeEdge {
 float cost(TraversalParams &t) {
     return t.g2 + CATH(t.c, t.f) + (1 - t.p) * t.f;
+}
+
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
 }
 
 bool cond(TraversalParams &t) {
@@ -174,6 +199,10 @@ float cost(TraversalParams &t) {
     return t.g1 + t.b;
 }
 
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
+}
+
 bool cond(TraversalParams &t) {
     return t.c > t.b;
 }
@@ -189,6 +218,10 @@ std::vector<Position> additions(TraversalParams &t) {
 namespace ContiguousEdge {
 float cost(TraversalParams &t) {
     return t.g1 + (1 - t.q) * t.b;
+}
+
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
 }
 
 bool cond(TraversalParams &t) {
@@ -207,6 +240,10 @@ std::vector<Position> additions(TraversalParams &t) {
 namespace OppositeEdge {
 float cost(TraversalParams &t) {
     return t.g1 + t.b + t.p * CATH(t.c, t.b);
+}
+
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
 }
 
 bool cond(TraversalParams &t) {
@@ -235,6 +272,10 @@ float cost(TraversalParams &t) {
     return t.g2 + t.c * SQRT2;
 }
 
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
+}
+
 bool cond(TraversalParams &) {
     return true;
 }
@@ -253,6 +294,10 @@ float cost(TraversalParams &t) {
     return t.g2 + t.c * HYPOT(1, 1 - t.q);
 }
 
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
+}
+
 bool cond(TraversalParams &) {
     return true;
 }
@@ -268,6 +313,10 @@ std::vector<Position> additions(TraversalParams &t) {
 namespace OppositeEdge {
 float cost(TraversalParams &t) {
     return t.g2 + t.c * HYPOT(1 - t.p, 1);
+}
+
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
 }
 
 bool cond(TraversalParams &) {
@@ -290,6 +339,10 @@ float cost(TraversalParams &t) {
     return t.g1 + t.c;
 }
 
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
+}
+
 bool cond(TraversalParams &) {
     return true;
 }
@@ -308,6 +361,10 @@ float cost(TraversalParams &t) {
     return t.g1 + t.c * (1 - t.q);
 }
 
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
+}
+
 bool cond(TraversalParams &) {
     return true;
 }
@@ -323,6 +380,10 @@ std::vector<Position> additions(TraversalParams &t) {
 namespace OppositeEdge {
 float cost(TraversalParams &t) {
     return t.g1 + t.c * HYPOT(t.p, 1);
+}
+
+float stepcost(TraversalParams &t) {
+    return 0; //TODO
 }
 
 bool cond(TraversalParams &) {

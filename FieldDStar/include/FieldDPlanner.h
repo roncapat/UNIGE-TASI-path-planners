@@ -86,9 +86,9 @@ class FieldDPlanner {
 #define LOOP_FAILURE_NO_GOAL -2
   int step();
 
-  void (*poses_cb)(std::vector<Pose>);
+  void (*poses_cb)(std::vector<Pose>, float, float);
   void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>>, int, int>);
-  void set_poses_cb(void (*poses_cb)(std::vector<Pose>)) { this->poses_cb = poses_cb; };
+  void set_poses_cb(void (*poses_cb)(std::vector<Pose>, float, float)) { this->poses_cb = poses_cb; };
   void set_expanded_cb(void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>>, int, int>)) {
       this->expanded_cb = expanded_cb;
   };
@@ -142,6 +142,8 @@ class FieldDPlanner {
   Graph node_grid_;
 
   std::vector<Position> path_;
+  float total_cost = 0;
+  float total_dist = 0;
 
   // path additions made by one step of constructOptimalPath()
   typedef std::pair<std::vector<Position>, float> path_additions;
@@ -251,14 +253,22 @@ class FieldDPlanner {
   @param[in] p_b consecutive neighbor of p
   @return vector containing the next positions(s) and movement cost
   */
-  path_additions computeOptimalCellTraversalFromEdge(const Position &p, const Position &p_a, const Position &p_b);
-  path_additions computeOptimalCellTraversalFromContiguousEdge(const Position &p,
-                                                               const Position &p_a,
-                                                               const Position &p_b);
-  path_additions computeOptimalCellTraversalFromOppositeEdge(const Position &p,
-                                                             const Position &p_a,
-                                                             const Position &p_b);
-  path_additions computeOptimalCellTraversalFromCorner(const Position &p, const Position &p_a, const Position &p_b);
+  FieldDPlanner::path_additions computeOptimalCellTraversalFromEdge(const Position &p,
+                                                                    const Position &p_a,
+                                                                    const Position &p_b,
+                                                                    float &step_cost);
+  FieldDPlanner::path_additions computeOptimalCellTraversalFromContiguousEdge(const Position &p,
+                                                                              const Position &p_a,
+                                                                              const Position &p_b,
+                                                                              float &step_cost);
+  FieldDPlanner::path_additions computeOptimalCellTraversalFromOppositeEdge(const Position &p,
+                                                                            const Position &p_a,
+                                                                            const Position &p_b,
+                                                                            float &step_cost);
+  FieldDPlanner::path_additions computeOptimalCellTraversalFromCorner(const Position &p,
+                                                                      const Position &p_a,
+                                                                      const Position &p_b,
+                                                                      float &step_cost);
   /**
   Helper method for path reconstruction process. Finds the next path position(s)
   when planning from a vertex or an edge position on the graph.
@@ -266,7 +276,9 @@ class FieldDPlanner {
   @param[in] p edge on graph to plan from
   @return vector containing the next positions(s) and movement cost
   */
-  path_additions getPathAdditions(const Position &p, bool do_lookahead);
+  FieldDPlanner::path_additions getPathAdditions(const Position &p,
+                                                 const bool &do_lookahead,
+                                                 float &step_cost);
   /**
   Checks whether a specified node is within range of the goal node. This 'range'
   is specified by the GOAL_RANGE instance variable.
