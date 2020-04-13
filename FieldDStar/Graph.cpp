@@ -115,6 +115,7 @@ bool Graph::isDiagonalContinuous(const Position &p, const Position &p_prime) {
 
 std::vector<Node> Graph::nbrs(const Node &s, bool include_invalid) {
     std::vector<Node> neighbors;
+    neighbors.reserve(8);
     int x, y;
     std::tie(x, y) = s.getIndex();
 
@@ -282,6 +283,7 @@ std::vector<std::tuple<Node, Node>> Graph::consecutiveNeighbors(const Node &s) {
     // get neighbors of current node, including invalid nodes
     std::vector<Node> neighbors = nbrs(s, true);
     std::vector<std::tuple<Node, Node>> consecutive_neighbors;
+    consecutive_neighbors.reserve(8);
 
     // first 7 consecutive neighbor pairs
     for (size_t i = 0; i < neighbors.size() - 1; i++) {
@@ -328,7 +330,7 @@ float Graph::getC(const Node &s, const Node &s_prime) {
 
     // return inf cost if cell is occupied, otherwise return constant traversal cost (1)
     cell_val = getValWithConfigurationSpace(cell_ind);
-    return (cell_val > occupancy_threshold_uchar_) ? std::numeric_limits<float>::infinity() :
+    return (cell_val >= occupancy_threshold_uchar_) ? std::numeric_limits<float>::infinity() :
            (TRAVERSAL_COST + (cell_val / 255.0f));
 }
 
@@ -366,28 +368,31 @@ float Graph::getB(const Node &s, const Node &s_prime) {
 
     // return inf cost if cell is occupied, otherwise return constant traversal cost (1)
     max_cell_val = std::max(getValWithConfigurationSpace(cell_ind_1), getValWithConfigurationSpace(cell_ind_2));
-    return (max_cell_val > occupancy_threshold_uchar_) ? std::numeric_limits<float>::infinity() :
+    return (max_cell_val >= occupancy_threshold_uchar_) ? std::numeric_limits<float>::infinity() :
            (TRAVERSAL_COST + (max_cell_val / 255.0f));
 }
 
 float Graph::getValWithConfigurationSpace(const std::tuple<int, int> &ind) {
     // invalid cells have infinite travel cost
     if (!isValidCell(ind))
-        return 255.0f;
+        return INFINITY;
 
     int x, y;
     std::tie(x, y) = ind;
 
-    int sep = configuration_space_ / resolution_ + 1;  // number of cells accounted for with configuration_space_
+    if (configuration_space_ == 0)
+        return (map_[x][y]);
+
+    int sep = configuration_space_;
 
     auto x_low = std::max(x - sep, 0);
-    auto x_high = std::min(x + sep, length_);
+    auto x_high = std::min(x + sep, length_ - 1);
     auto y_low = std::max(y - sep, 0);
-    auto y_high = std::min(y + sep, width_);
+    auto y_high = std::min(y + sep, width_ - 1);
 
     unsigned char max_val = 0;
-    for (int i = x_low; i < x_high; ++i) {
-        for (int j = y_low; j < y_high; ++j) {
+    for (int i = x_low; i <= x_high; ++i) {
+        for (int j = y_low; j <= y_high; ++j) {
             max_val = std::max(max_val, map_[i][j]);
         }
     }

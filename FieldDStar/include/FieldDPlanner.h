@@ -101,6 +101,7 @@ class FieldDPlanner {
   bool lookahead = true;
   bool first_run_trick = true;        // Zheng trick from Update-Reducing Field-D*
   float occupancy_threshold_ = 0.5;   // maximum occupancy probability before a cell has infinite traversal cost
+  float heuristic_multiplier = 255;
 
   MapPtr map_;  // Most up-to-date map
   int x_initial_, y_initial_;   // Index for initial x and y location in search space
@@ -132,6 +133,8 @@ class FieldDPlanner {
     @param[in] msg the message received on the "/waypoint" topic
   */
   void set_goal(std::pair<float, float> point);
+  void set_heuristic_multiplier(float mult) { heuristic_multiplier = mult; }
+  void set_lookahead(bool use_lookahead) { lookahead = use_lookahead; }
 
   void publish_path();
 

@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Field D (noise trap) LH" type="CMakeRunConfiguration" factoryName="Application" folderName="Lookahead ON" PROGRAM_PARAMS="../Tests/Tests/noise-trap_90_90_25_25_.bmp 90 90 25 25 1 logfile.json dbgfile.json" WORKING_DIR="file://../../FieldDStar" PASS_PARENT_ENVS_2="true" PROJECT_NAME="roncapat_global_planners" TARGET_NAME="field_d_planner_gui" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="roncapat_global_planners" RUN_TARGET_NAME="field_d_planner_gui">
+    <method v="2">
+      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>

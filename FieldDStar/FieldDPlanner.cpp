@@ -63,6 +63,7 @@ void FieldDPlanner::publish_expanded_set() {
     }
 
     std::vector<std::tuple<int, int, float>> expanded;
+    expanded.reserve(expanded_map_.size());
     for (auto e : expanded_map_) {
         auto x = static_cast<float>(std::get<0>(e.first.getIndex()) - x_initial_) * map_->resolution;
         auto y = static_cast<float>(std::get<1>(e.first.getIndex()) - y_initial_) * map_->resolution;
@@ -75,6 +76,7 @@ void FieldDPlanner::publish_expanded_set() {
 void FieldDPlanner::publish_path() {
     size_t num_poses = path_.size();
     std::vector<Pose> poses;
+    poses.reserve(num_poses);
 
     if (num_poses > 1 || !follow_old_path_) {
         for (size_t i = 0; i < num_poses; i++) {
@@ -156,7 +158,8 @@ Key FieldDPlanner::calculateKey(const Node &s) {
     // calculate the key to order the node in the priority_queue_ with. key_modifier_ is the
     // key modifier, a value which corrects for the distance traveled by the robot
     // since the search began (source: D* Lite)
-    return Key(std::round(cost_so_far + 100 * node_grid_.euclidianHeuristic(s.getIndex()) + node_grid_.key_modifier_),
+    return Key(std::round(
+        cost_so_far + heuristic_multiplier * node_grid_.euclidianHeuristic(s.getIndex()) + node_grid_.key_modifier_),
                std::round(cost_so_far));
 }
 
@@ -302,10 +305,10 @@ void FieldDPlanner::constructOptimalPath() {
     std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
 }
 
-std::tuple<float, float> cell_idx_bottom_left(const Position &p) { return {p.x - 1, p.y - 1}; }
-std::tuple<float, float> cell_idx_bottom_right(const Position &p) { return {p.x, p.y - 1}; }
-std::tuple<float, float> cell_idx_top_left(const Position &p) { return {p.x - 1, p.y}; }
-std::tuple<float, float> cell_idx_top_right(const Position &p) { return {p.x, p.y}; }
+std::tuple<float, float> cell_idx_bottom_left(const Position &p) { return {p.x, p.y - 1}; }
+std::tuple<float, float> cell_idx_bottom_right(const Position &p) { return {p.x, p.y}; }
+std::tuple<float, float> cell_idx_top_left(const Position &p) { return {p.x - 1, p.y - 1}; }
+std::tuple<float, float> cell_idx_top_right(const Position &p) { return {p.x - 1, p.y}; }
 
 std::tuple<float, float> cell_idx_4n(const Position &p, bool bottom_TOP, bool left_RIGHT) {
     if (bottom_TOP)
@@ -318,18 +321,18 @@ std::tuple<float, float> cell_idx_4n(const Position &p, bool bottom_TOP, bool le
 std::pair<float, float> FieldDPlanner::getBC(TraversalParams &t) {
     std::tuple<int, int> cell_ind_b, cell_ind_c;
 
-    if (t.p0.x == t.p1.x) { // p lies on a vertical edge
-        cell_ind_b = cell_idx_4n(t.p1, t.p0.y > t.p1.y, t.p2.x < t.p1.x);
-        cell_ind_c = cell_idx_4n(t.p1, t.p0.y > t.p1.y, t.p2.x > t.p1.x);
-    } else { // p lies on a horizontal edge
-        cell_ind_b = cell_idx_4n(t.p1, t.p2.y < t.p1.y, t.p0.x < t.p1.x);
-        cell_ind_c = cell_idx_4n(t.p1, t.p2.y > t.p1.y, t.p0.x < t.p1.x);
+    if (t.p0.x == t.p1.x) {
+        cell_ind_b = cell_idx_4n(t.p1, t.p2.x > t.p1.x, t.p0.y > t.p1.y);
+        cell_ind_c = cell_idx_4n(t.p1, t.p2.x < t.p1.x, t.p0.y > t.p1.y);
+    } else {
+        cell_ind_b = cell_idx_4n(t.p1, t.p0.x < t.p1.x, t.p2.y < t.p1.y);
+        cell_ind_c = cell_idx_4n(t.p1, t.p0.x < t.p1.x, t.p2.y > t.p1.y);
     }
 
     t.b = node_grid_.getValWithConfigurationSpace(cell_ind_b);
     t.c = node_grid_.getValWithConfigurationSpace(cell_ind_c);
-    if (t.b > 255 * occupancy_threshold_) t.b = INFINITY;
-    if (t.c > 255 * occupancy_threshold_) t.c = INFINITY;
+    if (t.b >= 255 * occupancy_threshold_) t.b = INFINITY;
+    if (t.c >= 255 * occupancy_threshold_) t.c = INFINITY;
     return {t.b, t.c};
 }
 
@@ -614,7 +617,9 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
     //TODO use priority queue instead of 1-step-lookahead for ALL edges (Otte et al.)
     for (const auto &[p_a, p_b] : node_grid_.nbrsContinuous(p)) {
 
-        /* POSSIBLE WAY TO AVOID INCONSISTENT NODES IN EXTRACTION?
+        /* POSSIBLE WAY TO AVOID INCONSISTENT NODES IN EXTRACTION?*/
+        // Initial observations show that it does not always work
+        /*
         if (!((consistent(p_a.castToNode()) and (consistent(p_b.castToNode()) or getG(p_b.castToNode()) == INFINITY))
             or (consistent(p_b.castToNode())
                 and (consistent(p_a.castToNode()) or getG(p_a.castToNode()) == INFINITY))))

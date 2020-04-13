@@ -1,4 +1,9 @@
+Average traversability: 113.221
+Minimum traversability: 38
+Maximum traversability: 254
+Halfway traversability: 108
 New waypoint received. Search Problem Goal = [25, 25]. Distance: 91.9239m.
 Initializing Search...
 0 nodes updated
-6385 nodes expanded
+8521 nodes expanded
+Found path. Cost: 0 Distance: 139.555

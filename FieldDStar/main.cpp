@@ -84,15 +84,39 @@ int main(int _argc, char **_argv) {
         .x_initial = 0,
         .y_initial = 0
     });
+
+    float avg = 0, half = 0;
+    int count = 0, min = 254, max = 0;
+    for (uint8_t *p = map.data.data(); p < (map.data.data() + map.data.num_elements()); ++p) {
+        if (*p < 255) {
+            avg += *p;
+            ++count;
+            if (*p < min) min = *p;
+            if (*p > max) max = *p;
+        }
+    }
+    avg /= count;
+    half = (max - min) / 2;
+    std::cout << "Average traversability: " << avg << std::endl;
+    std::cout << "Minimum traversability: " << min << std::endl;
+    std::cout << "Maximum traversability: " << max << std::endl;
+    std::cout << "Halfway traversability: " << half << std::endl;
+
     FieldDPlanner planner{};
-    planner.lookahead = bool(std::stoi(argv[6]));
+    planner.occupancy_threshold_ = 1;
+    planner.configuration_space_ = 1;
+    planner.first_run_trick = true;
     planner.init();
     planner.set_map(map_info);
     planner.set_goal({std::stoi(argv[4]), std::stoi(argv[5])});
+    planner.set_lookahead(std::stoi(argv[6]));
+    //planner.set_heuristic_multiplier(std::ceil(0.5*min)); // Ferguson and Stenz heuristic
+    planner.set_heuristic_multiplier(std::ceil(min)); // What I think is correct (consistent?)
     planner.set_poses_cb(poses_cb);
     planner.set_expanded_cb(expanded_cb);
     planner.step();
-#ifdef FDSTAR_SHOW_RESULT
+
+    #ifdef FDSTAR_SHOW_RESULT
     std::string cmd = "python3 plot_path_gui.py ";
     cmd.append(argv[1]);
     cmd.append(" ");
@@ -101,6 +125,7 @@ int main(int _argc, char **_argv) {
     cmd.append(argv[8]);
     cmd.append(" result.bmp");
     std::system(cmd.data());
-#endif
+    #endif
+
     return 0;
 }
