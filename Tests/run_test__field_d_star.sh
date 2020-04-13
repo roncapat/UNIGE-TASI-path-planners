@@ -35,10 +35,10 @@ for f in $files; do
   cd "$name"
   type="__lookahead_off"
   "$planner" $f $params 0 "logfile$type.json" "dbgfile$type.json" &> "planner$type.log"
-  python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.bmp"
+  python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
   type="__lookahead_on"
   "$planner" $f $params 1 "logfile$type.json" "dbgfile$type.json" &> "planner$type.log"
-  python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.bmp"
+  python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
   IFS=' '
   cd ..
 done
