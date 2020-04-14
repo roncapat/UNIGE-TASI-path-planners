@@ -1,9 +1,9 @@
 #pragma once
 #include <fstream>
 #include <vector>
+#include <memory>
 #include <stdexcept>
 #include <iostream>
-#include <boost/multi_array.hpp>
 
 #pragma pack(push, 1)
 struct BMPFileHeader {
@@ -45,9 +45,8 @@ struct BMP {
   BMPFileHeader file_header;
   BMPInfoHeader bmp_info_header;
   BMPColorHeader bmp_color_header;
-  typedef boost::multi_array<uint8_t, 2> array_type;
-  array_type::extent_gen extents;
-  array_type data;
+  std::shared_ptr<uint8_t[]> dataptr;
+  int32_t width, height, size;
 
   BMP(const char *fname) {
       read(fname);
@@ -76,7 +75,10 @@ struct BMP {
           }
 
           // BMP pixels rows are 4-bytes aligned, 0 padded at the end of each line
-          int padding = (bmp_info_header.width % 4 == 0) ? 0 : 4 - bmp_info_header.width % 4;
+          width = bmp_info_header.width;
+          height = bmp_info_header.height;
+          size = width*height;
+          int padding = (width % 4 == 0) ? 0 : 4 - width % 4;
 
           // Jump to the pixel data location
           input.seekg(file_header.offset_data, std::ifstream::beg);
@@ -89,10 +91,11 @@ struct BMP {
               throw std::runtime_error("The program can treat only 8-bit BMP images");
 
           input.seekg(file_header.offset_data, std::ifstream::beg);
-          data.resize(extents[bmp_info_header.height][bmp_info_header.width + padding]);
-          for (int y = bmp_info_header.height - 1; y >= 0; y--)
-              input.read((char *) data.data() + y * (bmp_info_header.width + padding), bmp_info_header.width + padding);
-          data.resize(extents[bmp_info_header.height][bmp_info_header.width]);
+          dataptr = std::move(std::shared_ptr<uint8_t[]>(new uint8_t[size], std::default_delete<uint8_t[]>()));
+          for (int y = height - 1; y >= 0; y--) {
+              input.read((char *) dataptr.get() + y * width, width);
+              input.ignore(padding);
+          }
           //BMP images pixels are specified from LOWER LEFT corner, we need TOP LEFT
       } else {
           throw std::runtime_error("Unable to open the input image file.");

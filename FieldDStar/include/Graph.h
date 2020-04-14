@@ -28,7 +28,6 @@ Date Created: December 16, 2018
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <boost/multi_array.hpp>
 
 /**
 A Position represents any discrete or continuous point in the Graph space. A
@@ -110,11 +109,9 @@ struct Cell {
   }
 };
 
-typedef boost::multi_array<uint8_t, 2> map_type;
-typedef std::shared_ptr<boost::multi_array<uint8_t, 2>> map_type_ptr;
 class Graph {
  public:
-  map_type map_;  // Map is the current, most up-to-date occupancy grid.
+  std::shared_ptr<uint8_t[]> map_;  // Map is the current, most up-to-date occupancy grid.
 
   Node start_;  // start node in the search problem
   Node goal_;   // goal node in the search problem
@@ -127,6 +124,7 @@ class Graph {
   // Dimensions of the occupancy grid (number of cells)
   int length_;
   int width_;
+  int size_;
 
   float resolution_;           // grid resolution
   float configuration_space_;  // configuration space

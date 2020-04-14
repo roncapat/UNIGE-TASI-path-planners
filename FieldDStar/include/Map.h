@@ -1,12 +1,11 @@
 #ifndef MAP_H
 #define MAP_H
 
-#include <boost/multi_array.hpp>
 #include <memory>
 
 class Map {
  public:
-  boost::multi_array<uint8_t, 2> image;
+  std::shared_ptr<uint8_t[]> image;
   float resolution;
   float orientation;
   int length;

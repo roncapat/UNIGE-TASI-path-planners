@@ -57,14 +57,14 @@ int main(int _argc, char **_argv) {
     auto map = BMP(argv[1]);
     // Flip color schema. In BMP, white is 255 and black 0.
     // Here, obstacles (black) are 255 and free space is lighter
-    std::transform(map.data.data(),
-                   map.data.data() + map.data.num_elements(),
-                   map.data.data(),
+    std::transform(map.dataptr.get(),
+                   map.dataptr.get() + map.size,
+                   map.dataptr.get(),
                    [](auto v) { return 255 - v; });
     // Do not allow free paths
-    std::transform(map.data.data(),
-                   map.data.data() + map.data.num_elements(),
-                   map.data.data(),
+    std::transform(map.dataptr.get(),
+                   map.dataptr.get() + map.size,
+                   map.dataptr.get(),
                    [](auto v) { return v == 0 ? 1 : v; });
 
     /*
@@ -74,29 +74,29 @@ int main(int _argc, char **_argv) {
     std::cout << std::to_string(map.data[24][40]) << std::endl;
     */
     map_info = std::make_shared<Map>(Map{
-        .image = map.data,
+        .image = map.dataptr,
         .resolution = 1,
         .orientation = 0,
-        .length = map.bmp_info_header.height,
-        .width = map.bmp_info_header.width,
-        .x = std::stoi(argv[2]),//27,
-        .y = std::stoi(argv[3]),// 10,
+        .length = map.height,
+        .width = map.width,
+        .x = std::stoi(argv[2]),
+        .y = std::stoi(argv[3]),
         .x_initial = 0,
         .y_initial = 0
     });
 
     float avg = 0, half = 0;
     int count = 0, min = 254, max = 0;
-    for (uint8_t *p = map.data.data(); p < (map.data.data() + map.data.num_elements()); ++p) {
+    for (auto p = map.dataptr.get(); p < (map.dataptr.get() + map.size); ++p) {
         if (*p < 255) {
-            avg += *p;
+            avg += (float)*p;
             ++count;
             if (*p < min) min = *p;
             if (*p > max) max = *p;
         }
     }
-    avg /= count;
-    half = (max - min) / 2;
+    avg /= (float)count;
+    half = (float)(max - min) / 2;
     std::cout << "Average traversability: " << avg << std::endl;
     std::cout << "Minimum traversability: " << min << std::endl;
     std::cout << "Maximum traversability: " << max << std::endl;

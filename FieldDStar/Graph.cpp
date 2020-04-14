@@ -18,16 +18,13 @@ void Graph::setGoal(Node goal) {
 }
 
 void Graph::initializeGraph(const MapPtr &msg) {
-    this->updated_cells_.clear();
-    this->length_ = msg->length;
-    this->width_ = msg->width;
-    this->resolution_ = msg->resolution;
-    this->start_.setIndex(msg->x, msg->y);
-    this->key_modifier_ = 0;  // reset the key modifuer
-
-    // set the current map equal to the input message's map
-    map_type::extent_gen extents;
-    map_.resize(extents[length_][width_]);
+    updated_cells_.clear();
+    length_ = msg->length;
+    width_ = msg->width;
+    size_ = length_*width_;
+    resolution_ = msg->resolution;
+    start_.setIndex(msg->x, msg->y);
+    key_modifier_ = 0;
     map_ = msg->image;
 }
 
@@ -44,17 +41,17 @@ void Graph::updateGraph(MapPtr &msg) {
     this->updated_cells_.clear();  // clear the vector of cells that need updating
 
     // get the most recently observed occupancy grid
-    map_type curr_map = msg->image;
+    auto curr_map = msg->image;
 
     // gather the cells that need updating if the new map differs
-    if (!std::equal(map_.begin(), map_.end(), curr_map.begin())) {
-        auto start_it = map_.begin();
+    if (!std::equal(map_.get(), map_.get()+size_, curr_map.get())) {
+        auto start_it = map_.get();
 
-        auto it_new = curr_map.begin();
-        auto it_map = map_.begin();
+        auto it_new = curr_map.get();
+        auto it_map = map_.get();
 
-        auto it_new_end = curr_map.end();
-        auto it_map_end = map_.end();
+        auto it_new_end = curr_map.get() + size_;
+        auto it_map_end = map_.get() + size_;
 
         // if cells differ, get (x,y) index of occupancy grid cell
         // and add it to the list of updated cells
@@ -381,7 +378,7 @@ float Graph::getValWithConfigurationSpace(const std::tuple<int, int> &ind) {
     std::tie(x, y) = ind;
 
     if (configuration_space_ == 0)
-        return (map_[x][y]);
+        return (map_[x*width_ + y]);
 
     int sep = configuration_space_;
 
@@ -393,7 +390,7 @@ float Graph::getValWithConfigurationSpace(const std::tuple<int, int> &ind) {
     unsigned char max_val = 0;
     for (int i = x_low; i <= x_high; ++i) {
         for (int j = y_low; j <= y_high; ++j) {
-            max_val = std::max(max_val, map_[i][j]);
+            max_val = std::max(max_val, map_[i*width_+j]);
         }
     }
 
