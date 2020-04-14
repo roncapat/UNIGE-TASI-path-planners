@@ -21,7 +21,7 @@ void Graph::initializeGraph(const MapPtr &msg) {
     updated_cells_.clear();
     length_ = msg->length;
     width_ = msg->width;
-    size_ = length_*width_;
+    size_ = length_ * width_;
     resolution_ = msg->resolution;
     start_.setIndex(msg->x, msg->y);
     key_modifier_ = 0;
@@ -44,7 +44,7 @@ void Graph::updateGraph(MapPtr &msg) {
     auto curr_map = msg->image;
 
     // gather the cells that need updating if the new map differs
-    if (!std::equal(map_.get(), map_.get()+size_, curr_map.get())) {
+    if (!std::equal(map_.get(), map_.get() + size_, curr_map.get())) {
         auto start_it = map_.get();
 
         auto it_new = curr_map.get();
@@ -83,14 +83,14 @@ bool Graph::isValidNode(const Node &s) {
 
 bool Graph::isValidPosition(const Position &p) {
     // with [x,y] indexing
-    return (p.x <= static_cast<float>(length_)) && (p.y <= static_cast<float>(width_)) && (p.x >= 0.0f)
-        && (p.y >= 0.0f);
+    return (p.x >= 0.0f) && (p.x <= static_cast<float>(length_)) && (p.y >= 0.0f)
+        && (p.y <= static_cast<float>(width_));
 }
 
 bool Graph::isValidCell(const std::tuple<int, int> &ind) {
     int x, y;
     std::tie(x, y) = ind;
-    return (x < length_) && (y < width_) && (x >= 0) && (y >= 0);
+    return (x >= 0) && (x < length_) && (y >= 0) && (y < width_);
 }
 
 bool Graph::isDiagonal(const Node &s, const Node &s_prime) {
@@ -159,14 +159,16 @@ std::vector<Node> Graph::nbrs(const Node &s, bool include_invalid) {
     return neighbors;
 }
 
-std::vector<std::pair<Position, Position>> Graph::nbrsContinuous(const Position &p) {
+std::vector<std::pair<Position, Position>> Graph::consecutiveNeighbors(const Position &p) {
     std::vector<Position> neighbors;
-    std::vector<std::pair<Position, Position>> connbrs;
+    std::vector<std::pair<Position, Position>> consecutive_neighbors;
 
     float intpartx, intparty, decpartx, decparty;
     decpartx = std::modf(p.x, &intpartx);
     decparty = std::modf(p.y, &intparty);
     if (0 < decpartx and decpartx < 1) { //non-integer, lies on horizontal edge - 6 neighbors (2 cells)
+        neighbors.reserve(6);
+        consecutive_neighbors.reserve(6);
         neighbors.emplace_back(std::make_tuple(std::floor(p.x), intparty));   // left
         neighbors.emplace_back(std::make_tuple(std::floor(p.x), intparty - 1));  // bottom left
         neighbors.emplace_back(std::make_tuple(std::ceil(p.x), intparty - 1)); // bottom right
@@ -174,6 +176,8 @@ std::vector<std::pair<Position, Position>> Graph::nbrsContinuous(const Position 
         neighbors.emplace_back(std::make_tuple(std::ceil(p.x), intparty + 1));         // top right
         neighbors.emplace_back(std::make_tuple(std::floor(p.x), intparty + 1));  // top left
     } else if (0 < decparty and decparty < 1) { //non-integer, lies on vertical edge - 6 neighbors (2 cells)
+        neighbors.reserve(6);
+        consecutive_neighbors.reserve(6);
         neighbors.emplace_back(std::make_tuple(intpartx, std::floor(p.y)));   // bottom
         neighbors.emplace_back(std::make_tuple(intpartx + 1, std::floor(p.y)));  // bottom right
         neighbors.emplace_back(std::make_tuple(intpartx + 1, std::ceil(p.y))); // top right
@@ -181,6 +185,8 @@ std::vector<std::pair<Position, Position>> Graph::nbrsContinuous(const Position 
         neighbors.emplace_back(std::make_tuple(intpartx - 1, std::ceil(p.y)));         // top left
         neighbors.emplace_back(std::make_tuple(intpartx - 1, std::floor(p.y)));  // bottom left
     } else { // 8 neighbors (4 cells)
+        neighbors.reserve(8);
+        consecutive_neighbors.reserve(8);
         neighbors.emplace_back(std::make_tuple(intpartx + 1.0f, intparty));         // right
         neighbors.emplace_back(std::make_tuple(intpartx + 1.0f, intparty + 1.0f));  // top right
         neighbors.emplace_back(std::make_tuple(intpartx, intparty + 1.0f));         // top
@@ -191,13 +197,48 @@ std::vector<std::pair<Position, Position>> Graph::nbrsContinuous(const Position 
         neighbors.emplace_back(std::make_tuple(intpartx + 1.0f, intparty - 1.0f));  // bottom right
     }
 
-    //TODO check best data structure for fast removal of invalid couples (instead of deep copy of almost all the list)
-    for (size_t i = 0; i < neighbors.size(); i++) {
-        if (isValidPosition(neighbors[i]) && isValidPosition(neighbors[(i + 1) % neighbors.size()]))
-            connbrs.emplace_back(neighbors[i], neighbors[(i + 1) % neighbors.size()]);
+    for (size_t i = 0; i < neighbors.size(); ++i) {
+        if (isValidPosition(neighbors[i])) {
+            if (isValidPosition(neighbors[(i + 1) % neighbors.size()])) {
+                consecutive_neighbors.emplace_back(neighbors[i], neighbors[(i + 1) % neighbors.size()]);
+            } else {
+                ++i; //next edge is also invalid, skip
+            }
+        }
     }
 
-    return connbrs;
+    return consecutive_neighbors;
+}
+
+std::vector<std::tuple<Node, Node>> Graph::consecutiveNeighbors(const Node &s) {
+    std::vector<Node> neighbors;
+    std::vector<std::tuple<Node, Node>> consecutive_neighbors;
+    neighbors.reserve(8);
+    consecutive_neighbors.reserve(8);
+
+    int intpartx = 0, intparty = 0;
+    std::tie(intpartx, intparty) = s.getIndex();
+
+    neighbors.emplace_back(std::make_tuple(intpartx + 1, intparty));      // right
+    neighbors.emplace_back(std::make_tuple(intpartx + 1, intparty + 1));  // top right
+    neighbors.emplace_back(std::make_tuple(intpartx, intparty + 1));      // top
+    neighbors.emplace_back(std::make_tuple(intpartx - 1, intparty + 1));  // top left
+    neighbors.emplace_back(std::make_tuple(intpartx - 1, intparty));      // left
+    neighbors.emplace_back(std::make_tuple(intpartx - 1, intparty - 1));  // bottom left
+    neighbors.emplace_back(std::make_tuple(intpartx, intparty - 1));      // bottom
+    neighbors.emplace_back(std::make_tuple(intpartx + 1, intparty - 1));  // bottom right
+
+    for (size_t i = 0; i < neighbors.size(); ++i) {
+        if (isValidPosition(neighbors[i])) {
+            if (isValidPosition(neighbors[(i + 1) % neighbors.size()])) {
+                consecutive_neighbors.emplace_back(neighbors[i], neighbors[(i + 1) % neighbors.size()]);
+            } else {
+                ++i; //next edge is also invalid, skip
+            }
+        }
+    }
+
+    return consecutive_neighbors;
 }
 
 Node Graph::counterClockwiseNeighbor(Node s, Node s_prime) {
@@ -274,27 +315,6 @@ Node Graph::clockwiseNeighbor(Node s, Node s_prime) {
         return clockwise_neighbor;
     else
         return Node(false);
-}
-
-std::vector<std::tuple<Node, Node>> Graph::consecutiveNeighbors(const Node &s) {
-    // get neighbors of current node, including invalid nodes
-    std::vector<Node> neighbors = nbrs(s, true);
-    std::vector<std::tuple<Node, Node>> consecutive_neighbors;
-    consecutive_neighbors.reserve(8);
-
-    // first 7 consecutive neighbor pairs
-    for (size_t i = 0; i < neighbors.size() - 1; i++) {
-        assert(!isDiagonal(neighbors[i], neighbors[i + 1]));
-        // if both consecutive_neighbors valid, make a tuple and put it in the list
-        if (isValidNode(neighbors[i]) && isValidNode(neighbors[i + 1]))
-            consecutive_neighbors.push_back(std::make_tuple(neighbors[i], neighbors[i + 1]));
-    }
-
-    // last consecutive neighbor pair [s8->s1]
-    if (isValidNode(neighbors[neighbors.size() - 1]) && isValidNode(neighbors[0]))
-        consecutive_neighbors.push_back(std::make_tuple(neighbors[neighbors.size() - 1], neighbors[0]));
-
-    return consecutive_neighbors;
 }
 
 float Graph::getC(const Node &s, const Node &s_prime) {
@@ -378,7 +398,7 @@ float Graph::getValWithConfigurationSpace(const std::tuple<int, int> &ind) {
     std::tie(x, y) = ind;
 
     if (configuration_space_ == 0)
-        return (map_[x*width_ + y]);
+        return (map_[x * width_ + y]);
 
     int sep = configuration_space_;
 
@@ -390,7 +410,7 @@ float Graph::getValWithConfigurationSpace(const std::tuple<int, int> &ind) {
     unsigned char max_val = 0;
     for (int i = x_low; i <= x_high; ++i) {
         for (int j = y_low; j <= y_high; ++j) {
-            max_val = std::max(max_val, map_[i*width_+j]);
+            max_val = std::max(max_val, map_[i * width_ + j]);
         }
     }
 

@@ -614,9 +614,8 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
               << (isVertex(p) ? " (Corner)" : " (Edge)") << std::endl << std::endl;
     #endif
 
-    //TODO use priority queue instead of 1-step-lookahead for ALL edges (Otte et al.)
-    for (const auto &[p_a, p_b] : node_grid_.nbrsContinuous(p)) {
-
+    for (const auto &[p_a, p_b] : node_grid_.consecutiveNeighbors(p)) {
+        float cur_step_cost = INFINITY;
         /* POSSIBLE WAY TO AVOID INCONSISTENT NODES IN EXTRACTION?*/
         // Initial observations show that it does not always work
         /*
@@ -627,9 +626,9 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
         */
 
         if (isVertex(p))
-            temp_pa = computeOptimalCellTraversalFromCorner(p, p_a, p_b, step_cost);
+            temp_pa = computeOptimalCellTraversalFromCorner(p, p_a, p_b, cur_step_cost);
         else
-            temp_pa = computeOptimalCellTraversalFromEdge(p, p_a, p_b, step_cost);
+            temp_pa = computeOptimalCellTraversalFromEdge(p, p_a, p_b, cur_step_cost);
 
         #ifdef VERBOSE_EXTRACTION
         if (lookahead and not do_lookahead) std::cout << "\t";
@@ -660,10 +659,10 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
                 continue;
             }
         }
-
         if (temp_pa.second < min_cost) { // Promote as best solution
             min_cost = temp_pa.second;
             min_pa = temp_pa;
+            step_cost = cur_step_cost;
         }
     }
 

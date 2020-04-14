@@ -40,30 +40,18 @@ struct Position {
   float y;
 
   Node castToNode() const {
-      return Node(static_cast<int>(roundf(this->x)), static_cast<int>(roundf(this->y)));
+      return {static_cast<int>(roundf(x)), static_cast<int>(roundf(y))};
   }
 
-  Position() {
-  }
+  Position() = default;
 
-  Position(float x, float y) {
-      this->x = x;
-      this->y = y;
-  }
+  Position(float x, float y) : x(x), y(y) {}
 
-  Position(std::tuple<float, float> position) : Position(std::get<0>(position), std::get<1>(position)) {
-  }
+  Position(std::tuple<float, float> position) : Position(std::get<0>(position), std::get<1>(position)) {}
 
-  Position(Node n) : Position(static_cast<std::tuple<float, float>>(n.getIndex())) {
-  }
+  Position(const Node &n) : Position(static_cast<std::tuple<float, float>>(n.getIndex())) {}
 
-  // overloaded assignment operator
-  Position &operator=(const Position &other) {
-      this->x = other.x;
-      this->y = other.y;
-
-      return *this;
-  }
+  Position &operator=(const Position &other) = default;
 
   // Cells equal if their corresponding indices are equal
   bool operator==(const Position &other) const {
@@ -83,21 +71,11 @@ struct Cell {
   int x;
   int y;
 
-  Cell(int x, int y) {
-      this->x = x;
-      this->y = y;
-  }
+  Cell(int x, int y) : x(x), y(y) {}
 
-  Cell(std::tuple<int, int> cell) : Cell(std::get<0>(cell), std::get<1>(cell)) {
-  }
+  Cell(std::tuple<int, int> cell) : Cell(std::get<0>(cell), std::get<1>(cell)) {}
 
-  // overloaded assignment operator
-  Cell &operator=(const Cell &other) {
-      this->x = other.x;
-      this->y = other.y;
-
-      return *this;
-  }
+  Cell &operator=(const Cell &other) = default;
 
   // Cells equal if their corresponding indices are equal
   bool operator==(const Cell &other) const {
@@ -237,7 +215,7 @@ class Graph {
   @param[in] p position to get connbrs for
   @param[out] output vector of connbrs pairs
   */
-  std::vector<std::pair<Position, Position>> nbrsContinuous(const Position &p);
+  std::vector<std::pair<Position, Position>> consecutiveNeighbors(const Position &p);
   /**
   Returns first counter-clockwise neighbor of node s and a neighbor node
   s', starting at s'.

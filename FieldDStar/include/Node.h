@@ -136,13 +136,11 @@ namespace std {
 template<>
 struct hash<Node> {
   std::size_t operator()(const Node &node) const {
-      std::size_t result = 17;
-
       int x, y;
       std::tie(x, y) = node.getIndex();
-
-      result = 31 * result + x;
-      result = 31 * result + y;
+      std::size_t result = 17;
+      result = 31 * result + hash<int>()(x);
+      result = 31 * result + hash<int>()(y);
       return result;
   }
 };

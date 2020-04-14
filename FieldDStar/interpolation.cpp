@@ -10,11 +10,13 @@ const float SQRT2 = 1.41421356237309504880168872420969807856967187537694f;
 namespace TraversalTypeI {
 namespace Corner {
 float cost(TraversalParams &t) {
-    return t.g2 + t.b + CATH(t.c, t.b);
+    RETURN_CHECK_POSITIVE(t.g2 + t.b + CATH(t.c, t.b));
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    float x = 1 - t.b / CATH(t.c, t.b);
+    assert(x >= 0 and x <= 1);
+    RETURN_CHECK_POSITIVE_LIMITED(x * t.b + HYPOT(1 - x, 1) * t.c);
 }
 
 bool cond(TraversalParams &t) {
@@ -40,11 +42,13 @@ std::vector<Position> additions(TraversalParams &t) {
 
 namespace ContiguousEdge {
 float cost(TraversalParams &t) {
-    return t.g2 + (1 - t.q) * t.b + CATH(t.c, t.b);
+    RETURN_CHECK_POSITIVE(t.g2 + (1 - t.q) * t.b + CATH(t.c, t.b));
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    float x = 1 - t.q - t.b / CATH(t.c, t.b);
+    assert(x >= 0 and x <= (1 - t.q));
+    RETURN_CHECK_POSITIVE_LIMITED(x * t.b + HYPOT(1 - t.q - x, 1) * t.c);
 }
 
 bool cond(TraversalParams &t) {
@@ -73,11 +77,13 @@ bool cond(TraversalParams &t) {
 }
 
 float cost(TraversalParams &t) {
-    return t.g2 + t.b + (1 + t.p) * CATH(t.c, t.b);
+    RETURN_CHECK_POSITIVE(t.g2 + t.b + (1 + t.p) * CATH(t.c, t.b));
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    float x = 1 - (1 + t.p) * t.b / CATH(t.c, t.b);
+    assert(x >= 0 and x <= (1));
+    RETURN_CHECK_POSITIVE_LIMITED(x * t.b + HYPOT(1 - x, 1 + t.p) * t.c);
 }
 
 float condcost(TraversalParams &t) {
@@ -106,7 +112,7 @@ std::vector<Position> additions(TraversalParams &t) {
 namespace TraversalTypeII {
 namespace Corner {
 float cost(TraversalParams &t) {
-    return t.g1 + CATH(t.c, t.f);
+    RETURN_CHECK_POSITIVE(t.g1 + CATH(t.c, t.f));
 }
 
 bool cond(TraversalParams &t) {
@@ -114,7 +120,9 @@ bool cond(TraversalParams &t) {
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    float y = t.f / CATH(t.c, t.f);
+    assert(y >= 0 and y <= 1);
+    RETURN_CHECK_POSITIVE_LIMITED(HYPOT(1, y) * t.c);
 }
 
 float condcost(TraversalParams &t) {
@@ -135,11 +143,13 @@ std::vector<Position> additions(TraversalParams &t) {
 }
 namespace ContiguousEdge {
 float cost(TraversalParams &t) {
-    return t.g1 + (1 - t.q) * CATH(t.c, t.f);
+    RETURN_CHECK_POSITIVE(t.g1 + (1 - t.q) * CATH(t.c, t.f));
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    float y = (1 - t.q) * t.f / CATH(t.c, t.f);
+    assert(y >= 0 and y <= 1);
+    RETURN_CHECK_POSITIVE_LIMITED(HYPOT(1 - t.q, y) * t.c);
 }
 
 bool cond(TraversalParams &t) {
@@ -164,11 +174,13 @@ std::vector<Position> additions(TraversalParams &t) {
 }
 namespace OppositeEdge {
 float cost(TraversalParams &t) {
-    return t.g2 + CATH(t.c, t.f) + (1 - t.p) * t.f;
+    RETURN_CHECK_POSITIVE(t.g2 + CATH(t.c, t.f) + (1 - t.p) * t.f);
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    float y = t.p + t.f / CATH(t.c, t.f);
+    assert(y >= 0 and y <= 1);
+    RETURN_CHECK_POSITIVE_LIMITED(HYPOT(1, y - t.p) * t.c);
 }
 
 bool cond(TraversalParams &t) {
@@ -196,11 +208,11 @@ std::vector<Position> additions(TraversalParams &t) {
 namespace TraversalTypeIII {
 namespace Corner {
 float cost(TraversalParams &t) {
-    return t.g1 + t.b;
+    RETURN_CHECK_POSITIVE(t.g1 + t.b);
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    RETURN_CHECK_POSITIVE_LIMITED(t.b);
 }
 
 bool cond(TraversalParams &t) {
@@ -217,11 +229,11 @@ std::vector<Position> additions(TraversalParams &t) {
 }
 namespace ContiguousEdge {
 float cost(TraversalParams &t) {
-    return t.g1 + (1 - t.q) * t.b;
+    RETURN_CHECK_POSITIVE(t.g1 + (1 - t.q) * t.b);
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    RETURN_CHECK_POSITIVE_LIMITED((1 - t.q) * t.b);
 }
 
 bool cond(TraversalParams &t) {
@@ -239,11 +251,13 @@ std::vector<Position> additions(TraversalParams &t) {
 
 namespace OppositeEdge {
 float cost(TraversalParams &t) {
-    return t.g1 + t.b + t.p * CATH(t.c, t.b);
+    RETURN_CHECK_POSITIVE(t.g1 + t.b + t.p * CATH(t.c, t.b));
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    float x = t.p * t.b / CATH(t.c, t.b);
+    assert(x >= 0 and x <= 1);
+    RETURN_CHECK_POSITIVE_LIMITED(HYPOT(x, t.p) * t.c + (1 - x) * t.b);
 }
 
 bool cond(TraversalParams &t) {
@@ -269,11 +283,11 @@ std::vector<Position> additions(TraversalParams &t) {
 namespace TraversalTypeA {
 namespace Corner {
 float cost(TraversalParams &t) {
-    return t.g2 + t.c * SQRT2;
+    RETURN_CHECK_POSITIVE(t.g2 + t.c * SQRT2);
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    RETURN_CHECK_POSITIVE_LIMITED(t.c * SQRT2);
 }
 
 bool cond(TraversalParams &) {
@@ -291,11 +305,11 @@ std::vector<Position> additions(TraversalParams &t) {
 namespace ContiguousEdge {
 
 float cost(TraversalParams &t) {
-    return t.g2 + t.c * HYPOT(1, 1 - t.q);
+    RETURN_CHECK_POSITIVE(t.g2 + t.c * HYPOT(1, 1 - t.q));
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    RETURN_CHECK_POSITIVE_LIMITED(HYPOT(t.q, 1) * t.c);
 }
 
 bool cond(TraversalParams &) {
@@ -312,11 +326,11 @@ std::vector<Position> additions(TraversalParams &t) {
 }
 namespace OppositeEdge {
 float cost(TraversalParams &t) {
-    return t.g2 + t.c * HYPOT(1 - t.p, 1);
+    RETURN_CHECK_POSITIVE(t.g2 + t.c * HYPOT(1 - t.p, 1));
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    RETURN_CHECK_POSITIVE_LIMITED(HYPOT(1, 1 - t.p) * t.c);
 }
 
 bool cond(TraversalParams &) {
@@ -336,11 +350,11 @@ std::vector<Position> additions(TraversalParams &t) {
 namespace TraversalTypeB {
 namespace Corner {
 float cost(TraversalParams &t) {
-    return t.g1 + t.c;
+    RETURN_CHECK_POSITIVE(t.g1 + t.c);
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    RETURN_CHECK_POSITIVE_LIMITED(t.c);
 }
 
 bool cond(TraversalParams &) {
@@ -358,11 +372,11 @@ std::vector<Position> additions(TraversalParams &t) {
 }
 namespace ContiguousEdge {
 float cost(TraversalParams &t) {
-    return t.g1 + t.c * (1 - t.q);
+    RETURN_CHECK_POSITIVE(t.g1 + t.c * (1 - t.q));
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    RETURN_CHECK_POSITIVE_LIMITED((1 - t.q) * t.c);
 }
 
 bool cond(TraversalParams &) {
@@ -379,11 +393,11 @@ std::vector<Position> additions(TraversalParams &t) {
 }
 namespace OppositeEdge {
 float cost(TraversalParams &t) {
-    return t.g1 + t.c * HYPOT(t.p, 1);
+    RETURN_CHECK_POSITIVE(t.g1 + t.c * HYPOT(t.p, 1));
 }
 
 float stepcost(TraversalParams &t) {
-    return 0; //TODO
+    RETURN_CHECK_POSITIVE_LIMITED(t.c * HYPOT(t.p, 1));
 }
 
 bool cond(TraversalParams &) {

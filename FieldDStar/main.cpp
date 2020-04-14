@@ -20,7 +20,7 @@ void poses_cb(std::vector<Pose> poses, float length, float cost) {
                 << "],";
     }
     logfile.seekp(-1, std::ios::cur);
-    logfile << "]}";
+    logfile << "], \"length\": " << length << ", \"cost\": " << cost << "}";
     logfile.close();
 }
 
