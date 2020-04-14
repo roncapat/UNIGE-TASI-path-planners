@@ -60,56 +60,7 @@ Date Created: December 20th, 2018
   f1(s) = min(g(s), rhs(s)) + h(s_start, s) + K_M
   f2(s)min(g(s), rhs(s))
 */
-struct Key {
-  float f1;
-  float f2;
-
-  Key(float f1, float f2) {
-      this->f1 = f1;
-      this->f2 = f2;
-  }
-
-  Key(std::tuple<float, float> k) {
-      this->f1 = std::get<0>(k);
-      this->f2 = std::get<1>(k);
-  }
-
-  // overloaded assignment operator
-  Key &operator=(const Key &other) {
-      this->f1 = other.f1;
-      this->f2 = other.f2;
-
-      return *this;
-  }
-
-  // lexicograhpic ordering of keys
-  bool operator<(const Key &other) const {
-      if (this->f1 < other.f1)
-          return true;
-      else if (this->f1 == other.f1)
-          return this->f2 < other.f2;
-      else
-          return false;
-  }
-
-  bool operator<=(const Key &other) const {
-      if (this->f1 < other.f1)
-          return true;
-      else if (this->f1 == other.f1)
-          return this->f2 <= other.f2;
-      else
-          return false;
-  }
-
-  // Keys equal if their corresponding values are equal
-  bool operator==(const Key &other) const {
-      return (this->f1 == other.f1) && (this->f2 == other.f2);
-  }
-
-  bool operator!=(const Key &other) const {
-      return !(*this == other);
-  }
-};
+typedef std::pair<float, float> Key;
 
 class PriorityQueue {
  public:
@@ -143,7 +94,7 @@ class PriorityQueue {
   @param[in] n node to remove from the priority queue
   @return whether such an item was found and removed
   */
-  bool remove(const Node &n);  // O(n)
+  void remove(const Node &n);  // O(n)
   /**
   Pops the top (least-cost) state from the priority queue. This has the effect of
   reducing the size of the priority queue by one. If the priority queue is
@@ -176,16 +127,6 @@ class PriorityQueue {
   */
   bool empty();
 
-  /**
-  Represents a string representation of the priority queue:
-
-  for each state in pq_:
-      stream << [x,y,f: f-val,g: g-val] << std::endl
-
-  @return string representation of priority queue
-  */
-  std::string str() const;  // O(n)
-
  private:
   /**
   Finds first state in the priority queue with the specified index. If found,
@@ -197,18 +138,14 @@ class PriorityQueue {
   */
   std::set<std::pair<Node, Key>>::iterator find(const Node &n);
 
-  // Declaring the type of Predicate that accepts 2 pairs and returns a bool
-  typedef std::function<bool(std::pair<Node, Key>, std::pair<Node, Key>)> Comparator;
   // Defining a lambda function to compare two entries. Compares using key.
-  Comparator compFunctor = [](std::pair<Node, Key> elem1, std::pair<Node, Key> elem2) {
-    // Comparison logic for priority queue entries
+  // Comparison logic for priority queue entries
+  typedef std::function<bool(std::pair<Node, Key>, std::pair<Node, Key>)> Comparator;
+  Comparator compFunctor = [](const std::pair<Node, Key> &elem1, const std::pair<Node, Key> &elem2) {
     return elem1.second <= elem2.second;
   };
 
   std::set<std::pair<Node, Key>, Comparator> pq_;
 };
-
-std::ostream &operator<<(std::ostream &stream, const PriorityQueue &pq);
-std::ostream &operator<<(std::ostream &stream, const Key &k);
 
 #endif
