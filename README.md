@@ -3,8 +3,11 @@
 This repository contains a generic implementation of the Field D* algorithm,
 [originally proposed by Dave Ferguson and Anthony Stentz](https://www.ri.cmu.edu/pub_files/pub4/ferguson_david_2005_3/ferguson_david_2005_3.pdf).
 
-The algorithm features a custom path extraction technique, inspired by ([Michael W. Otte and Greg Grudic](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5354775)),
-and in the first run it employs the "rhs-trick" suggested in ([Changwen Zheng, Jiawei Cai, Huafei Yin](https://www.scirp.org/pdf/ALAMT20120200001_65663100.pdf)).
+The algorithm features a custom path extraction technique, inspired by ([Michael W. Otte and Greg Grudic](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5354775)).
+
+In the first run it employs the "rhs-trick" suggested in ([Changwen Zheng, Jiawei Cai, Huafei Yin](https://www.scirp.org/pdf/ALAMT20120200001_65663100.pdf)).
+
+When the robot moves and updated the map, it uses the "key modifier" technique described in ([Koenig and Likhachev](https://aaai.org/Papers/AAAI/2002/AAAI02-072.pdf)).
 
 To build the demo and run tests:
 ```

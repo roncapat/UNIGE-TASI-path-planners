@@ -34,13 +34,12 @@ https://ocw.mit.edu/courses/aeronautics-and-astronautics/16-412j-cognitive-robot
 #ifndef FIELDDPLANNER_H
 #define FIELDDPLANNER_H
 
-#include <assert.h>
+#include <cassert>
 #include <cmath>
 #include <limits>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
 #include "Graph.h"
@@ -162,20 +161,6 @@ class FieldDPlanner {
   void setGoalDistance(float goal_dist);
 
   /**
-  Compute the linearly interpolated path cost of three neighboring positions p,
-  p_a, and p_b. The resulting path cost of p is dependent on the relative cost of
-  the two consecutive neighbors (p_a, p_b) as well as the traversal cost to
-  both neighbors (c, b).
-
-  @param[in] p continuous position on the graph to calculate the path cost for
-  @param[in] p_a consecutive neighbor of p
-  @param[in] p_b another consecutive neighbor of p
-  @return a tuple containing the path cost of p and resulting (x,y) traversal distances
-          (relative to p_a and p_b) of the path cost calculation
-  */
-  CostComputation computeCost(const Position &p, const Position &p_a, const Position &p_b);
-  CostComputation computeCost(const Node &s, const Node &s_a, const Node &s_b);
-  /**
   Returns true if position p is a valid vertex on the graph. A position is a
   valid vertex if both of its cartesian coordinates are integers and it lies within
   the bounds of the graph
@@ -184,16 +169,6 @@ class FieldDPlanner {
   @return whether or not p is a vertex
   */
   bool isVertex(const Position &p);
-  /**
-  Returns the linearly interpolated path cost of a lying along an edge. Such an edge
-  node is characterized by having one of its cartesian coordinate values a float.
-  i.e. (x,y) = (5, 7.48). A vertex node (both coordinates integers) simply have
-  their true path cost returned.
-
-  @param[in] p positon on the graph to obtain path cost for
-  @return path cost of continuous position
-  */
-  float getEdgePositionCost(const Position &p);
 
   /**
   Calculate the key for a node S.
@@ -320,8 +295,8 @@ class FieldDPlanner {
   // priority queue contains all locally inconsistent nodes whose values
   // need updating
   PriorityQueue priority_queue_;
-  int num_nodes_updated = 0;
-  int num_nodes_expanded = 0;
+  unsigned long num_nodes_updated = 0;
+  unsigned long num_nodes_expanded = 0;
   bool initialize_search = true;  // set to true if the search problem must be initialized
   std::pair<float, float> getBC(TraversalParams &t);
   bool consistent(const Node &s);

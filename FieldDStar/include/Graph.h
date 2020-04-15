@@ -103,6 +103,8 @@ class Graph {
   int length_;
   int width_;
   int size_;
+  float flength_;
+  float fwidth_;
 
   float resolution_;           // grid resolution
   float configuration_space_;  // configuration space
@@ -205,7 +207,7 @@ class Graph {
   @return vector containing the 8 neighbors of node s. When there is no neighbord
           (as is the case on corners or along edges), a null value is returned
   */
-  std::vector<Node> nbrs(const Node &s, bool include_invalid = false);
+  std::vector<Node> neighbors(const Node &s, bool include_invalid = false);
   /**
   Gets consecutive neighbor pairs of an edge node. An edge node is defines as a
   node that does not lie a vertex but instead lies along some conitnuous position
@@ -277,29 +279,7 @@ class Graph {
   @return cost of traversing grid cell with configuration_space_
   */
   float getValWithConfigurationSpace(const std::tuple<int, int> &ind);
-  /**
-  Get cost of traversing from a Node s to a neighboring node s_prime
 
-  @param[in] s node to get traversal cost through
-  @param[in] s_prime neighbor of s
-  @return cost of traversing from s to s_prime
-  */
-  float getTraversalCost(const Node &s, const Node &s_prime);
-  /**
-  Get cost of traversing from one continuous position on the graph p to another
-  continuous position p_prime
-  @param[in] p continuous position on the graph
-  @param[in] p_prime another continuous position on the graph
-  @return cost of traversing from p to p_prime
-  */
-  float getContinuousTraversalCost(const Position &p, const Position &p_prime);
-  /**
-  Gets minimum traversal cost from a node s to any neighboring node.
-
-  @param[in] s Node to get minimum traversal cost for
-  @return minimum traversal cost
-  */
-  float getMinTraversalCost(const Node &s);
   /**
   Calculates euclidian distance between the start node 'start_' and the
   specified node s. This will be used as the focussing heuristic.
@@ -307,7 +287,7 @@ class Graph {
   @param[in] s node to calculate euclidian distance to
   @return euclidian distance between the start node and node s
   */
-  float euclidianHeuristic(const Node &s);
+  float euclideanHeuristic(const Node &s);
   /**
   Same as above method but takes index of Node to calculate euclidian distance
   from start for.
@@ -315,7 +295,7 @@ class Graph {
   @param[in] ind (x,y) coordinates of node
   @return euclidian distance to node from current start position
   */
-  float euclidianHeuristic(const std::tuple<int, int> &ind);
+  float euclideanHeuristic(const std::tuple<int, int> &ind);
   /**
   Gets Nodes around a cell whose occupancy value has changed while taking configuration
   space into account.

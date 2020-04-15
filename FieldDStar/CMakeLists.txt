@@ -15,7 +15,7 @@ IF (CMAKE_BUILD_TYPE MATCHES Release)
 ENDIF (CMAKE_BUILD_TYPE MATCHES Release)
 
 IF (CMAKE_BUILD_TYPE MATCHES Debug)
-    add_compile_options(-DVERBOSE_EXTRACTION)
+    add_compile_options(-DVERBOSE_EXTRACTION --coverage)
 ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
 include_directories(include)
@@ -28,6 +28,8 @@ add_executable(field_d_planner
                PriorityQueue.cpp
                interpolation.cpp)
 
+target_link_libraries(field_d_planner gcov)
+
 add_executable(field_d_planner_gui
                FieldDPlanner.cpp
                main.cpp
@@ -36,4 +38,5 @@ add_executable(field_d_planner_gui
                PriorityQueue.cpp
                interpolation.cpp)
 
+target_link_libraries(field_d_planner_gui gcov)
 target_compile_definitions(field_d_planner_gui PRIVATE FDSTAR_SHOW_RESULT)

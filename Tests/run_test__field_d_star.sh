@@ -34,11 +34,13 @@ for f in $files; do
   mkdir "$name"
   cd "$name"
   type="__lookahead_off"
-  "$planner" $f $params 0 "logfile$type.json" "dbgfile$type.json" &> "planner$type.log"
+  # shellcheck disable=SC2086
+  "$planner" "$f" $params 0 "logfile$type.json" "dbgfile$type.json" &> "planner$type.log"
   python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
   type="__lookahead_on"
-  "$planner" $f $params 1 "logfile$type.json" "dbgfile$type.json" &> "planner$type.log"
-  python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
+  # shellcheck disable=SC2086
+  "$planner" "$f" $params 1 "logfile$type.json" "dbgfile$type.json" &> "planner$type.log"
+  python3 "$postprocessor" "$f" "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
   IFS=' '
   echo "
   # Lookahead OFF

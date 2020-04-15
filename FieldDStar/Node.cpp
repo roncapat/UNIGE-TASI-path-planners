@@ -49,15 +49,7 @@ bool Node::operator!=(const Node &other) const {
     return !(*this == other);
 }
 
-Node &Node::operator=(const Node &node) {
-    // do the copy
-    std::tie(this->x_, this->y_) = node.getIndex();
-    this->ind_ = node.getIndex();
-    this->bptr_ = node.getBptr();
-
-    // return the existing object so we can chain this operator
-    return *this;
-}
+Node &Node::operator=(const Node &node) = default;
 
 std::ostream &operator<<(std::ostream &stream, const Node &n) {
     int x, y;

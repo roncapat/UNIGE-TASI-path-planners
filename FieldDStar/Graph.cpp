@@ -21,6 +21,8 @@ void Graph::initializeGraph(const MapPtr &msg) {
     updated_cells_.clear();
     length_ = msg->length;
     width_ = msg->width;
+    flength_ = static_cast<float>(msg->length);
+    fwidth_ = static_cast<float>(msg->width);
     size_ = length_ * width_;
     resolution_ = msg->resolution;
     start_.setIndex(msg->x, msg->y);
@@ -30,13 +32,13 @@ void Graph::initializeGraph(const MapPtr &msg) {
 
 void Graph::updateGraph(MapPtr &msg) {
     // Update the start position and key_modifier_
-    std::tuple<float, float> new_start = std::make_tuple(msg->x, msg->y);
+    std::tuple<float, float> new_start(msg->x, msg->y);
     std::tuple<float, float> old_start = this->start_.getIndex();
 
     // update the key modifier value to account for the robot's new pos
     this->key_modifier_ +=
         std::hypot(std::get<0>(new_start) - std::get<0>(old_start), std::get<1>(new_start) - std::get<1>(old_start));
-    this->start_.setIndex(static_cast<std::tuple<int, int>>(new_start));
+    this->start_.setIndex(new_start);
 
     this->updated_cells_.clear();  // clear the vector of cells that need updating
 
@@ -75,42 +77,30 @@ void Graph::updateGraph(MapPtr &msg) {
 }
 
 bool Graph::isValidNode(const Node &s) {
-    int x, y;
-    std::tie(x, y) = s.getIndex();
-    // with [x,y] indexing
+    auto[x, y] = s.getIndex();
     return (x <= length_) && (y <= width_) && (x >= 0) && (y >= 0);
 }
 
 bool Graph::isValidPosition(const Position &p) {
-    // with [x,y] indexing
-    return (p.x >= 0.0f) && (p.x <= static_cast<float>(length_)) && (p.y >= 0.0f)
-        && (p.y <= static_cast<float>(width_));
+    return (p.x >= 0.0f) && (p.x <= flength_) && (p.y >= 0.0f) && (p.y <= fwidth_);
 }
 
 bool Graph::isValidCell(const std::tuple<int, int> &ind) {
-    int x, y;
-    std::tie(x, y) = ind;
+    auto[x, y] = ind;
     return (x >= 0) && (x < length_) && (y >= 0) && (y < width_);
 }
 
 bool Graph::isDiagonal(const Node &s, const Node &s_prime) {
-    int x1, y1;
-    std::tie(x1, y1) = s.getIndex();
-
-    int x2, y2;
-    std::tie(x2, y2) = s_prime.getIndex();
-
-    int x_diff = std::abs(x2 - x1);
-    int y_diff = std::abs(y2 - y1);
-
-    return (x_diff == 1) && (y_diff == 1);
+    auto[x1, y1] = s.getIndex();
+    auto[x2, y2] = s_prime.getIndex();
+    return ((x1 != x2) && (y1 != y2));
 }
 
 bool Graph::isDiagonalContinuous(const Position &p, const Position &p_prime) {
     return ((p.x != p_prime.x) && (p.y != p_prime.y));
 }
 
-std::vector<Node> Graph::nbrs(const Node &s, bool include_invalid) {
+std::vector<Node> Graph::neighbors(const Node &s, bool include_invalid) {
     std::vector<Node> neighbors;
     neighbors.reserve(8);
     int x, y;
@@ -169,32 +159,32 @@ std::vector<std::pair<Position, Position>> Graph::consecutiveNeighbors(const Pos
     if (0 < decpartx and decpartx < 1) { //non-integer, lies on horizontal edge - 6 neighbors (2 cells)
         neighbors.reserve(6);
         consecutive_neighbors.reserve(6);
-        neighbors.emplace_back(std::make_tuple(std::floor(p.x), intparty));   // left
-        neighbors.emplace_back(std::make_tuple(std::floor(p.x), intparty - 1));  // bottom left
-        neighbors.emplace_back(std::make_tuple(std::ceil(p.x), intparty - 1)); // bottom right
-        neighbors.emplace_back(std::make_tuple(std::ceil(p.x), intparty));  // right
-        neighbors.emplace_back(std::make_tuple(std::ceil(p.x), intparty + 1));         // top right
-        neighbors.emplace_back(std::make_tuple(std::floor(p.x), intparty + 1));  // top left
+        neighbors.emplace_back(std::floor(p.x), intparty);   // left
+        neighbors.emplace_back(std::floor(p.x), intparty - 1);  // bottom left
+        neighbors.emplace_back(std::ceil(p.x), intparty - 1); // bottom right
+        neighbors.emplace_back(std::ceil(p.x), intparty);  // right
+        neighbors.emplace_back(std::ceil(p.x), intparty + 1);         // top right
+        neighbors.emplace_back(std::floor(p.x), intparty + 1);  // top left
     } else if (0 < decparty and decparty < 1) { //non-integer, lies on vertical edge - 6 neighbors (2 cells)
         neighbors.reserve(6);
         consecutive_neighbors.reserve(6);
-        neighbors.emplace_back(std::make_tuple(intpartx, std::floor(p.y)));   // bottom
-        neighbors.emplace_back(std::make_tuple(intpartx + 1, std::floor(p.y)));  // bottom right
-        neighbors.emplace_back(std::make_tuple(intpartx + 1, std::ceil(p.y))); // top right
-        neighbors.emplace_back(std::make_tuple(intpartx, std::ceil(p.y)));  // top
-        neighbors.emplace_back(std::make_tuple(intpartx - 1, std::ceil(p.y)));         // top left
-        neighbors.emplace_back(std::make_tuple(intpartx - 1, std::floor(p.y)));  // bottom left
+        neighbors.emplace_back(intpartx, std::floor(p.y));   // bottom
+        neighbors.emplace_back(intpartx + 1, std::floor(p.y));  // bottom right
+        neighbors.emplace_back(intpartx + 1, std::ceil(p.y)); // top right
+        neighbors.emplace_back(intpartx, std::ceil(p.y));  // top
+        neighbors.emplace_back(intpartx - 1, std::ceil(p.y));         // top left
+        neighbors.emplace_back(intpartx - 1, std::floor(p.y));  // bottom left
     } else { // 8 neighbors (4 cells)
         neighbors.reserve(8);
         consecutive_neighbors.reserve(8);
-        neighbors.emplace_back(std::make_tuple(intpartx + 1.0f, intparty));         // right
-        neighbors.emplace_back(std::make_tuple(intpartx + 1.0f, intparty + 1.0f));  // top right
-        neighbors.emplace_back(std::make_tuple(intpartx, intparty + 1.0f));         // top
-        neighbors.emplace_back(std::make_tuple(intpartx - 1.0f, intparty + 1.0f));  // top left
-        neighbors.emplace_back(std::make_tuple(intpartx - 1.0f, intparty));         // left
-        neighbors.emplace_back(std::make_tuple(intpartx - 1.0f, intparty - 1.0f));  // bottom left
-        neighbors.emplace_back(std::make_tuple(intpartx, intparty - 1.0f));         // bottom
-        neighbors.emplace_back(std::make_tuple(intpartx + 1.0f, intparty - 1.0f));  // bottom right
+        neighbors.emplace_back(intpartx + 1.0f, intparty);         // right
+        neighbors.emplace_back(intpartx + 1.0f, intparty + 1.0f);  // top right
+        neighbors.emplace_back(intpartx, intparty + 1.0f);         // top
+        neighbors.emplace_back(intpartx - 1.0f, intparty + 1.0f);  // top left
+        neighbors.emplace_back(intpartx - 1.0f, intparty);         // left
+        neighbors.emplace_back(intpartx - 1.0f, intparty - 1.0f);  // bottom left
+        neighbors.emplace_back(intpartx, intparty - 1.0f);         // bottom
+        neighbors.emplace_back(intpartx + 1.0f, intparty - 1.0f);  // bottom right
     }
 
     for (size_t i = 0; i < neighbors.size(); ++i) {
@@ -219,14 +209,14 @@ std::vector<std::tuple<Node, Node>> Graph::consecutiveNeighbors(const Node &s) {
     int intpartx = 0, intparty = 0;
     std::tie(intpartx, intparty) = s.getIndex();
 
-    neighbors.emplace_back(std::make_tuple(intpartx + 1, intparty));      // right
-    neighbors.emplace_back(std::make_tuple(intpartx + 1, intparty + 1));  // top right
-    neighbors.emplace_back(std::make_tuple(intpartx, intparty + 1));      // top
-    neighbors.emplace_back(std::make_tuple(intpartx - 1, intparty + 1));  // top left
-    neighbors.emplace_back(std::make_tuple(intpartx - 1, intparty));      // left
-    neighbors.emplace_back(std::make_tuple(intpartx - 1, intparty - 1));  // bottom left
-    neighbors.emplace_back(std::make_tuple(intpartx, intparty - 1));      // bottom
-    neighbors.emplace_back(std::make_tuple(intpartx + 1, intparty - 1));  // bottom right
+    neighbors.emplace_back(intpartx + 1, intparty);      // right
+    neighbors.emplace_back(intpartx + 1, intparty + 1);  // top right
+    neighbors.emplace_back(intpartx, intparty + 1);      // top
+    neighbors.emplace_back(intpartx - 1, intparty + 1);  // top left
+    neighbors.emplace_back(intpartx - 1, intparty);      // left
+    neighbors.emplace_back(intpartx - 1, intparty - 1);  // bottom left
+    neighbors.emplace_back(intpartx, intparty - 1);      // bottom
+    neighbors.emplace_back(intpartx + 1, intparty - 1);  // bottom right
 
     for (size_t i = 0; i < neighbors.size(); ++i) {
         if (isValidPosition(neighbors[i])) {
@@ -242,79 +232,37 @@ std::vector<std::tuple<Node, Node>> Graph::consecutiveNeighbors(const Node &s) {
 }
 
 Node Graph::counterClockwiseNeighbor(Node s, Node s_prime) {
-    int x, y;
-    std::tie(x, y) = s.getIndex();
+    auto[s_x, s_y] = s.getIndex();
+    auto[s_prime_x, s_prime_y] = s_prime.getIndex();
 
-    int x_prime, y_prime;
-    std::tie(x_prime, y_prime) = s_prime.getIndex();
+    int delta_x = s_prime_x - s_x + 1;
+    int delta_y = s_prime_y - s_y + 1;
 
-    int x_diff = x_prime - x;
-    int y_diff = y_prime - y;
+    static const int8_t lut_x_ccw[3][3] = {{-1, -1, 0}, {-1, 0, 1}, {0, 1, 1}};
+    static const int8_t lut_y_ccw[3][3] = {{0, 1, 1}, {-1, 0, 1}, {-1, -1, 0}};
 
-    Node counter_clockwise_neighbor;  // counter-clockwise neighbor
+    int new_x = s_x + lut_x_ccw[delta_x][delta_y];
+    int new_y = s_y + lut_y_ccw[delta_x][delta_y];
 
-    if (x_diff == 1 && y_diff == 0) {
-        counter_clockwise_neighbor.setIndex(x + 1, y + 1);
-    } else if (x_diff == 1 && y_diff == 1) {
-        counter_clockwise_neighbor.setIndex(x, y + 1);
-    } else if (x_diff == 0 && y_diff == 1) {
-        counter_clockwise_neighbor.setIndex(x - 1, y + 1);
-    } else if (x_diff == -1 && y_diff == 1) {
-        counter_clockwise_neighbor.setIndex(x - 1, y);
-    } else if (x_diff == -1 && y_diff == 0) {
-        counter_clockwise_neighbor.setIndex(x - 1, y - 1);
-    } else if (x_diff == -1 && y_diff == -1) {
-        counter_clockwise_neighbor.setIndex(x, y - 1);
-    } else if (x_diff == 0 && y_diff == -1) {
-        counter_clockwise_neighbor.setIndex(x + 1, y - 1);
-    } else if (x_diff == 1 && y_diff == -1) {
-        counter_clockwise_neighbor.setIndex(x + 1, y);
-    }
-
-    // if counter-clockwise neighbor node is valid (within bounds), then return
-    // it. Otherwise, return a node with validity set to false.
-    if (isValidNode(counter_clockwise_neighbor))
-        return counter_clockwise_neighbor;
-    else
-        return Node(false);
+    Node cc_neighbor(new_x, new_y);
+    return isValidNode(cc_neighbor) ? cc_neighbor : Node{false};
 }
 
 Node Graph::clockwiseNeighbor(Node s, Node s_prime) {
-    int x, y;
-    std::tie(x, y) = s.getIndex();
+    auto[s_x, s_y] = s.getIndex();
+    auto[s_prime_x, s_prime_y] = s_prime.getIndex();
 
-    int x_prime, y_prime;
-    std::tie(x_prime, y_prime) = s_prime.getIndex();
+    int delta_x = s_prime_x - s_x + 1;
+    int delta_y = s_prime_y - s_y + 1;
 
-    int x_diff = x_prime - x;
-    int y_diff = y_prime - y;
+    static const int8_t lut_x_cw[3][3] = {{0, -1, -1}, {1, 0, -1}, {1, 1, 0}};
+    static const int8_t lut_y_cw[3][3] = {{-1, -1, 0}, {-1, 0, 1}, {0, 1, 1}};
 
-    Node clockwise_neighbor;  // clockwise neighbor
+    int new_x = s_x + lut_x_cw[delta_x][delta_y];
+    int new_y = s_y + lut_y_cw[delta_x][delta_y];
 
-    if (x_diff == 1 && y_diff == 0) {
-        clockwise_neighbor.setIndex(x + 1, y - 1);
-    } else if (x_diff == 1 && y_diff == 1) {
-        clockwise_neighbor.setIndex(x + 1, y);
-    } else if (x_diff == 0 && y_diff == 1) {
-        clockwise_neighbor.setIndex(x + 1, y + 1);
-    } else if (x_diff == -1 && y_diff == 1) {
-        clockwise_neighbor.setIndex(x, y + 1);
-    } else if (x_diff == -1 && y_diff == 0) {
-        clockwise_neighbor.setIndex(x - 1, y + 1);
-    } else if (x_diff == -1 && y_diff == -1) {
-        clockwise_neighbor.setIndex(x - 1, y);
-    } else if (x_diff == 0 && y_diff == -1) {
-        clockwise_neighbor.setIndex(x - 1, y - 1);
-    } else if (x_diff == 1 && y_diff == -1) {
-        clockwise_neighbor.setIndex(x, y - 1);
-    }
-
-    // if clockwise neighbor node is valid (within bounds), then return
-    // it. Otherwise, return a node with validity set to false.
-    if (isValidNode(clockwise_neighbor))
-        return clockwise_neighbor;
-    else
-        return Node(false);
+    Node c_neighbor(new_x, new_y);
+    return isValidNode(c_neighbor) ? c_neighbor : Node{false};
 }
 
 float Graph::getC(const Node &s, const Node &s_prime) {
@@ -417,51 +365,12 @@ float Graph::getValWithConfigurationSpace(const std::tuple<int, int> &ind) {
     return static_cast<float>(max_val);
 }
 
-float Graph::getTraversalCost(const Node &s, const Node &s_prime) {
-    if (isDiagonal(s, s_prime))
-        return getC(s, s_prime) * DIAGONAL_DISTANCE;
-    else
-        return getB(s, s_prime) * EDGE_DISTANCE;
+float Graph::euclideanHeuristic(const Node &s) {
+    return this->euclideanHeuristic(s.getIndex());
 }
 
-template<typename T>
-T ceil0(const T &value) {
-    return (value < 0.0) ? std::floor(value) : std::ceil(value);
-}
-
-float Graph::getContinuousTraversalCost(const Position &p, const Position &p_prime) {
-    // round p to get a reference node
-    Node s = p.castToNode();
-
-    // get relative distance between p_prime and p. Note: ceil0 is biased away from 0
-    // i.e. ceil0(-0.35) = -1.00
-    float x_diff = ceil0(p_prime.x - p.x);
-    float y_diff = ceil0(p_prime.y - p.y);
-    if (x_diff != .0f) x_diff /= std::abs(x_diff);
-    if (y_diff != .0f) y_diff /= std::abs(y_diff);
-
-    assert((x_diff != 0) || (y_diff != 0));
-    assert((std::fabs(x_diff) <= 1) && (std::fabs(y_diff) <= 1));
-
-    Node s_prime(std::make_tuple(static_cast<int>(roundf(p.x) + x_diff), static_cast<int>(roundf(p.y) + y_diff)));
-
-    return (isDiagonal(s, s_prime) ? getC(s, s_prime) : getB(s, s_prime));
-}
-
-float Graph::getMinTraversalCost(const Node &s) {
-    float min_cost = std::numeric_limits<float>::infinity();
-    for (Node nbr : this->nbrs(s))
-        min_cost = std::min(min_cost, this->getTraversalCost(s, nbr));
-    return min_cost;
-}
-
-float Graph::euclidianHeuristic(const Node &s) {
-    return this->euclidianHeuristic(s.getIndex());
-}
-
-float Graph::euclidianHeuristic(const std::tuple<int, int> &ind) {
-    std::tuple<float, float> start = start_.getIndex();
-    std::tuple<float, float> s = ind;
+float Graph::euclideanHeuristic(const std::tuple<int, int> &s) {
+    auto start = start_.getIndex();
     return std::hypot(std::get<0>(start) - std::get<0>(s), std::get<1>(start) - std::get<1>(s));
 }
 
@@ -483,7 +392,7 @@ std::vector<Node> Graph::getNodesAroundCellWithConfigurationSpace(const Cell &ce
         Node currNode = open_list.front();
         open_list.pop();
 
-        for (Node n : this->nbrs(currNode)) {
+        for (Node n : this->neighbors(currNode)) {
             // node already considered
             if (closed_set.find(n) != closed_set.end())
                 continue;
