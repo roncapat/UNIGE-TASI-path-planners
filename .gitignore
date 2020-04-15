@@ -9,8 +9,7 @@
 *.iml
 out
 gen
-/cmake-build-debug/
-/cmake-build-release/
+/cmake-build-*/
 Makefile
 doc/
 /venv/

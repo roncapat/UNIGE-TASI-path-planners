@@ -197,7 +197,9 @@ class FieldDPlanner {
 
   @param[in] s Node to update
   */
+#ifndef OPTIMIZED_CORE
   void updateNode(const Node &s);
+#endif
   /**
   Expands nodes in the priority queue until optimal path to goal node has been
   found. The first search is equivalent to an A* heuristic search. All calls
@@ -273,7 +275,7 @@ class FieldDPlanner {
   @param[in] g g value for entry
   @param[in] rhs rhs value for entry
   */
-  void insert_or_assign(Node s, float g, float rhs);
+  void insert_or_assign(const Node& s, float g, float rhs);
   /**
   Returns g-value for a node s
 

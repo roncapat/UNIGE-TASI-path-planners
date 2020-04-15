@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <chrono>
 #include "FieldDPlanner.h"
 #include "bitmap/BMP.h"
 #include "Graph.h"
@@ -113,7 +114,11 @@ int main(int _argc, char **_argv) {
     planner.set_heuristic_multiplier(std::ceil(min)); // What I think is correct (consistent?)
     planner.set_poses_cb(poses_cb);
     planner.set_expanded_cb(expanded_cb);
+    auto begin = std::chrono::steady_clock::now();
     planner.step();
+    auto end = std::chrono::steady_clock::now();
+
+    std::cout << "Step time = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " [ms]" << std::endl;
 
     #ifdef FDSTAR_SHOW_RESULT
     std::string cmd = "python3 plot_path_gui.py ";

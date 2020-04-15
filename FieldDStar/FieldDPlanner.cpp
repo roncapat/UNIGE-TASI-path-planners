@@ -174,8 +174,9 @@ void FieldDPlanner::initializeSearch() {
     priority_queue_.insert(node_grid_.goal_, calculateKey(node_grid_.goal_));
 }
 
+#ifdef OPTIMIZED_CORE
 int FieldDPlanner::computeShortestPath() {
-    float dummy, cost;
+    float dummy, cost1, cost2, g_sp, rhs_sp, rhs_s, g_s;
     Node cn, ccn;
 
     // if the start node is occupied, return immediately. No path exists
@@ -191,56 +192,64 @@ int FieldDPlanner::computeShortestPath() {
         Node s = priority_queue_.topNode();
         expanded++;
 
-        if (getG(s) > getRHS(s)) {
-            insert_or_assign(s, getRHS(s), getRHS(s));
+        g_s = getG(s);
+        rhs_s = getRHS(s);
+        if (g_s > rhs_s) {
+            insert_or_assign(s, rhs_s, rhs_s);
             priority_queue_.pop();
             for (Node &sp : node_grid_.neighbors(s)) {
                 if (expanded_map_.find(sp) == expanded_map_.end()) {
                     insert_or_assign(sp, INFINITY, INFINITY);
                 }
                 ccn = node_grid_.counterClockwiseNeighbor(sp, s);
-                if (ccn.valid) {
-                    cost = computeOptimalCellTraversalFromCorner(sp, s, ccn, dummy).second;
-                    if (getRHS(sp) > cost) {
-                        insert_or_assign(sp, getG(sp), cost);
-                        sp.setBptr(s.getIndex());
-                    }
-                }
                 cn = node_grid_.clockwiseNeighbor(sp, s);
-                if (cn.valid) {
-                    cost = computeOptimalCellTraversalFromCorner(sp, cn, s, dummy).second;
-                    if (getRHS(sp) > cost) {
-                        insert_or_assign(sp, getG(sp), cost);
+                cost1 = ccn.valid ? computeOptimalCellTraversalFromCorner(sp, s, ccn, dummy).second : INFINITY;
+                cost2 = cn.valid ? computeOptimalCellTraversalFromCorner(sp, cn, s, dummy).second : INFINITY;
+                if (cost1 <= cost2){
+                    rhs_sp = getRHS(sp);
+                    if (rhs_sp > cost1) {
+                        sp.setBptr(s.getIndex());
+                        g_sp = getG(sp);
+                        insert_or_assign(sp, g_sp, cost1);
+                        priority_queue_.remove(sp);
+                        if (g_sp != cost1) {
+                            priority_queue_.insert(sp, calculateKey(sp));
+                        }
+                    } else if (rhs_sp > cost2) {
                         sp.setBptr(cn.getIndex());
+                        g_sp = getG(sp);
+                        insert_or_assign(sp, g_sp, cost2);
+                        priority_queue_.remove(sp);
+                        if (g_sp != cost2) {
+                            priority_queue_.insert(sp, calculateKey(sp));
+                        }
                     }
-                }
-                priority_queue_.remove(sp);
-                if (getG(sp) != getRHS(sp)) {
-                    priority_queue_.insert(sp, calculateKey(sp));
                 }
             }
         } else {
-            insert_or_assign(s, INFINITY, getRHS(s));
+            insert_or_assign(s, INFINITY, rhs_s);
             for (Node &sp : node_grid_.neighbors(s)) {
-                if (sp.getBptr() == s.getIndex() or sp.getBptr() == node_grid_.clockwiseNeighbor(sp, s).getIndex()) {
+                auto sp_bptr = sp.getBptr();
+                if (sp_bptr == s.getIndex() or sp_bptr == node_grid_.clockwiseNeighbor(sp, s).getIndex()) {
                     float min_rhs = INFINITY;
                     for (const auto &spp : node_grid_.neighbors(sp)) {
                         ccn = node_grid_.counterClockwiseNeighbor(sp, spp);
                         if (ccn.valid) {
-                            cost = computeOptimalCellTraversalFromCorner(sp, spp, ccn, dummy).second;
-                            min_rhs = std::min(min_rhs, cost);
-                            if (min_rhs == cost) sp.setBptr(spp.getIndex());
+                            cost1 = computeOptimalCellTraversalFromCorner(sp, spp, ccn, dummy).second;
+                            min_rhs = std::min(min_rhs, cost1);
+                            if (min_rhs == cost1) sp.setBptr(spp.getIndex());
                         }
                     }
-                    insert_or_assign(sp, getG(sp), min_rhs);
+                    g_sp = getG(sp);
+                    insert_or_assign(sp, g_sp, min_rhs);
                     priority_queue_.remove(sp);
-                    if (getG(sp) != getRHS(sp)) {
+                    if (g_sp != min_rhs) {
                         priority_queue_.insert(sp, calculateKey(sp));
                     }
                 }
             }
             priority_queue_.remove(s);
-            if (getG(s) != getRHS(s)) {
+            if (g_s != rhs_s) {
                 priority_queue_.insert(s, calculateKey(s));
             }
         }
@@ -249,6 +258,78 @@ int FieldDPlanner::computeShortestPath() {
     std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
     return num_nodes_expanded;
 }
+#else
+int FieldDPlanner::computeShortestPath() {
+    // if the start node is occupied, return immediately. No path exists
+    if (node_grid_.getValWithConfigurationSpace(node_grid_.start_.getIndex()) == INFINITY) {
+        std::cerr << "Start node occupied. No path is possible." << std::endl; //FIXME test
+        return 0;
+    }
+
+    int expanded = 0;
+    while (((priority_queue_.topKey() < calculateKey(node_grid_.start_)) ||
+        (std::fabs(getRHS(node_grid_.start_) - getG(node_grid_.start_)) > 1e-5)) &&
+        (!priority_queue_.empty())) {
+        Node top_node = priority_queue_.topNode();
+        priority_queue_.pop();
+        expanded++;
+
+        if (getG(top_node) > getRHS(top_node)) {
+            // locally overconsistent case. This node is now more favorable.
+            // make node locally consistent by setting g = rhs and propagate
+            // changes to neighboring nodes
+            insert_or_assign(top_node, getRHS(top_node), getRHS(top_node));
+            for (Node nbr : node_grid_.neighbors(top_node))
+                updateNode(nbr);
+        } else {
+            // locally underconsistent case. This node is now less favorable.
+            // make node locally consistent or overconsistent by setting g = inf
+            // and propagate changes to {neighbors} U {top_node}
+            insert_or_assign(top_node, INFINITY, getRHS(top_node));
+            for (Node nbr : node_grid_.neighbors(top_node))
+                updateNode(nbr);
+            updateNode(top_node);
+        }
+    }
+    num_nodes_expanded = expanded;
+    std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
+    return num_nodes_expanded;
+}
+
+void FieldDPlanner::updateNode(const Node &s) {
+    // s never visited before, add to unordered map with g(s) = rhs(s) = inf
+    if (expanded_map_.find(s) == expanded_map_.end()) {
+        insert_or_assign(s, INFINITY, INFINITY);
+    } else {
+        /**
+        looks for a node in the priority queue and removes it if found
+        same as calling: if priority_queue_.contains(s) priority_queue_.remove(s);
+        */
+        priority_queue_.remove(s);
+    }
+
+    // update rhs value of Node s
+    if (s != node_grid_.goal_) {
+        float min_rhs = INFINITY;
+        float dummy;
+        for (auto connbr : node_grid_.consecutiveNeighbors(s))
+            //min_rhs = std::min(min_rhs, this->computeCost(s, std::get<0>(connbr), std::get<1>(connbr)).cost);
+            min_rhs = std::min(min_rhs,
+                               computeOptimalCellTraversalFromCorner(s,
+                                                                     std::get<0>(connbr),
+                                                                     std::get<1>(connbr),
+                                                                     dummy)
+                                   .second);;
+
+        insert_or_assign(s, getG(s), min_rhs);
+    }
+
+    // insert node into priority queue if it is locally inconsistent
+    if (getG(s) != getRHS(s)) {
+        priority_queue_.insert(s, calculateKey(s));
+    }
+}
+#endif
 
 int FieldDPlanner::updateNodesAroundUpdatedCells() {
     std::unordered_set<Node> to_update;
@@ -696,12 +777,15 @@ bool FieldDPlanner::isWithinRangeOfGoal(const Position &p) {
     return distance_to_goal <= goal_radius;
 }
 
-void FieldDPlanner::insert_or_assign(Node s, float g, float rhs) {
+void FieldDPlanner::insert_or_assign(const Node& s, float g, float rhs) {
     // re-assigns value of node in unordered map or inserts new entry
-    if (expanded_map_.find(s) != expanded_map_.end())
-        expanded_map_.erase(s);
-
-    expanded_map_.insert(std::make_pair(s, std::make_tuple(g, rhs)));
+    auto it = expanded_map_.find(s);
+    if (it != expanded_map_.end()){
+        std::get<0>(it->second) = g;
+        std::get<1>(it->second) = rhs;
+    } else{
+        expanded_map_.emplace(s, std::make_tuple(g, rhs));
+    }
 }
 
 float FieldDPlanner::getG(const Node &s) {
