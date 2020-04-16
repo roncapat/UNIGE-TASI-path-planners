@@ -354,9 +354,6 @@ void FieldDPlanner::constructOptimalPath() {
     total_cost = 0;
     total_dist = 0;
 
-    Position curr_pos(node_grid_.start_);
-    path_.push_back(curr_pos);
-
     float min_cost;
     path_additions pa;
 
@@ -364,16 +361,24 @@ void FieldDPlanner::constructOptimalPath() {
     // TODO do something better than this sh*t
     int max_steps = static_cast<int>(20000.00f / (this->node_grid_.resolution_));
 
-    float step_cost;
+    float step_cost, step_dist;
+    Position start_pos(node_grid_.start_);
+    Position *last = &start_pos;
+    path_.push_back(start_pos);
     do {
         // move one step and calculate the optimal path additions
-        pa = getPathAdditions(curr_pos, lookahead, step_cost);
+        pa = getPathAdditions(*last, lookahead, step_cost);
         path_.insert(path_.end(), pa.first.begin(), pa.first.end());
         min_cost = pa.second;
+        step_dist = std::hypot(last->x - pa.first.begin()->x, last->y - pa.first.begin()->y);
+        for (auto p = pa.first.begin(); p < pa.first.end() - 1; ++p) {
+            step_dist += std::hypot(p->x - (p + 1)->x, p->y - (p + 1)->y);
+        }
         total_cost += step_cost;
-        curr_pos = path_.back();
+        total_dist += step_dist;
         curr_step += 1;
-    } while (!isWithinRangeOfGoal(curr_pos) && (min_cost != INFINITY) &&
+        last = &path_.back();
+    } while (!isWithinRangeOfGoal(*last) && (min_cost != INFINITY) &&
         (curr_step < max_steps));
 
     if (min_cost == INFINITY) {
@@ -384,9 +389,6 @@ void FieldDPlanner::constructOptimalPath() {
         path_.clear();
     }
 
-    for (auto p = path_.begin(); p < path_.end() - 1; ++p) {
-        total_dist += std::hypot(p->x - (p + 1)->x, p->y - (p + 1)->y);
-    }
     std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
 }
 
@@ -821,11 +823,8 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
 }
 
 bool FieldDPlanner::isWithinRangeOfGoal(const Position &p) {
-    int x, y;
-    std::tie(x, y) = node_grid_.goal_.getIndex();
-    float distance_to_goal = std::hypot(x - p.x, y - p.y);
-    float goal_radius = goal_dist_ / node_grid_.resolution_;
-    return distance_to_goal <= goal_radius;
+    auto [x, y] = node_grid_.goal_.getIndex();
+    return x==p.x && y==p.y;
 }
 
 void FieldDPlanner::insert_or_assign(const Node &s, float g, float rhs) {

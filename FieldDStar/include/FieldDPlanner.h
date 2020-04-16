@@ -95,7 +95,7 @@ class FieldDPlanner {
   // launch parameters
   double maximum_distance_ = 100000;  // maximum distance to goal node before warning messages spit out
   double configuration_space_ = 1;    // configuration space
-  double goal_range_ = 1;             // distance from goal at which a node is considered the goal
+  double goal_range_ = 0;             // distance from goal at which a node is considered the goal
   bool follow_old_path_ = true;       // follow the previously generated path if no optimal path currently exists
   bool lookahead = true;
   int optimization_lvl = 1;

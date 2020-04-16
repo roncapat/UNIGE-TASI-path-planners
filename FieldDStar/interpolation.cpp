@@ -309,7 +309,7 @@ float cost(TraversalParams &t) {
 }
 
 float stepcost(TraversalParams &t) {
-    RETURN_CHECK_POSITIVE_LIMITED(HYPOT(t.q, 1) * t.c);
+    RETURN_CHECK_POSITIVE_LIMITED(t.c * HYPOT(1, 1 - t.q));
 }
 
 bool cond(TraversalParams &) {
@@ -330,7 +330,7 @@ float cost(TraversalParams &t) {
 }
 
 float stepcost(TraversalParams &t) {
-    RETURN_CHECK_POSITIVE_LIMITED(HYPOT(1, 1 - t.p) * t.c);
+    RETURN_CHECK_POSITIVE_LIMITED(t.c * HYPOT(1 - t.p, 1));
 }
 
 bool cond(TraversalParams &) {

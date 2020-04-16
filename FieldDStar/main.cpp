@@ -167,7 +167,7 @@ int main(int _argc, char **_argv) {
     infofile << ",";
     infofile << "\"nodes_expanded\":" << planner.num_nodes_expanded;
     infofile << ",";
-    infofile << "\"step_time\":" << time_ms;
+    infofile << "\"step_time\":" << time_ms+time_us/1000.0f;
     infofile << ",";
     infofile << "\"path_length\":" << g_length;
     infofile << ",";

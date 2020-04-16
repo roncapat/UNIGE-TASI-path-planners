@@ -5,5 +5,5 @@ New waypoint received. Search Problem Goal = [2, 10]. Distance: 25m.
 Initializing Search...
 0 nodes updated
 918 nodes expanded
-Found path. Cost: 71.7132 Distance: 71.7679
-Step time = 10.55
+Found path. Cost: 71.7679 Distance: 71.7679
+Step time = 10.639

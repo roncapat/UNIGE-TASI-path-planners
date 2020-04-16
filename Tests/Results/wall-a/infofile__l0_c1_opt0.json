@@ -1,1 +1,1 @@
-{"planner_cspace":1,"planner_opt_lvl":0,"planner_lookahead":0,"map_size":2400,"map_width":60,"map_height":40,"map_avg":1,"map_min":1,"map_max":1,"map_start_x":27,"map_start_y":10,"map_goal_x":2,"map_goal_y":10,"nodes_expanded":914,"step_time":20,"path_length":71.7568,"path_cost":71.7021}
+{"planner_cspace":1,"planner_opt_lvl":0,"planner_lookahead":0,"map_size":2400,"map_width":60,"map_height":40,"map_avg":1,"map_min":1,"map_max":1,"map_start_x":27,"map_start_y":10,"map_goal_x":2,"map_goal_y":10,"nodes_expanded":914,"step_time":40.217,"path_length":71.7568,"path_cost":71.7568}
