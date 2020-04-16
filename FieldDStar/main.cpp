@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include <iomanip>
 #include "FieldDPlanner.h"
 #include "bitmap/BMP.h"
 #include "Graph.h"
@@ -12,11 +13,15 @@ void poses_cb(std::vector<Pose> poses, float length, float cost) {
     std::ofstream logfile;
     std::string filename(argv[7]);
     logfile.open(filename);
-    logfile << "{\"poses\": [";
-    for (auto pose : poses) {
-        logfile << "[" << std::to_string(pose.x)
-                << ", " << std::to_string(pose.y)
-                << ", " << std::to_string(pose.orientation)
+    const size_t bufsize = 256*1024;
+    char buf[bufsize];
+    logfile.rdbuf()->pubsetbuf(buf, bufsize);
+    logfile << std::setprecision(2);
+    logfile << "{\"poses\":[";
+    for (const auto &pose : poses) {
+        logfile << "[" << pose.x
+                << "," << pose.y
+                << "," << pose.orientation
                 << "],";
     }
     logfile.seekp(-1, std::ios::cur);
@@ -29,14 +34,17 @@ void expanded_cb(std::tuple<std::vector<std::tuple<int, int, float>>, int, int> 
     std::ofstream logfile;
     std::string filename(argv[8]);
     logfile.open(filename);
-    logfile << "{\"num_expanded\": " << std::get<1>(exp_info)
-            << ", \"num_updated\": " << std::get<2>(exp_info)
-            << ", \"expanded\": [";
-    for (auto node : std::get<0>(exp_info)) {
-        logfile << "[" << std::to_string(std::get<0>(node))
-                << ", " << std::to_string(std::get<1>(node))
-                << ", "
-                << std::to_string(std::get<2>(node) == std::numeric_limits<float>::infinity() ? -1 : std::get<2>(node))
+    const size_t bufsize = 256*1024;
+    char buf[bufsize];
+    logfile.rdbuf()->pubsetbuf(buf, bufsize);
+    logfile << std::setprecision(2);
+    logfile << "{\"num_expanded\":" << std::get<1>(exp_info)
+            << ",\"num_updated\":" << std::get<2>(exp_info)
+            << ",\"expanded\":[";
+    for (const auto &node : std::get<0>(exp_info)) {
+        logfile << "[" << std::get<0>(node)
+                << "," << std::get<1>(node)
+                << "," << ((std::get<2>(node) == std::numeric_limits<float>::infinity()) ? -1 : std::get<2>(node))
                 << "],";
     }
     logfile.seekp(-1, std::ios::cur);
@@ -89,14 +97,14 @@ int main(int _argc, char **_argv) {
     int count = 0, min = 254, max = 0;
     for (auto p = map.dataptr.get(); p < (map.dataptr.get() + map.size); ++p) {
         if (*p < 255) {
-            avg += (float)*p;
+            avg += (float) *p;
             ++count;
             if (*p < min) min = *p;
             if (*p > max) max = *p;
         }
     }
-    avg /= (float)count;
-    half = (float)(max - min) / 2;
+    avg /= (float) count;
+    half = (float) (max - min) / 2;
     std::cout << "Average traversability: " << avg << std::endl;
     std::cout << "Minimum traversability: " << min << std::endl;
     std::cout << "Maximum traversability: " << max << std::endl;
@@ -118,7 +126,8 @@ int main(int _argc, char **_argv) {
     planner.step();
     auto end = std::chrono::steady_clock::now();
 
-    std::cout << "Step time = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " [ms]" << std::endl;
+    std::cout << "Step time = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " [ms]"
+              << std::endl;
 
     #ifdef FDSTAR_SHOW_RESULT
     std::string cmd = "python3 plot_path_gui.py ";

@@ -302,6 +302,7 @@ class FieldDPlanner {
   bool initialize_search = true;  // set to true if the search problem must be initialized
   std::pair<float, float> getBC(TraversalParams &t);
   bool consistent(const Node &s);
+  float computeOptimalCost(const Position &p, const Position &p_a, const Position &p_b);
 };
 
 #endif
