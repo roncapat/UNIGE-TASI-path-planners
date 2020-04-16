@@ -10,11 +10,6 @@ ENDIF (NOT CMAKE_BUILD_TYPE)
 
 message("Build type: ${CMAKE_BUILD_TYPE}")
 
-IF (OPTIMIZED_CORE MATCHES 1)
-    add_compile_options(-DOPTIMIZED_CORE)
-    message("Using optimized core algorithm")
-ENDIF (OPTIMIZED_CORE MATCHES 1)
-
 IF (CMAKE_BUILD_TYPE MATCHES Release)
     add_compile_options(-march=native -mtune=native)
 ENDIF (CMAKE_BUILD_TYPE MATCHES Release)

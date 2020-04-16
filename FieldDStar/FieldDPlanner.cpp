@@ -34,19 +34,16 @@ int FieldDPlanner::step() {
 
     // only update the graph if nodes have been updated
     if ((num_nodes_updated > 0) or initialize_search) {
-        computeShortestPath();
+        if (optimization_lvl == 0) {
+            computeShortestPath_0();
+        } else {
+            computeShortestPath_1();
+        }
     } else {
         num_nodes_expanded = 0;
     }
 
-    if (expanded_cb) {
-        publish_expanded_set();
-    }
-
-    if (poses_cb) {
-        constructOptimalPath();
-        publish_path();
-    }
+    constructOptimalPath();
     initialize_search = false;
     return LOOP_OK;
 }
@@ -174,8 +171,7 @@ void FieldDPlanner::initializeSearch() {
     priority_queue_.insert(node_grid_.goal_, calculateKey(node_grid_.goal_));
 }
 
-#ifdef OPTIMIZED_CORE
-int FieldDPlanner::computeShortestPath() {
+int FieldDPlanner::computeShortestPath_1() {
     float dummy, cost1, cost2, g_sp, rhs_sp, rhs_s, g_s;
     Node cn, ccn;
 
@@ -258,8 +254,8 @@ int FieldDPlanner::computeShortestPath() {
     std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
     return num_nodes_expanded;
 }
-#else
-int FieldDPlanner::computeShortestPath() {
+
+int FieldDPlanner::computeShortestPath_0() {
     // if the start node is occupied, return immediately. No path exists
     if (node_grid_.getValWithConfigurationSpace(node_grid_.start_.getIndex()) == INFINITY) {
         std::cerr << "Start node occupied. No path is possible." << std::endl; //FIXME test
@@ -280,15 +276,15 @@ int FieldDPlanner::computeShortestPath() {
             // changes to neighboring nodes
             insert_or_assign(top_node, getRHS(top_node), getRHS(top_node));
             for (Node nbr : node_grid_.neighbors(top_node))
-                updateNode(nbr);
+                updateNode_0(nbr);
         } else {
             // locally underconsistent case. This node is now less favorable.
             // make node locally consistent or overconsistent by setting g = inf
             // and propagate changes to {neighbors} U {top_node}
             insert_or_assign(top_node, INFINITY, getRHS(top_node));
             for (Node nbr : node_grid_.neighbors(top_node))
-                updateNode(nbr);
-            updateNode(top_node);
+                updateNode_0(nbr);
+            updateNode_0(top_node);
         }
     }
     num_nodes_expanded = expanded;
@@ -296,7 +292,7 @@ int FieldDPlanner::computeShortestPath() {
     return num_nodes_expanded;
 }
 
-void FieldDPlanner::updateNode(const Node &s) {
+void FieldDPlanner::updateNode_0(const Node &s) {
     // s never visited before, add to unordered map with g(s) = rhs(s) = inf
     if (expanded_map_.find(s) == expanded_map_.end()) {
         insert_or_assign(s, INFINITY, INFINITY);
@@ -329,7 +325,6 @@ void FieldDPlanner::updateNode(const Node &s) {
         priority_queue_.insert(s, calculateKey(s));
     }
 }
-#endif
 
 int FieldDPlanner::updateNodesAroundUpdatedCells() {
     std::unordered_set<Node> to_update;
@@ -427,8 +422,8 @@ std::pair<float, float> FieldDPlanner::getBC(TraversalParams &t) {
 }
 
 float FieldDPlanner::computeOptimalCost(const Position &p,
-                                                                const Position &p_a,
-                                                                const Position &p_b) {
+                                        const Position &p_a,
+                                        const Position &p_b) {
     std::vector<Position> positions;
     float min_cost;
 

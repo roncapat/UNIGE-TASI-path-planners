@@ -85,10 +85,10 @@ class FieldDPlanner {
 #define LOOP_FAILURE_NO_GOAL -2
   int step();
 
-  void (*poses_cb)(std::vector<Pose>, float, float);
-  void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>>, int, int>);
-  void set_poses_cb(void (*poses_cb)(std::vector<Pose>, float, float)) { this->poses_cb = poses_cb; };
-  void set_expanded_cb(void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>>, int, int>)) {
+  void (*poses_cb)(std::vector<Pose>&, float, float);
+  void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>>&, int, int>);
+  void set_poses_cb(void (*poses_cb)(std::vector<Pose>&, float, float)) { this->poses_cb = poses_cb; };
+  void set_expanded_cb(void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>>&, int, int>)) {
       this->expanded_cb = expanded_cb;
   };
 
@@ -98,9 +98,12 @@ class FieldDPlanner {
   double goal_range_ = 1;             // distance from goal at which a node is considered the goal
   bool follow_old_path_ = true;       // follow the previously generated path if no optimal path currently exists
   bool lookahead = true;
+  int optimization_lvl = 1;
   bool first_run_trick = true;        // Zheng trick from Update-Reducing Field-D*
   float occupancy_threshold_ = 0.5;   // maximum occupancy probability before a cell has infinite traversal cost
   float heuristic_multiplier = 255;
+  unsigned long num_nodes_updated = 0;
+  unsigned long num_nodes_expanded = 0;
 
   MapPtr map_;  // Most up-to-date map
   int x_initial_, y_initial_;   // Index for initial x and y location in search space
@@ -197,9 +200,7 @@ class FieldDPlanner {
 
   @param[in] s Node to update
   */
-#ifndef OPTIMIZED_CORE
-  void updateNode(const Node &s);
-#endif
+  void updateNode_0(const Node &s);
   /**
   Expands nodes in the priority queue until optimal path to goal node has been
   found. The first search is equivalent to an A* heuristic search. All calls
@@ -208,7 +209,8 @@ class FieldDPlanner {
 
   @return number of nodes expanded in graph search
   */
-  int computeShortestPath();
+  int computeShortestPath_0();
+  int computeShortestPath_1();
   /**
   Updates nodes around cells whose occupancy values have changed. Takes into
   account the cspace of the robot. This step is performed after the robot
@@ -297,8 +299,6 @@ class FieldDPlanner {
   // priority queue contains all locally inconsistent nodes whose values
   // need updating
   PriorityQueue priority_queue_;
-  unsigned long num_nodes_updated = 0;
-  unsigned long num_nodes_expanded = 0;
   bool initialize_search = true;  // set to true if the search problem must be initialized
   std::pair<float, float> getBC(TraversalParams &t);
   bool consistent(const Node &s);

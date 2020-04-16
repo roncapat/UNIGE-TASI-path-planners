@@ -9,17 +9,12 @@ out_dir="$script_dir/Results"
 planner="$build_dir/field_d_planner"
 planner_opt="$build_opt_dir/field_d_planner"
 postprocessor="$src_dir/plot_path.py"
+tablebuilder="$src_dir/build_md_table.py"
 
 rm -rf "$build_dir"
 mkdir "$build_dir"
 cd "$build_dir"
 cmake -G "Unix Makefiles" --target field_d_planner "$src_dir" | tee build.log
-make -j8 | tee -a build.log
-
-rm -rf "$build_opt_dir"
-mkdir "$build_opt_dir"
-cd "$build_opt_dir"
-cmake -G "Unix Makefiles" --target field_d_planner -DOPTIMIZED_CORE=1 "$src_dir" | tee build.log
 make -j8 | tee -a build.log
 
 rm -rf "$out_dir"
@@ -41,32 +36,50 @@ for f in $files; do
   echo "params: $params"
   mkdir "$name"
   cd "$name"
-  type="__lookahead_off"
-  # shellcheck disable=SC2086
-  "$planner" "$f" $params 0 "logfile$type.json" "dbgfile$type.json" &> "planner$type.log"
+  type="__l0_c0_opt0"
+  "$planner" "$f" $params 0 0 0 "logfile$type.json" "dbgfile$type.json" "infofile$type.json" &> "planner$type.log"
   python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
-  type="__lookahead_on"
-  # shellcheck disable=SC2086
-  "$planner" "$f" $params 1 "logfile$type.json" "dbgfile$type.json" &> "planner$type.log"
-  python3 "$postprocessor" "$f" "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
-  type="__lookahead_off_optimized"
-  # shellcheck disable=SC2086
-  "$planner_opt" "$f" $params 0 "logfile$type.json" "dbgfile$type.json" &> "planner$type.log"
+  type="__l0_c0_opt1"
+  "$planner" "$f" $params 0 0 1 "logfile$type.json" "dbgfile$type.json" "infofile$type.json" &> "planner$type.log"
   python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
-  type="__lookahead_on_optimized"
-  # shellcheck disable=SC2086
-  "$planner_opt" "$f" $params 1 "logfile$type.json" "dbgfile$type.json" &> "planner$type.log"
-  python3 "$postprocessor" "$f" "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
-  IFS=' '
+  type="__l0_c1_opt0"
+  "$planner" "$f" $params 0 1 0 "logfile$type.json" "dbgfile$type.json" "infofile$type.json" &> "planner$type.log"
+  python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
+  type="__l0_c1_opt1"
+  "$planner" "$f" $params 0 1 1 "logfile$type.json" "dbgfile$type.json" "infofile$type.json" &> "planner$type.log"
+  python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
+  type="__l1_c0_opt0"
+  "$planner" "$f" $params 1 0 0 "logfile$type.json" "dbgfile$type.json" "infofile$type.json" &> "planner$type.log"
+  python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
+  type="__l1_c0_opt1"
+  "$planner" "$f" $params 1 0 1 "logfile$type.json" "dbgfile$type.json" "infofile$type.json" &> "planner$type.log"
+  python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
+  type="__l1_c1_opt0"
+  "$planner" "$f" $params 1 1 0 "logfile$type.json" "dbgfile$type.json" "infofile$type.json" &> "planner$type.log"
+  python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
+  type="__l1_c1_opt1"
+  "$planner" "$f" $params 1 1 1 "logfile$type.json" "dbgfile$type.json" "infofile$type.json" &> "planner$type.log"
+  python3 "$postprocessor" $f "logfile$type.json" "dbgfile$type.json" "result$type.jpg"
+  python3 "$tablebuilder" info >> readme.md
+
   echo "
-  # Lookahead OFF
-  ![Lookahead OFF](result__lookahead_off.jpg)
-  # Lookahead ON
-  ![Lookahead ON](result__lookahead_on.jpg)
-  # Lookahead OFF (optimized)
-  ![Lookahead OFF](result__lookahead_off_optimized.jpg)
-  # Lookahead ON (optimized)
-  ![Lookahead ON](result__lookahead_on_optimized.jpg)
-  " > readme.md
+  # Lookahead OFF | C-space 0 | Basic D-Lite version
+  ![000](result__l0_c0_opt0.jpg)
+  # Lookahead OFF | C-space 0 | Initial optimized version
+  ![001](result__l0_c0_opt1.jpg)
+  # Lookahead OFF | C-space 1 | Basic D-Lite version
+  ![010](result__l0_c1_opt0.jpg)
+  # Lookahead OFF | C-space 1 | Initial optimized version
+  ![011](result__l0_c1_opt1.jpg)
+  # Lookahead ON | C-space 0 | Basic D-Lite version
+  ![100](result__l1_c0_opt0.jpg)
+  # Lookahead ON | C-space 0 | Initial optimized version
+  ![101](result__l1_c0_opt1.jpg)
+  # Lookahead ON | C-space 1 | Basic D-Lite version
+  ![110](result__l1_c1_opt0.jpg)
+  # Lookahead ON | C-space 1 | Initial optimized version
+  ![111](result__l1_c1_opt1.jpg)
+
+  " >> readme.md
   cd ..
 done
