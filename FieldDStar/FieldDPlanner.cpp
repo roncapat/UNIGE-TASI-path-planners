@@ -20,11 +20,8 @@ int FieldDPlanner::step() {
     // don't plan unless a goal node has been set
     if (not goal_set_) return LOOP_FAILURE_NO_GOAL;
 
-    if (initialize_search) {
+    if (initialize_search or goal_changed_) {
         std::cout << "Initializing Search..." << std::endl;
-        initializeSearch();
-    } else if (goal_changed_) {
-        std::cout << "New Goal Received. Initializing Search..." << std::endl;
         goal_changed_ = false;
         initializeSearch();
     }
@@ -362,7 +359,6 @@ void FieldDPlanner::constructOptimalPath() {
     int max_steps = static_cast<int>(20000.00f / (this->node_grid_.resolution_));
 
     float step_cost, step_dist;
-    Position start_pos(node_grid_.start_);
     Position *last = &start_pos;
     path_.push_back(start_pos);
     do {

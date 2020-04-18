@@ -13,3 +13,6 @@ gen
 Makefile
 doc/
 /venv/
+*.json
+*.jpg
+*.jpeg

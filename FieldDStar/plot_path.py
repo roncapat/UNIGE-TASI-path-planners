@@ -9,7 +9,7 @@ import numpy
 def plot_path():
     if len(sys.argv) < 5:
 
-        sys.stderr.write("Usage:\n\t %s <mapfile.bmp> <logfile.json> <dbgfile.json> <outfile.bmp>\n" % sys.argv[0])
+        sys.stderr.write("Usage:\n\t %s <mapfile.bmp> <logfile.json> <dbgfile.json> <outfile.jpg>\n" % sys.argv[0])
         exit()
 
     mult = 21

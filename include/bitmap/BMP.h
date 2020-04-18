@@ -91,7 +91,7 @@ struct BMP {
               throw std::runtime_error("The program can treat only 8-bit BMP images");
 
           input.seekg(file_header.offset_data, std::ifstream::beg);
-          dataptr = std::move(std::shared_ptr<uint8_t[]>(new uint8_t[size], std::default_delete<uint8_t[]>()));
+          dataptr = std::shared_ptr<uint8_t[]>(new uint8_t[size], std::default_delete<uint8_t[]>());
           for (int y = height - 1; y >= 0; y--) {
               input.read((char *) dataptr.get() + y * width, width);
               input.ignore(padding);

@@ -15,7 +15,8 @@ IF (CMAKE_BUILD_TYPE MATCHES Release)
 ENDIF (CMAKE_BUILD_TYPE MATCHES Release)
 
 IF (CMAKE_BUILD_TYPE MATCHES Debug)
-    add_compile_options(-DVERBOSE_EXTRACTION --coverage)
+    #add_compile_options(-DVERBOSE_EXTRACTION)
+    add_compile_options(--coverage)
 ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
 include_directories(include)

@@ -119,6 +119,11 @@ class FieldDPlanner {
   */
   void publish_expanded_set();
 
+  Position start_pos;
+  void set_start_position(const Position& pos){
+      node_grid_.start_ = Node(std::round(pos.x), std::round(pos.y));
+      start_pos = pos;
+  }
   /**
     Set the current map to be used by the D* Lite search problem. The initial
     map is used to perform the first search through the occupancy grid (equivalent
