@@ -94,6 +94,12 @@ class Graph {
   Node start_;  // start node in the search problem
   Node goal_;   // goal node in the search problem
 
+
+  // k_m, as defined in the D* lite paper, keeps track of the robot's movement
+  // in the grid space. Serves to increase each new node's key value by k_m as
+  // to maintain lower bounds in the priority queue
+  float key_modifier_ = 0;
+
   // Updated cell information is used to update nodes that lie on the 4 corners of
   // each updated cell. This is reset each time updateGraph is called. Each element
   // is composed of an <x,y> tuple representing the cell.
@@ -113,11 +119,6 @@ class Graph {
   float DIAGONAL_DISTANCE = sqrtf(2.0f);
   float EDGE_DISTANCE = 1.0f;
   float TRAVERSAL_COST = 1.0f;
-
-  // k_m, as defined in the D* lite paper, keeps track of the robot's movement
-  // in the grid space. Serves to increase each new node's key value by k_m as
-  // to maintain lower bounds in the priority queue
-  float key_modifier_ = 0;
 
   /**
   Sets a value for the cell's occupancy threshold. This floating point,
@@ -149,13 +150,7 @@ class Graph {
   @param[in] msg map to load parameters from
   */
   void initializeGraph(const MapPtr &msg);
-  /**
-  Loads a new occupancy grid into the graph object. This is used to update
-  all nodes and vertices with the updated path costs.
 
-  @param[in] map cv ptr containing a mono8-encoded version of the occupancy grid
-  */
-  void updateGraph(MapPtr &msg);
   /**
   Determines whether or not a Node is valid. The only condition that would
   render a node invalid is if it falls out of the grid's boundary.
@@ -307,6 +302,7 @@ class Graph {
 
  private:
   float occupancy_threshold_uchar_ = 178.5f;
+  void updateGraph(std::shared_ptr<uint8_t> patch, int x, int y, int w, int h);
 };
 
 #endif  // GRAPHSEARCH_H

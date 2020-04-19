@@ -41,7 +41,7 @@ p_out.write(struct.pack('<b', 0))  # reply with 0
 p_out.flush()
 
 img_h = cv2.imread(sys.argv[1], cv2.IMREAD_GRAYSCALE)
-img_l = cv2.GaussianBlur(img_h, (7, 7), 0)
+img_l = cv2.GaussianBlur(img_h, (11, 11), 0)
 
 data_h = 255 - img_h
 data_h = data_h + (data_h == 0)
@@ -58,6 +58,8 @@ p_out.flush()
 p_out.write(data_l.tobytes())
 p_out.flush()
 
+cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+cv2.resizeWindow('image', 1000, 1000)
 while True:
     ack = struct.unpack('b', p_in.read(1))[0]  # wait for 1
     if ack == 2:
@@ -70,7 +72,30 @@ while True:
     p_out.write(struct.pack('<b', 1))  # reply with 1
     p_out.flush()
 
-p_out.write(struct.pack('<b', 2))  # reply with 1
+    radius = 10
+    center = (int(round(pos_x)), int(round(pos_y)))
+    top = center[1] - radius
+    bottom = center[1] + radius
+    left = center[0] - radius
+    right = center[0] + radius
+    top_left = (top, left)
+    bottom_right = (bottom, right)
+    data_rect_l = data_l[(top - 1):bottom, (left - 1):right].copy()
+    data_rect_h = data_h[(top - 1):bottom, (left - 1):right].copy()
+    data_rect_m = data_rect_h.copy()
+    cv2.circle(data_rect_l, (radius, radius), radius, 0, cv2.FILLED)
+    cv2.circle(data_rect_m, (radius, radius), radius, 0, cv2.FILLED)
+    patch = data_rect_h - data_rect_m + data_rect_l
+    data_l[(top - 1):bottom, (left - 1):right] = patch
+    display = data_l.copy()
+    cv2.circle(display, center, radius, 0)
+    cv2.circle(display, center, 2, 0, cv2.FILLED)
+    cv2.imshow("image", display)
+    cv2.waitKey(30)
+    #TODO send update patch to planner
+
+
+p_out.write(struct.pack('<b', 2))  # reply with 2
 p_out.flush()
 
 p.wait()

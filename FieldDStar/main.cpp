@@ -171,12 +171,16 @@ int main(int _argc, char **_argv) {
 
         if  (next_point.x==std::stoi(argv[4]) and next_point.y==std::stoi(argv[5]))
             break; //Goal reached
-        planner.set_start_position(next_point);
+        planner.set_start_position(next_point, true);
     }
 
     ack = 2;
     out_fifo.write((char *) &ack, 1);
     out_fifo.flush();
+    ack = -1;
+    while (ack != 2) {
+        in__fifo.read((char *) &ack, 1); //Wait for 2
+    }
 
     std::ofstream infofile;
     std::string filename(argv[11]);

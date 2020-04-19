@@ -85,10 +85,10 @@ class FieldDPlanner {
 #define LOOP_FAILURE_NO_GOAL -2
   int step();
 
-  void (*poses_cb)(std::vector<Pose>&, float, float);
-  void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>>&, int, int>);
-  void set_poses_cb(void (*poses_cb)(std::vector<Pose>&, float, float)) { this->poses_cb = poses_cb; };
-  void set_expanded_cb(void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>>&, int, int>)) {
+  void (*poses_cb)(std::vector<Pose> &, float, float);
+  void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>> &, int, int>);
+  void set_poses_cb(void (*poses_cb)(std::vector<Pose> &, float, float)) { this->poses_cb = poses_cb; };
+  void set_expanded_cb(void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>> &, int, int>)) {
       this->expanded_cb = expanded_cb;
   };
 
@@ -120,10 +120,14 @@ class FieldDPlanner {
   void publish_expanded_set();
 
   Position start_pos;
-  void set_start_position(const Position& pos){
+  void set_start_position(const Position &pos, bool update = false) {
       node_grid_.start_ = Node(std::round(pos.x), std::round(pos.y));
       start_pos = pos;
+      if (update)
+          node_grid_.key_modifier_ += std::hypot(pos.x - std::get<0>(node_grid_.start_.getIndex()),
+                                                 pos.y - std::get<1>(node_grid_.start_.getIndex()));
   }
+
   /**
     Set the current map to be used by the D* Lite search problem. The initial
     map is used to perform the first search through the occupancy grid (equivalent
@@ -282,7 +286,7 @@ class FieldDPlanner {
   @param[in] g g value for entry
   @param[in] rhs rhs value for entry
   */
-  void insert_or_assign(const Node& s, float g, float rhs);
+  void insert_or_assign(const Node &s, float g, float rhs);
   /**
   Returns g-value for a node s
 

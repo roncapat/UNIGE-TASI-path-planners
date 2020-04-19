@@ -30,48 +30,19 @@ void Graph::initializeGraph(const MapPtr &msg) {
     map_ = msg->image;
 }
 
-void Graph::updateGraph(MapPtr &msg) {
-    // Update the start position and key_modifier_
-    std::tuple<float, float> new_start(msg->x, msg->y);
-    std::tuple<float, float> old_start = this->start_.getIndex();
+//FIXME need check
+void Graph::updateGraph(std::shared_ptr<uint8_t> patch, int x, int y, int w, int h) {
+    assert(x >= 0);
+    assert(y >= 0);
+    assert(x + h < length_);
+    assert(y + w < width_);
+    updated_cells_.clear();  // clear the vector of cells that need updating
 
-    // update the key modifier value to account for the robot's new pos
-    this->key_modifier_ +=
-        std::hypot(std::get<0>(new_start) - std::get<0>(old_start), std::get<1>(new_start) - std::get<1>(old_start));
-    this->start_.setIndex(new_start);
-
-    this->updated_cells_.clear();  // clear the vector of cells that need updating
-
-    // get the most recently observed occupancy grid
-    auto curr_map = msg->image;
-
-    // gather the cells that need updating if the new map differs
-    if (!std::equal(map_.get(), map_.get() + size_, curr_map.get())) {
-        auto start_it = map_.get();
-
-        auto it_new = curr_map.get();
-        auto it_map = map_.get();
-
-        auto it_new_end = curr_map.get() + size_;
-        auto it_map_end = map_.get() + size_;
-
-        // if cells differ, get (x,y) index of occupancy grid cell
-        // and add it to the list of updated cells
-        while ((it_new != it_new_end) && (it_map != it_map_end)) {
-            auto curr_val = *it_new;
-            auto map_val = *it_map;
-            // store index of updated cell if occupancy grid values differ
-            if (curr_val != map_val) {
-                int pos = it_map - start_it;
-                int row = pos / (this->width_);
-                int col = pos % (this->width_);
-                this->updated_cells_.emplace_back(row, col);
-                // update the value of map_ with the value of the new map
-                *it_map = curr_val;
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            if (map_.get()[(i+x)*width_+(y+j)] != patch.get()[i*w+j]){
+                updated_cells_.emplace_back(x+i, y+j);
             }
-
-            it_new++;
-            it_map++;
         }
     }
 }

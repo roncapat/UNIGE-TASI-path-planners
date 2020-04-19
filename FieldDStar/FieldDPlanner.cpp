@@ -103,7 +103,7 @@ void FieldDPlanner::set_map(const MapPtr &msg) {
         node_grid_.initializeGraph(map_);
         initialize_graph_ = false;
     } else {
-        node_grid_.updateGraph(map_);
+        //node_grid_.updateGraph(map_); // FIXME
     }
 }
 
