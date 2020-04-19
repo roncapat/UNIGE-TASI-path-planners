@@ -60,6 +60,8 @@ p_out.flush()
 
 cv2.namedWindow('image', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('image', 1000, 1000)
+scale = 5
+out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (height * scale, width * scale))
 while True:
     ack = struct.unpack('b', p_in.read(1))[0]  # wait for 1
     if ack == 2:
@@ -87,14 +89,14 @@ while True:
     cv2.circle(data_rect_m, (radius, radius), radius, 0, cv2.FILLED)
     patch = data_rect_h - data_rect_m + data_rect_l
     data_l[(top - 1):bottom, (left - 1):right] = patch
-    scale = 5
-    display = cv2.resize(data_l, (height*scale, width*scale))
-    cv2.circle(display, (center[0]*scale, center[1]*scale), radius*scale, 0)
-    cv2.circle(display, (center[0]*scale, center[1]*scale), scale, 0, cv2.FILLED)
-    cv2.imshow("image", display)
-    cv2.waitKey(30)
-    #TODO send update patch to planner
-
+    frame = cv2.resize(data_l, (height * scale, width * scale))
+    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    cv2.circle(frame, (center[0] * scale, center[1] * scale), radius * scale, (0, 0, 0))
+    cv2.circle(frame, (center[0] * scale, center[1] * scale), scale, (100, 0, 100), cv2.FILLED)
+    cv2.imshow("image", frame)
+    out.write(frame)
+    cv2.waitKey(5)
+    # TODO send update patch to planner
 
 p_out.write(struct.pack('<b', 2))  # reply with 2
 p_out.flush()
@@ -104,5 +106,8 @@ p_in.close()
 p_out.close()
 os.remove(pipe_in)
 os.remove(pipe_out)
+
+out.release()
+
 p = subprocess.Popen(["python3", path + "/plot_path_gui.py", sys.argv[1], sys.argv[9], sys.argv[10], "result.jpg"])
 p.wait()
