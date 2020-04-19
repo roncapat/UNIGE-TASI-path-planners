@@ -87,9 +87,10 @@ while True:
     cv2.circle(data_rect_m, (radius, radius), radius, 0, cv2.FILLED)
     patch = data_rect_h - data_rect_m + data_rect_l
     data_l[(top - 1):bottom, (left - 1):right] = patch
-    display = data_l.copy()
-    cv2.circle(display, center, radius, 0)
-    cv2.circle(display, center, 2, 0, cv2.FILLED)
+    scale = 5
+    display = cv2.resize(data_l, (height*scale, width*scale))
+    cv2.circle(display, (center[0]*scale, center[1]*scale), radius*scale, 0)
+    cv2.circle(display, (center[0]*scale, center[1]*scale), scale, 0, cv2.FILLED)
     cv2.imshow("image", display)
     cv2.waitKey(30)
     #TODO send update patch to planner
