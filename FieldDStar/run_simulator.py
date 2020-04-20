@@ -74,21 +74,28 @@ while True:
     p_out.write(struct.pack('<b', 1))  # reply with 1
     p_out.flush()
 
-    radius = 10
+    radius = 15
     center = (int(round(pos_x)), int(round(pos_y)))
+    off_x = off_y = 0
     top = center[1] - radius
-    bottom = center[1] + radius
+    bottom = center[1] + radius + 1
     left = center[0] - radius
-    right = center[0] + radius
+    right = center[0] + radius + 1
+    if top < 0:
+        off_y = top
+        top = 0
+    if left < 0:
+        off_x = left
+        left = 0
     top_left = (top, left)
     bottom_right = (bottom, right)
-    data_rect_l = data_l[(top - 1):bottom, (left - 1):right].copy()
-    data_rect_h = data_h[(top - 1):bottom, (left - 1):right].copy()
+    data_rect_l = data_l[top:bottom, left:right].copy()
+    data_rect_h = data_h[top:bottom, left:right].copy()
     data_rect_m = data_rect_h.copy()
-    cv2.circle(data_rect_l, (radius, radius), radius, 0, cv2.FILLED)
-    cv2.circle(data_rect_m, (radius, radius), radius, 0, cv2.FILLED)
+    cv2.circle(data_rect_l, (radius + off_y, radius + off_x), radius, 0, cv2.FILLED)
+    cv2.circle(data_rect_m, (radius + off_y, radius + off_x), radius, 0, cv2.FILLED)
     patch = data_rect_h - data_rect_m + data_rect_l
-    data_l[(top - 1):bottom, (left - 1):right] = patch
+    data_l[top:bottom, left:right] = patch
     frame = cv2.resize(data_l, (height * scale, width * scale))
     frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
     cv2.circle(frame, (center[0] * scale, center[1] * scale), radius * scale, (0, 0, 0))
