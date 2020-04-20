@@ -6,6 +6,81 @@ import sys
 import cv2
 from plot_path import *
 
+
+# Takes a round region of data from data_h and pastes it in data_l
+# Returns a rectangular area with the patch to apply to data_l, and the
+# corresponding upper-left position and data ranges
+def round_patch_update(data_l, data_h, center, radius):
+    off_x = off_y = 0
+    top = center[1] - radius
+    bottom = center[1] + radius + 1
+    left = center[0] - radius
+    right = center[0] + radius + 1
+    if top < 0:
+        off_y = top
+        top = 0
+    if left < 0:
+        off_x = left
+        left = 0
+    print(off_x, off_y)
+    data_rect_l = data_l[top:bottom, left:right].copy()
+    data_rect_h = data_h[top:bottom, left:right].copy()
+    data_rect_m = data_rect_h.copy()
+    cv2.circle(data_rect_l, (radius + off_x, radius + off_y), radius, 0, cv2.FILLED)
+    cv2.circle(data_rect_m, (radius + off_x, radius + off_y), radius, 0, cv2.FILLED)
+    patch = data_rect_h - data_rect_m + data_rect_l
+    position = (top, left)
+    ranges = (slice(top, bottom), slice(left, right))
+    return (patch, position, ranges)
+
+
+def rmf(filename):
+    try:
+        os.remove(filename)
+    except OSError:
+        pass
+
+
+def get_byte(pipe):
+    return struct.unpack('b', pipe.read(1))[0]
+
+
+def wait_byte(pipe, val):
+    ack = None
+    while ack != val:
+        ack = struct.unpack('b', pipe.read(1))[0]  # wait for val
+
+
+def send_byte(pipe, val):
+    pipe.write(struct.pack('b', val))  # reply with 0
+    pipe.flush()
+
+
+def send_patch(pipe, data, pos):
+    pipe.write(struct.pack('<i', pos[0]))  # position
+    pipe.write(struct.pack('<i', pos[1]))
+    pipe.write(struct.pack('<i', data.shape[0]))  # size
+    pipe.write(struct.pack('<i', data.shape[1]))
+    pipe.write(data.tobytes())  # patch
+    pipe.flush()
+
+def send_map(pipe, data):
+    pipe.write(struct.pack('<i', data.shape[0]))  # size
+    pipe.write(struct.pack('<i', data.shape[1]))
+    pipe.write(data.tobytes())  # patch
+    pipe.flush()
+
+
+def simulation_data(img_h, filter_radius, low_res_penalty):
+    img_l = cv2.GaussianBlur(img_h, (filter_radius, filter_radius), 0)
+    _h_data = 255 - img_h
+    _h_data = _h_data + (_h_data == 0)
+    _l_data = 255 - img_l
+    _l_data = _l_data + (_l_data == 0)
+    _l_data = cv2.add(_l_data, low_res_penalty)
+    return _l_data, _h_data
+
+
 path = "/".join(os.path.abspath(__file__).split("/")[:-1])
 
 if len(sys.argv) < 11:
@@ -18,119 +93,63 @@ if len(sys.argv) < 11:
 pipe_out = os.path.abspath("map_pipe_in")
 pipe_in = os.path.abspath("map_pipe_out")
 
-try:
-    os.remove(pipe_in)
-except OSError:
-    pass
-
-try:
-    os.remove(pipe_out)
-except OSError:
-    pass
-
+rmf(pipe_out)
+rmf(pipe_in)
 os.mkfifo(pipe_out, 0o666)
 os.mkfifo(pipe_in, 0o666)
 
-mapfile = sys.argv[1]
-logfile = sys.argv[9]
-dbgfile = sys.argv[10]
-print(mapfile, logfile, dbgfile)
+[mapfile, logfile, dbgfile] = [sys.argv[i] for i in [1, 9, 10]]
 
-args = [path + "/../cmake-build-debug/FieldDStar/field_d_planner", *(sys.argv[1:]), pipe_out, pipe_in]
+args = [path + "/../cmake-build-release/FieldDStar/field_d_planner", *(sys.argv[1:]), pipe_out, pipe_in]
 p = subprocess.Popen(args)
 p_out = open(pipe_out, 'wb')
 p_in = open(pipe_in, 'rb')
-ack = None
-while ack != 0:
-    ack = struct.unpack('b', p_in.read(1))[0]  # wait for 0
-p_out.write(struct.pack('<b', 0))  # reply with 0
-p_out.flush()
+wait_byte(p_in, 0)
+send_byte(p_out, 0)
 
 img_h = cv2.imread(sys.argv[1], cv2.IMREAD_GRAYSCALE)
-img_l = cv2.GaussianBlur(img_h, (11, 11), 0)
-
-data_h = 255 - img_h
-data_h = data_h + (data_h == 0)
-
-data_l = 255 - img_l
-data_l = data_l + (data_l == 0)
-
+(data_l, data_h) = simulation_data(img_h, filter_radius=13, low_res_penalty=15)
 [height, width] = data_l.shape
 print("[SIMULATOR] Size: [%i, %i]" % (width, height))
-p_out.write(bytearray(struct.pack('<i', width)))
-p_out.flush()
-p_out.write(bytearray(struct.pack('<i', height)))
-p_out.flush()
-p_out.write(data_l.tobytes())
-p_out.flush()
+send_map(p_out, data_l)
 
 cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-cv2.resizeWindow('image', 1000, 1000)
+cv2.resizeWindow('image', 900, 900)
+cv2.moveWindow('image', 40,100)
 cv2.namedWindow('dbg', cv2.WINDOW_NORMAL)
-cv2.resizeWindow('dbg', 1000, 1000)
-cv2.namedWindow('patch', cv2.WINDOW_NORMAL)
-cv2.resizeWindow('patch', 400, 400)
+cv2.resizeWindow('dbg', 900, 900)
+cv2.moveWindow('dbg', 980,100)
 scale = 5
 out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (height * scale, width * scale))
 
-first_run = True
+wait_byte(p_in, 1)
 while True:
-    ack = struct.unpack('b', p_in.read(1))[0]  # wait for 1
-    if ack == 2:
-        break
-    if ack != 1:
-        raise AssertionError
     pos_x = struct.unpack('f', p_in.read(4))[0]
     pos_y = struct.unpack('f', p_in.read(4))[0]
     print("[SIMULATOR] New position: [%f, %f]" % (pos_x, pos_y))
 
-    if not first_run:
-        dbgview = plot_path(mapfile, logfile, dbgfile)
-        cv2.imshow("dbg", dbgview)
-    first_run = False
-
-    radius = 15
     center = (int(round(pos_y)), int(round(pos_x)))
-    off_x = off_y = 0
-    top = center[1] - radius
-    bottom = center[1] + radius + 1
-    left = center[0] - radius
-    right = center[0] + radius + 1
-    if top < 0:
-        off_y = top
-        top = 0
-    if left < 0:
-        off_x = left
-        left = 0
-    top_left = (top, left)
-    bottom_right = (bottom, right)
-    data_rect_l = data_l[top:bottom, left:right].copy()
-    data_rect_h = data_h[top:bottom, left:right].copy()
-    data_rect_m = data_rect_h.copy()
-    cv2.circle(data_rect_l, (radius + off_y, radius + off_x), radius, 0, cv2.FILLED)
-    cv2.circle(data_rect_m, (radius + off_y, radius + off_x), radius, 0, cv2.FILLED)
-    patch = data_rect_h - data_rect_m + data_rect_l
-    data_l[top:bottom, left:right] = patch
+    radius = 15
+    (p_data, p_pos, p_ranges) = round_patch_update(data_l, data_h, center, radius=15)
+    data_l[p_ranges[0], p_ranges[1]] = p_data
+    print("[SIMULATOR] New patch: position [%i, %i], shape [%i, %i]" % (
+        p_pos[0], p_pos[1], p_data.shape[1], p_data.shape[0]))
+    send_byte(p_out, 1)
+    send_patch(p_out, p_data, p_pos)
+
     frame = cv2.resize(data_l, (height * scale, width * scale))
     frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
     cv2.circle(frame, (center[0] * scale, center[1] * scale), radius * scale, (0, 0, 0))
     cv2.circle(frame, (center[0] * scale, center[1] * scale), scale, (100, 0, 100), cv2.FILLED)
     cv2.imshow("image", frame)
-    cv2.imshow("patch", patch)
     out.write(frame)
     cv2.waitKey(1)
-    print("[SIMULATOR] New patch: position [%i, %i], shape [%i, %i]" % (top, left, patch.shape[1], patch.shape[0]))
-    p_out.write(struct.pack('<b', 1))  # reply with 1
-    p_out.write(struct.pack('<i', top))  # position
-    p_out.write(struct.pack('<i', left))
-    p_out.write(struct.pack('<i', patch.shape[0]))  # size
-    p_out.write(struct.pack('<i', patch.shape[1]))
-    p_out.write(patch.tobytes())  # patch
-    p_out.flush()
+    if get_byte(p_in) == 2:
+        break
+    dbgview = plot_path(mapfile, logfile, dbgfile)
+    cv2.imshow("dbg", dbgview)
 
-
-p_out.write(struct.pack('<b', 2))  # reply with 2
-p_out.flush()
+send_byte(p_out, 2)
 
 p.wait()
 p_in.close()
