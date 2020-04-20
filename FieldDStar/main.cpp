@@ -147,7 +147,6 @@ int main(int _argc, char **_argv) {
     float time;
 
     while(not goal_reached) {
-
         std::cout << "[PLANNER]   New position: [" << next_point.x << ", " << next_point.y << "]" << std::endl;
         ack = 1;
         out_fifo.write((char *) &ack, 1);

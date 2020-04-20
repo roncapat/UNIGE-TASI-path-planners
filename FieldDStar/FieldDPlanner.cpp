@@ -330,24 +330,24 @@ int FieldDPlanner::updateNodesAroundUpdatedCells() {
     }
 
     float cost=INFINITY, min_rhs=INFINITY;
-    for (Node sp : to_update) {
-        if (expanded_map_.find(sp) == expanded_map_.end()) {
-            insert_or_assign(sp, INFINITY, INFINITY);
+    for (Node s : to_update) {
+        if (expanded_map_.find(s) == expanded_map_.end()) {
+            insert_or_assign(s, INFINITY, INFINITY);
         }
-        if (sp == node_grid_.goal_) continue;
-        for (const auto &spp : node_grid_.neighbors(sp)) {
-            auto ccn = node_grid_.counterClockwiseNeighbor(sp, spp);
+        if (s == node_grid_.goal_) continue;
+        for (const auto &sp : node_grid_.neighbors(s)) {
+            auto ccn = node_grid_.counterClockwiseNeighbor(s, sp);
             if (ccn.valid) {
-                cost = computeOptimalCost(sp, spp, ccn);
+                cost = computeOptimalCost(s, sp, ccn);
                 min_rhs = std::min(min_rhs, cost);
-                if (min_rhs == cost) sp.setBptr(spp.getIndex());
+                if (min_rhs == cost) s.setBptr(sp.getIndex());
             }
         }
-        auto g_sp = getG(sp);
-        insert_or_assign(sp, g_sp, cost);
-        priority_queue_.remove(sp);
+        auto g_sp = getG(s);
+        insert_or_assign(s, g_sp, min_rhs);
+        priority_queue_.remove(s);
         if (g_sp != min_rhs) {
-            priority_queue_.insert(sp, calculateKey(sp));
+            priority_queue_.insert(s, calculateKey(s));
         }
     }
 

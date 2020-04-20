@@ -119,7 +119,7 @@ while True:
     cv2.imshow("patch", patch)
     out.write(frame)
     cv2.waitKey(1)
-    print("[SIMULATOR] New patch: position [%i, %i], shape [%i, %i]" % (top, left, patch.shape[0], patch.shape[1]))
+    print("[SIMULATOR] New patch: position [%i, %i], shape [%i, %i]" % (top, left, patch.shape[1], patch.shape[0]))
     p_out.write(struct.pack('<b', 1))  # reply with 1
     p_out.write(struct.pack('<i', top))  # position
     p_out.write(struct.pack('<i', left))
