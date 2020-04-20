@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 import cv2
+from plot_path import *
 
 path = "/".join(os.path.abspath(__file__).split("/")[:-1])
 
@@ -30,6 +31,11 @@ except OSError:
 os.mkfifo(pipe_out, 0o666)
 os.mkfifo(pipe_in, 0o666)
 
+mapfile = sys.argv[1]
+logfile = sys.argv[9]
+dbgfile = sys.argv[10]
+print(mapfile, logfile, dbgfile)
+
 args = [path + "/../cmake-build-debug/FieldDStar/field_d_planner", *(sys.argv[1:]), pipe_out, pipe_in]
 p = subprocess.Popen(args)
 p_out = open(pipe_out, 'wb')
@@ -50,7 +56,7 @@ data_l = 255 - img_l
 data_l = data_l + (data_l == 0)
 
 [height, width] = data_l.shape
-print("[SIMULATOR] Size: [%i,%i]" % (width, height))
+print("[SIMULATOR] Size: [%i, %i]" % (width, height))
 p_out.write(bytearray(struct.pack('<i', width)))
 p_out.flush()
 p_out.write(bytearray(struct.pack('<i', height)))
@@ -60,8 +66,14 @@ p_out.flush()
 
 cv2.namedWindow('image', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('image', 1000, 1000)
+cv2.namedWindow('dbg', cv2.WINDOW_NORMAL)
+cv2.resizeWindow('dbg', 1000, 1000)
+cv2.namedWindow('patch', cv2.WINDOW_NORMAL)
+cv2.resizeWindow('patch', 400, 400)
 scale = 5
 out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (height * scale, width * scale))
+
+first_run = True
 while True:
     ack = struct.unpack('b', p_in.read(1))[0]  # wait for 1
     if ack == 2:
@@ -70,12 +82,15 @@ while True:
         raise AssertionError
     pos_x = struct.unpack('f', p_in.read(4))[0]
     pos_y = struct.unpack('f', p_in.read(4))[0]
-    print("[SIMULATOR] New position: [%f,%f]" % (pos_x, pos_y))
-    p_out.write(struct.pack('<b', 1))  # reply with 1
-    p_out.flush()
+    print("[SIMULATOR] New position: [%f, %f]" % (pos_x, pos_y))
+
+    if not first_run:
+        dbgview = plot_path(mapfile, logfile, dbgfile)
+        cv2.imshow("dbg", dbgview)
+    first_run = False
 
     radius = 15
-    center = (int(round(pos_x)), int(round(pos_y)))
+    center = (int(round(pos_y)), int(round(pos_x)))
     off_x = off_y = 0
     top = center[1] - radius
     bottom = center[1] + radius + 1
@@ -101,9 +116,18 @@ while True:
     cv2.circle(frame, (center[0] * scale, center[1] * scale), radius * scale, (0, 0, 0))
     cv2.circle(frame, (center[0] * scale, center[1] * scale), scale, (100, 0, 100), cv2.FILLED)
     cv2.imshow("image", frame)
+    cv2.imshow("patch", patch)
     out.write(frame)
-    cv2.waitKey(5)
-    # TODO send update patch to planner
+    cv2.waitKey(1)
+    print("[SIMULATOR] New patch: position [%i, %i], shape [%i, %i]" % (top, left, patch.shape[0], patch.shape[1]))
+    p_out.write(struct.pack('<b', 1))  # reply with 1
+    p_out.write(struct.pack('<i', top))  # position
+    p_out.write(struct.pack('<i', left))
+    p_out.write(struct.pack('<i', patch.shape[0]))  # size
+    p_out.write(struct.pack('<i', patch.shape[1]))
+    p_out.write(patch.tobytes())  # patch
+    p_out.flush()
+
 
 p_out.write(struct.pack('<b', 2))  # reply with 2
 p_out.flush()
@@ -115,6 +139,3 @@ os.remove(pipe_in)
 os.remove(pipe_out)
 
 out.release()
-
-p = subprocess.Popen(["python3", path + "/plot_path_gui.py", sys.argv[1], sys.argv[9], sys.argv[10], "result.jpg"])
-p.wait()

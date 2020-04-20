@@ -31,11 +31,11 @@ void Graph::initializeGraph(const MapPtr &msg) {
 }
 
 //FIXME need check
-void Graph::updateGraph(std::shared_ptr<uint8_t> patch, int x, int y, int w, int h) {
+void Graph::updateGraph(std::shared_ptr<uint8_t[]> patch, int x, int y, int w, int h) {
     assert(x >= 0);
     assert(y >= 0);
-    assert(x + h < length_);
-    assert(y + w < width_);
+    assert(x + h - 1 < length_);
+    assert(y + w - 1 < width_);
     updated_cells_.clear();  // clear the vector of cells that need updating
 
     for (int i = 0; i < h; ++i) {
@@ -43,9 +43,19 @@ void Graph::updateGraph(std::shared_ptr<uint8_t> patch, int x, int y, int w, int
             if (map_.get()[(i+x)*width_+(y+j)] != patch.get()[i*w+j]){
                 updated_cells_.emplace_back(x+i, y+j);
             }
+            assert(patch.get()[i*w+j] > 0); //Positive cost
+            map_.get()[(i+x)*width_+(y+j)] = patch.get()[i*w+j];
         }
     }
-}
+/*
+    for (int i = 0; i < width_; ++i) {
+        for (int j = 0; j < length_; ++j) {
+            std::cout << int(map_.get()[i*width_+j]) << " ";
+        }
+        std::cout << std::endl;
+    }
+*/
+ }
 
 bool Graph::isValidNode(const Node &s) {
     auto[x, y] = s.getIndex();
@@ -321,6 +331,7 @@ float Graph::getValWithConfigurationSpace(const std::tuple<int, int> &ind) {
 
     int sep = configuration_space_;
 
+    //FIXME this is not a radial check
     auto x_low = std::max(x - sep, 0);
     auto x_high = std::min(x + sep, length_ - 1);
     auto y_low = std::max(y - sep, 0);
@@ -346,36 +357,29 @@ float Graph::euclideanHeuristic(const std::tuple<int, int> &s) {
 }
 
 std::vector<Node> Graph::getNodesAroundCellWithConfigurationSpace(const Cell &cell) {
-    std::queue<Node> open_list;           // nodes to evaluate
-    std::unordered_set<Node> closed_set;  // evaluated nodes
+    //FIXME this is not a radial check
     std::vector<Node> cell_nodes;         // nodes that require update
 
-    Node start_node(cell.x, cell.y);
+    auto top = cell.x;
+    auto left = cell.y;
+    auto bottom = top+1;
+    auto right = left+1;
 
-    open_list.push(start_node);
-    closed_set.insert(start_node);
-    cell_nodes.push_back(start_node);
-    // number of cells on all sides that constitute C-space
-    int separation_dist = static_cast<int>(ceil(configuration_space_ / resolution_));
+    int sep = configuration_space_;
 
-    // perform a simple breadth-first search to radially look for nodes around C_space
-    while (!open_list.empty()) {
-        Node currNode = open_list.front();
-        open_list.pop();
+    top -= sep;
+    left -= sep;
+    bottom += sep;
+    right += sep;
 
-        for (Node n : this->neighbors(currNode)) {
-            // node already considered
-            if (closed_set.find(n) != closed_set.end())
-                continue;
-            else
-                closed_set.insert(n);
+    top = std::max(top, 0);
+    left = std::max(left, 0);
+    bottom = std::min(bottom, width_-1);
+    right = std::min(right, length_-1);
 
-            // node is within the configuration space
-            if (start_node.distTo(static_cast<std::tuple<float, float>>(n.getIndex())) < separation_dist) {
-                open_list.push(n);
-                cell_nodes.push_back(std::move(n));
-            }
-        }
-    }
+    for (int i = top; i<=bottom; ++i)
+        for(int j = left; j<=right; j++)
+            cell_nodes.emplace_back(i,j);
+
     return cell_nodes;
 }

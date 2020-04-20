@@ -169,7 +169,7 @@ void FieldDPlanner::initializeSearch() {
 }
 
 int FieldDPlanner::computeShortestPath_1() {
-    float dummy, cost1, cost2, g_sp, rhs_sp, rhs_s, g_s;
+    float cost1, cost2, g_sp, rhs_sp, rhs_s, g_s;
     Node cn, ccn;
 
     // if the start node is occupied, return immediately. No path exists
@@ -228,7 +228,7 @@ int FieldDPlanner::computeShortestPath_1() {
                     for (const auto &spp : node_grid_.neighbors(sp)) {
                         ccn = node_grid_.counterClockwiseNeighbor(sp, spp);
                         if (ccn.valid) {
-                            cost1 = computeOptimalCellTraversalFromCorner(sp, spp, ccn, dummy).second;
+                            cost1 = computeOptimalCost(sp, spp, ccn);
                             min_rhs = std::min(min_rhs, cost1);
                             if (min_rhs == cost1) sp.setBptr(spp.getIndex());
                         }
@@ -304,15 +304,12 @@ void FieldDPlanner::updateNode_0(const Node &s) {
     // update rhs value of Node s
     if (s != node_grid_.goal_) {
         float min_rhs = INFINITY;
-        float dummy;
         for (auto connbr : node_grid_.consecutiveNeighbors(s))
             //min_rhs = std::min(min_rhs, this->computeCost(s, std::get<0>(connbr), std::get<1>(connbr)).cost);
             min_rhs = std::min(min_rhs,
-                               computeOptimalCellTraversalFromCorner(s,
-                                                                     std::get<0>(connbr),
-                                                                     std::get<1>(connbr),
-                                                                     dummy)
-                                   .second);;
+                               computeOptimalCost(s,
+                                                  std::get<0>(connbr),
+                                                  std::get<1>(connbr)));;
 
         insert_or_assign(s, getG(s), min_rhs);
     }
@@ -332,12 +329,25 @@ int FieldDPlanner::updateNodesAroundUpdatedCells() {
         to_update.insert(updates.begin(), updates.end());
     }
 
-    for (const Node &s : to_update) {
-        if (expanded_map_.find(s) != expanded_map_.end()) {
-            priority_queue_.remove(s);
-            if (getG(s) != getRHS(s)) {
-                priority_queue_.insert(s, calculateKey(s));
+    float cost=INFINITY, min_rhs=INFINITY;
+    for (Node sp : to_update) {
+        if (expanded_map_.find(sp) == expanded_map_.end()) {
+            insert_or_assign(sp, INFINITY, INFINITY);
+        }
+        if (sp == node_grid_.goal_) continue;
+        for (const auto &spp : node_grid_.neighbors(sp)) {
+            auto ccn = node_grid_.counterClockwiseNeighbor(sp, spp);
+            if (ccn.valid) {
+                cost = computeOptimalCost(sp, spp, ccn);
+                min_rhs = std::min(min_rhs, cost);
+                if (min_rhs == cost) sp.setBptr(spp.getIndex());
             }
+        }
+        auto g_sp = getG(sp);
+        insert_or_assign(sp, g_sp, cost);
+        priority_queue_.remove(sp);
+        if (g_sp != min_rhs) {
+            priority_queue_.insert(sp, calculateKey(sp));
         }
     }
 
@@ -359,22 +369,23 @@ void FieldDPlanner::constructOptimalPath() {
     int max_steps = static_cast<int>(20000.00f / (this->node_grid_.resolution_));
 
     float step_cost, step_dist;
-    Position *last = &start_pos;
     path_.push_back(start_pos);
+    Position last = path_.back();
     do {
         // move one step and calculate the optimal path additions
-        pa = getPathAdditions(*last, lookahead, step_cost);
-        path_.insert(path_.end(), pa.first.begin(), pa.first.end());
+        pa = getPathAdditions(last, lookahead, step_cost);
+        path_.reserve(path_.size() + pa.first.size());
+        auto it = path_.insert(path_.end(), pa.first.begin(), pa.first.end());
         min_cost = pa.second;
-        step_dist = std::hypot(last->x - pa.first.begin()->x, last->y - pa.first.begin()->y);
-        for (auto p = pa.first.begin(); p < pa.first.end() - 1; ++p) {
+        step_dist = 0;
+        for (auto p = it-1; p < (path_.end() - 1); ++p) {
             step_dist += std::hypot(p->x - (p + 1)->x, p->y - (p + 1)->y);
         }
         total_cost += step_cost;
         total_dist += step_dist;
         curr_step += 1;
-        last = &path_.back();
-    } while (!isWithinRangeOfGoal(*last) && (min_cost != INFINITY) &&
+        last = path_.back();
+    } while (!isWithinRangeOfGoal(last) && (min_cost != INFINITY) &&
         (curr_step < max_steps));
 
     if (min_cost == INFINITY) {
@@ -819,8 +830,8 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
 }
 
 bool FieldDPlanner::isWithinRangeOfGoal(const Position &p) {
-    auto [x, y] = node_grid_.goal_.getIndex();
-    return x==p.x && y==p.y;
+    auto[x, y] = node_grid_.goal_.getIndex();
+    return x == p.x && y == p.y;
 }
 
 void FieldDPlanner::insert_or_assign(const Node &s, float g, float rhs) {

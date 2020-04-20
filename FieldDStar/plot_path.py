@@ -6,15 +6,10 @@ import cv2
 import numpy
 
 
-def plot_path():
-    if len(sys.argv) < 5:
-
-        sys.stderr.write("Usage:\n\t %s <mapfile.bmp> <logfile.json> <dbgfile.json> <outfile.jpg>\n" % sys.argv[0])
-        exit()
-
+def plot_path(mapfile, pathfile, dbgfile):
     mult = 21
 
-    img = cv2.imread(sys.argv[1], 0)
+    img = cv2.imread(mapfile, 0)
     width = int(img.shape[1] * mult) + 1
     height = int(img.shape[0] * mult) + 1
     out_map = numpy.ones((height, width, 3), numpy.uint8) * 255
@@ -29,7 +24,7 @@ def plot_path():
                           (c, c, c),
                           cv2.FILLED)
 
-    with open(sys.argv[3], 'r') as dbgfile:
+    with open(dbgfile, 'r') as dbgfile:
         expanded = json.load(dbgfile)['expanded']
         for p in expanded:
             x = p[1]
@@ -40,7 +35,7 @@ def plot_path():
             else:
                 cv2.circle(out_map, (mult * x, mult * y), floor(mult / 5), (30, 30, 255), cv2.FILLED)
 
-    with open(sys.argv[2], 'r') as pathfile:
+    with open(pathfile, 'r') as pathfile:
         poses = json.load(pathfile)['poses']
         for a, b in zip(poses, poses[1:]):
             a_scaled = (
@@ -50,16 +45,19 @@ def plot_path():
                 mult * int(b[1]) + int(round(modf(b[1])[0] * (mult - 1))),
                 mult * int(b[0]) + int(round(modf(b[0])[0] * (mult - 1))))
             cv2.line(out_map, a_scaled, b_scaled, (255, 100, 0), floor(mult / 5))
-        x = int(poses[0][1])
-        y = int(poses[0][0])
-        cv2.circle(out_map, (mult * x, mult * y), floor(mult / 2), (100, 255, 100), cv2.FILLED)  # GREEN - START
+        x = int(mult * poses[0][1])
+        y = int(mult * poses[0][0])
+        cv2.circle(out_map, (x, y), floor(mult / 2), (100, 255, 100), cv2.FILLED)  # GREEN - START
         x = int(poses[-1][1])
         y = int(poses[-1][0])
         cv2.circle(out_map, (mult * x, mult * y), floor(mult / 2), (255, 0, 0), cv2.FILLED)  # BLUE - GOAL
 
-    cv2.imwrite(sys.argv[4], out_map)
     return out_map
 
 
 if __name__ == "__main__":
-    plot_path()
+    if len(sys.argv) < 5:
+        sys.stderr.write("Usage:\n\t %s <mapfile.bmp> <logfile.json> <dbgfile.json> <outfile.jpg>\n" % sys.argv[0])
+        exit()
+    result = plot_path(*sys.argv[1:4])
+    cv2.imwrite(sys.argv[4], result)

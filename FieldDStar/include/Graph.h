@@ -299,10 +299,10 @@ class Graph {
   @return list of nodes who might be affected by changed cell value
   */
   std::vector<Node> getNodesAroundCellWithConfigurationSpace(const Cell &cell);
+  void updateGraph(std::shared_ptr<uint8_t[]> patch, int x, int y, int w, int h);
 
  private:
   float occupancy_threshold_uchar_ = 178.5f;
-  void updateGraph(std::shared_ptr<uint8_t> patch, int x, int y, int w, int h);
 };
 
 #endif  // GRAPHSEARCH_H

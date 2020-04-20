@@ -88,7 +88,7 @@ int main(int _argc, char **_argv) {
 
     char ack = -1;
     unsigned int size;
-    int32_t width=0, height=0;
+    int32_t width=0, height=0, top=0, left=0;
     std::ifstream in__fifo{argv[12], std::ios::in | std::ios::binary};
     std::ofstream out_fifo{argv[13], std::ios::out | std::ios::binary};
 
@@ -137,8 +137,10 @@ int main(int _argc, char **_argv) {
     planner.set_start_position(next_point);
     planner.set_goal({std::stoi(argv[4]), std::stoi(argv[5])});
     planner.set_lookahead(std::stoi(argv[6]));
+    // FIXME handle remplanning, for now i put the lowest possible value for consistency
     //planner.set_heuristic_multiplier(std::ceil(0.5*min)); // Ferguson and Stenz heuristic
-    planner.set_heuristic_multiplier(std::ceil(min)); // What I think is correct (consistent?)
+    //planner.set_heuristic_multiplier(std::ceil(min)); // What I think is correct (consistent?)
+    planner.set_heuristic_multiplier(1);
     planner.set_poses_cb(poses_cb);
     planner.set_expanded_cb(expanded_cb);
 
@@ -156,7 +158,15 @@ int main(int _argc, char **_argv) {
         while (ack != 1) {
             in__fifo.read((char *) &ack, 1); //Wait for 1
         }
-        //Receive and apply updated patch of map
+        in__fifo.read((char*)&top, 4);
+        in__fifo.read((char*)&left, 4);
+        in__fifo.read((char*)&height, 4);
+        in__fifo.read((char*)&width, 4);
+        std::cout << "[PLANNER]   New patch: position [" << top << ", " << left << "], shape [" << width << ", " << height << "]" << std::endl;
+        size = width*height;
+        std::shared_ptr<uint8_t[]>patch (new uint8_t[size], std::default_delete<uint8_t[]>());
+        in__fifo.read((char*)patch.get(), size); //Receive image
+        planner.node_grid_.updateGraph(patch, top, left, width, height);
 
         auto begin = std::chrono::steady_clock::now();
         planner.step();
@@ -172,6 +182,7 @@ int main(int _argc, char **_argv) {
         if  (next_point.x==std::stoi(argv[4]) and next_point.y==std::stoi(argv[5]))
             break; //Goal reached
         planner.set_start_position(next_point, true);
+        //planner.init(); //PLAN FROM SCRATCH INSTEAD OF REPLANNING
     }
 
     ack = 2;
