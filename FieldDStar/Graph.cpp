@@ -28,11 +28,11 @@ void Graph::initializeGraph(const MapPtr &msg) {
 
 //FIXME need check
 void Graph::updateGraph(std::shared_ptr<uint8_t[]> patch, int x, int y, int w, int h) {
+    updated_cells_.clear();  // clear the vector of cells that need updating
     assert(x >= 0);
     assert(y >= 0);
-    assert(x + h - 1 < length_);
-    assert(y + w - 1 < width_);
-    updated_cells_.clear();  // clear the vector of cells that need updating
+    assert((x + h - 1) < length_);
+    assert((y + w - 1) < width_);
 
     for (int i = 0; i < h; ++i) {
         for (int j = 0; j < w; ++j) {
@@ -339,8 +339,8 @@ std::vector<Node> Graph::getNodesAroundCellWithConfigurationSpace(const Cell &ce
 
     top = std::max(top, 0);
     left = std::max(left, 0);
-    bottom = std::min(bottom, width_-1);
-    right = std::min(right, length_-1);
+    bottom = std::min(bottom, length_-1);
+    right = std::min(right, width_-1);
 
     return {{top,left}, {top,right}, {bottom,left}, {bottom,right}};
 }

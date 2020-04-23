@@ -66,8 +66,8 @@ def send_patch(pipe, data, pos):
 
 
 def send_map(pipe, data):
-    pipe.write(struct.pack('<i', data.shape[0]))  # size
     pipe.write(struct.pack('<i', data.shape[1]))
+    pipe.write(struct.pack('<i', data.shape[0]))  # size
     pipe.write(data.tobytes())  # patch
     pipe.flush()
 
@@ -120,28 +120,19 @@ def plot_upscaled_map_with_robot_circle(data_l, height, width, scale, center, ra
 
 path = "/".join(os.path.abspath(__file__).split("/")[:-1])
 
-if len(sys.argv) < 11:
+if len(sys.argv) < 5:
     print("Usage:")
-    print("\t %s <mapfile.bmp> <from_x> <from_y> <to_x> <to_y>"
-          " lookahead cspace optimiziation_lvl "
-          "<logfile.json> <dbgfile.json> <infofile.json>" % sys.argv[0])
-    sys.exit(1)
+    print("\t %s <mapfile.bmp> cspace pipe_in pipe_out")
 
-pipe_out = os.path.abspath("map_pipe_in")
-pipe_in = os.path.abspath("map_pipe_out")
+pipe_in = os.path.abspath(sys.argv[3])
+pipe_out = os.path.abspath(sys.argv[4])
+cspace = int(sys.argv[2])
 
-rmf(pipe_out)
-rmf(pipe_in)
-os.mkfifo(pipe_out, 0o666)
-os.mkfifo(pipe_in, 0o666)
-
-[mapfile, cspace, logfile, dbgfile] = [sys.argv[i] for i in [1, 7, 9, 10]]
-cspace=int(cspace)
-
-args = [path + "/../cmake-build-release/FieldDStar/field_d_planner", *(sys.argv[1:]), pipe_out, pipe_in]
-p = subprocess.Popen(args)
+print(pipe_out)
+print(pipe_in)
 p_out = open(pipe_out, 'wb')
 p_in = open(pipe_in, 'rb')
+
 wait_byte(p_in, 0)
 send_byte(p_out, 0)
 
@@ -161,7 +152,7 @@ kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (cspace, cspace))
 data_l_cspace = cv2.dilate(data_l, kernel)
 send_map(p_out, data_l)
 
-out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (height * 21, width * 21 + 150))
+out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (width * 21, height * 21 + 150))
 
 prev_path = []
 next_path = []
@@ -217,12 +208,9 @@ dbgview = plot_path_on_map(~data_l_cspace, prev_path, next_path, expanded, info)
 cv2.imshow("dbg_c", dbgview)
 out.write(dbgview)
 
-send_byte(p_out, 2)
-p.wait()
-p_in.close()
-p_out.close()
-os.remove(pipe_in)
-os.remove(pipe_out)
-
 out.release()
 cv2.waitKey()
+
+p_in.close()
+send_byte(p_out, 2)
+p_out.close()
