@@ -156,11 +156,17 @@ class FieldDPlanner {
   Graph node_grid_;
 
   std::vector<Position> path_;
+  std::vector<float> cost_;
   float total_cost = 0;
   float total_dist = 0;
 
   // path additions made by one step of constructOptimalPath()
-  typedef std::pair<std::vector<Position>, float> path_additions;
+  class path_additions{
+   public:
+    std::vector<Position> steps;
+    std::vector<float> stepcosts;
+    float cost_to_goal;
+  };
 
   float goal_dist_;
 
@@ -302,9 +308,10 @@ class FieldDPlanner {
   */
   float getRHS(const Node &s);
 
+  std::unordered_map<Node, std::tuple<float, float>> expanded_map_;
+
  private:
   // hashed map contains all nodes and <g,rhs> values in search
-  std::unordered_map<Node, std::tuple<float, float>> expanded_map_;
   // priority queue contains all locally inconsistent nodes whose values
   // need updating
   PriorityQueue priority_queue_;

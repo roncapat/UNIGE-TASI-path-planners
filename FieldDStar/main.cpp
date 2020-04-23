@@ -8,56 +8,11 @@
 char **argv;
 
 Position next_point;
+float step_cost = 0;
 bool goal_reached = false;
 
 std::shared_ptr<Map> map_info = nullptr;
 float g_length = INFINITY; float g_cost = INFINITY;
-
-void poses_cb(std::vector<Pose> &poses, float length, float cost) {
-    g_length = length;
-    g_cost = cost;
-    std::ofstream logfile;
-    std::string filename(argv[9]);
-    logfile.open(filename);
-    const size_t bufsize = 256*1024;
-    char buf[bufsize];
-    logfile.rdbuf()->pubsetbuf(buf, bufsize);
-    logfile << std::setprecision(4);
-    logfile << "{\"poses\":[";
-    for (const auto &pose : poses) {
-        logfile << "[" << pose.x
-                << "," << pose.y
-                << "," << pose.orientation
-                << "],";
-    }
-    logfile.seekp(-1, std::ios::cur);
-    logfile << "], \"length\": " << length << ", \"cost\": " << cost << "}";
-    logfile.close();
-    next_point = {poses[1].x, poses[1].y};
-}
-
-void expanded_cb(std::tuple<std::vector<std::tuple<int, int, float>>&, int, int> exp_info) {
-
-    std::ofstream logfile;
-    std::string filename(argv[10]);
-    logfile.open(filename);
-    const size_t bufsize = 256*1024;
-    char buf[bufsize];
-    logfile.rdbuf()->pubsetbuf(buf, bufsize);
-    logfile << std::setprecision(3);
-    logfile << "{\"num_expanded\":" << std::get<1>(exp_info)
-            << ",\"num_updated\":" << std::get<2>(exp_info)
-            << ",\"expanded\":[";
-    for (const auto &node : std::get<0>(exp_info)) {
-        logfile << "[" << std::get<0>(node)
-                << "," << std::get<1>(node)
-                << "," << ((std::get<2>(node) == std::numeric_limits<float>::infinity()) ? -1 : std::get<2>(node))
-                << "],";
-    }
-    logfile.seekp(-1, std::ios::cur);
-    logfile << "]}";
-    logfile.close();
-}
 
 std::tuple<int,int,float> map_traversability_stats(uint8_t* data, unsigned int size){
     float avg = 0;
@@ -141,8 +96,6 @@ int main(int _argc, char **_argv) {
     //planner.set_heuristic_multiplier(std::ceil(0.5*min)); // Ferguson and Stenz heuristic
     //planner.set_heuristic_multiplier(std::ceil(min)); // What I think is correct (consistent?)
     planner.set_heuristic_multiplier(1);
-    planner.set_poses_cb(poses_cb);
-    planner.set_expanded_cb(expanded_cb);
 
     float time;
 
@@ -152,6 +105,7 @@ int main(int _argc, char **_argv) {
         out_fifo.write((char *) &ack, 1);
         out_fifo.write((char *) &(next_point.x), 4);
         out_fifo.write((char *) &(next_point.y), 4);
+        out_fifo.write((char *) &(step_cost), 4);
         out_fifo.flush();
         ack = -1;
         while (ack != 1) {
@@ -170,18 +124,49 @@ int main(int _argc, char **_argv) {
         auto begin = std::chrono::steady_clock::now();
         planner.step();
         auto end = std::chrono::steady_clock::now();
-        planner.publish_expanded_set();
-        planner.publish_path();
 
         auto time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
         auto time_us = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
         time = time_ms + time_us / 1000.0f;
         std::cout << "Step time = " << time << std::endl;
+        //planner.init(); //PLAN FROM SCRATCH INSTEAD OF REPLANNING
 
+        ack = 3;
+        out_fifo.write((char *) &ack, 1);
+        auto path_size = (int)planner.path_.size();
+        out_fifo.write((char *) &path_size, 4);
+        for (const auto &pose : planner.path_){
+            out_fifo.write((char *) &(pose.x), 4);
+            out_fifo.write((char *) &(pose.y), 4);
+        }
+        out_fifo.flush();
+        for (const auto &step_cost: planner.cost_){
+            out_fifo.write((char *) &(step_cost), 4);
+        }
+        out_fifo.flush();
+        out_fifo.write((char *) &(planner.total_dist), 4);
+        out_fifo.write((char *) &(planner.total_cost), 4);
+
+        ack=4;
+        out_fifo.write((char *) &ack, 1);
+        auto expanded_size = (long long)planner.expanded_map_.size();
+        out_fifo.write((char *) &expanded_size, 8);
+        for (const auto &expanded : planner.expanded_map_){
+            auto [x,y] = expanded.first.getIndex();
+            auto [g, rhs] = expanded.second;
+            out_fifo.write((char *) &(x), 4);
+            out_fifo.write((char *) &(y), 4);
+            out_fifo.write((char *) &(g), 4);
+            out_fifo.write((char *) &(rhs), 4);
+        }
+        out_fifo.flush();
+
+
+        next_point = {planner.path_[1].x, planner.path_[1].y};
+        step_cost = planner.cost_.front();
         if  (next_point.x==std::stoi(argv[4]) and next_point.y==std::stoi(argv[5]))
             break; //Goal reached
         planner.set_start_position(next_point, true);
-        //planner.init(); //PLAN FROM SCRATCH INSTEAD OF REPLANNING
     }
 
     ack = 2;

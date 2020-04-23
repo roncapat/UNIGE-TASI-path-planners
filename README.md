@@ -3,7 +3,7 @@
 This repository contains a generic implementation of the Field D* algorithm,
 [originally proposed by Dave Ferguson and Anthony Stentz](https://www.ri.cmu.edu/pub_files/pub4/ferguson_david_2005_3/ferguson_david_2005_3.pdf).
 
-In the first run it employs the "rhs-trick" suggested in ([Changwen Zheng, Jiawei Cai, Huafei Yin](https://www.scirp.org/pdf/ALAMT20120200001_65663100.pdf)).<br>
+In the steps run it employs the "rhs-trick" suggested in ([Changwen Zheng, Jiawei Cai, Huafei Yin](https://www.scirp.org/pdf/ALAMT20120200001_65663100.pdf)).<br>
 <strong>  However, it seems ineffective when using the optimized version of Field D*. This should be addressed.</strong>
 
 The algorithm keeps backpointers from each node to the edge minimizing the cost, and use them to reduce the replanning load.

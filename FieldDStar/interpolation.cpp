@@ -19,6 +19,11 @@ float stepcost(TraversalParams &t) {
     RETURN_CHECK_POSITIVE_LIMITED(x * t.b + HYPOT(1 - x, 1) * t.c);
 }
 
+std::vector<float> stepcosts(TraversalParams &t) {
+    float x = 1 - t.b / CATH(t.c, t.b);
+    return {x * t.b, HYPOT(1 - x, 1) * t.c};
+}
+
 bool cond(TraversalParams &t) {
     return t.c > (t.b * SQRT2);
 }
@@ -49,6 +54,11 @@ float stepcost(TraversalParams &t) {
     float x = 1 - t.q - t.b / CATH(t.c, t.b);
     assert(x >= 0 and x <= (1 - t.q));
     RETURN_CHECK_POSITIVE_LIMITED(x * t.b + HYPOT(1 - t.q - x, 1) * t.c);
+}
+
+std::vector<float> stepcosts(TraversalParams &t) {
+    float x = 1 - t.q - t.b / CATH(t.c, t.b);
+    return {x * t.b, HYPOT(1 - t.q - x, 1) * t.c};
 }
 
 bool cond(TraversalParams &t) {
@@ -84,6 +94,11 @@ float stepcost(TraversalParams &t) {
     float x = 1 - (1 + t.p) * t.b / CATH(t.c, t.b);
     assert(x >= 0 and x <= (1));
     RETURN_CHECK_POSITIVE_LIMITED(x * t.b + HYPOT(1 - x, 1 + t.p) * t.c);
+}
+
+std::vector<float> stepcosts(TraversalParams &t) {
+    float x = 1 - (1 + t.p) * t.b / CATH(t.c, t.b);
+    return {x * t.b, HYPOT(1 - x, 1 + t.p) * t.c};
 }
 
 float condcost(TraversalParams &t) {
@@ -125,6 +140,11 @@ float stepcost(TraversalParams &t) {
     RETURN_CHECK_POSITIVE_LIMITED(HYPOT(1, y) * t.c);
 }
 
+std::vector<float> stepcosts(TraversalParams &t) {
+    float y = t.f / CATH(t.c, t.f);
+    return {HYPOT(1, y) * t.c};
+}
+
 float condcost(TraversalParams &t) {
     return (cond(t)) ? cost(t) : INFINITY;
 }
@@ -150,6 +170,11 @@ float stepcost(TraversalParams &t) {
     float y = (1 - t.q) * t.f / CATH(t.c, t.f);
     assert(y >= 0 and y <= 1);
     RETURN_CHECK_POSITIVE_LIMITED(HYPOT(1 - t.q, y) * t.c);
+}
+
+std::vector<float> stepcosts(TraversalParams &t) {
+    float y = (1 - t.q) * t.f / CATH(t.c, t.f);
+    return {HYPOT(1 - t.q, y) * t.c};
 }
 
 bool cond(TraversalParams &t) {
@@ -181,6 +206,11 @@ float stepcost(TraversalParams &t) {
     float y = t.p + t.f / CATH(t.c, t.f);
     assert(y >= 0 and y <= 1);
     RETURN_CHECK_POSITIVE_LIMITED(HYPOT(1, y - t.p) * t.c);
+}
+
+std::vector<float> stepcosts(TraversalParams &t) {
+    float y = t.p + t.f / CATH(t.c, t.f);
+    return {HYPOT(1, y - t.p) * t.c};
 }
 
 bool cond(TraversalParams &t) {
@@ -215,6 +245,10 @@ float stepcost(TraversalParams &t) {
     RETURN_CHECK_POSITIVE_LIMITED(t.b);
 }
 
+std::vector<float> stepcosts(TraversalParams &t) {
+    return {t.b};
+}
+
 bool cond(TraversalParams &t) {
     return t.c > t.b;
 }
@@ -234,6 +268,10 @@ float cost(TraversalParams &t) {
 
 float stepcost(TraversalParams &t) {
     RETURN_CHECK_POSITIVE_LIMITED((1 - t.q) * t.b);
+}
+
+std::vector<float> stepcosts(TraversalParams &t) {
+    return {(1 - t.q) * t.b};
 }
 
 bool cond(TraversalParams &t) {
@@ -258,6 +296,11 @@ float stepcost(TraversalParams &t) {
     float x = t.p * t.b / CATH(t.c, t.b);
     assert(x >= 0 and x <= 1);
     RETURN_CHECK_POSITIVE_LIMITED(HYPOT(x, t.p) * t.c + (1 - x) * t.b);
+}
+
+std::vector<float> stepcosts(TraversalParams &t) {
+    float x = t.p * t.b / CATH(t.c, t.b);
+    return {HYPOT(x, t.p) * t.c, (1 - x) * t.b};
 }
 
 bool cond(TraversalParams &t) {
@@ -290,6 +333,10 @@ float stepcost(TraversalParams &t) {
     RETURN_CHECK_POSITIVE_LIMITED(t.c * SQRT2);
 }
 
+std::vector<float> stepcosts(TraversalParams &t) {
+    return {t.c * SQRT2};
+}
+
 bool cond(TraversalParams &) {
     return true;
 }
@@ -312,6 +359,10 @@ float stepcost(TraversalParams &t) {
     RETURN_CHECK_POSITIVE_LIMITED(t.c * HYPOT(1, 1 - t.q));
 }
 
+std::vector<float> stepcosts(TraversalParams &t) {
+    return {t.c * HYPOT(1, 1 - t.q)};
+}
+
 bool cond(TraversalParams &) {
     return true;
 }
@@ -331,6 +382,10 @@ float cost(TraversalParams &t) {
 
 float stepcost(TraversalParams &t) {
     RETURN_CHECK_POSITIVE_LIMITED(t.c * HYPOT(1 - t.p, 1));
+}
+
+std::vector<float> stepcosts(TraversalParams &t) {
+    return {t.c * HYPOT(1 - t.p, 1)};
 }
 
 bool cond(TraversalParams &) {
@@ -357,6 +412,10 @@ float stepcost(TraversalParams &t) {
     RETURN_CHECK_POSITIVE_LIMITED(t.c);
 }
 
+std::vector<float> stepcosts(TraversalParams &t) {
+    return {t.c};
+}
+
 bool cond(TraversalParams &) {
     return true;
 }
@@ -379,6 +438,10 @@ float stepcost(TraversalParams &t) {
     RETURN_CHECK_POSITIVE_LIMITED((1 - t.q) * t.c);
 }
 
+std::vector<float> stepcosts(TraversalParams &t) {
+    return {(1 - t.q) * t.c};
+}
+
 bool cond(TraversalParams &) {
     return true;
 }
@@ -398,6 +461,10 @@ float cost(TraversalParams &t) {
 
 float stepcost(TraversalParams &t) {
     RETURN_CHECK_POSITIVE_LIMITED(t.c * HYPOT(t.p, 1));
+}
+
+std::vector<float> stepcosts(TraversalParams &t) {
+    return {t.c * HYPOT(t.p, 1)};
 }
 
 bool cond(TraversalParams &) {

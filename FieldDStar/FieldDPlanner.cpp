@@ -1,6 +1,7 @@
 #include "FieldDPlanner.h"
 #include <cmath>
 #include <array>
+#include <numeric>
 
 FieldDPlanner::FieldDPlanner() = default;
 
@@ -358,6 +359,7 @@ int FieldDPlanner::updateNodesAroundUpdatedCells() {
 
 void FieldDPlanner::constructOptimalPath() {
     path_.clear();
+    cost_.clear();
     total_cost = 0;
     total_dist = 0;
 
@@ -374,9 +376,11 @@ void FieldDPlanner::constructOptimalPath() {
     do {
         // move one step and calculate the optimal path additions
         pa = getPathAdditions(last, lookahead, step_cost);
-        path_.reserve(path_.size() + pa.first.size());
-        auto it = path_.insert(path_.end(), pa.first.begin(), pa.first.end());
-        min_cost = pa.second;
+        path_.reserve(path_.size() + pa.steps.size());
+        cost_.reserve(cost_.size() + pa.stepcosts.size());
+        auto it = path_.insert(path_.end(), pa.steps.begin(), pa.steps.end());
+        cost_.insert(cost_.end(), pa.stepcosts.begin(), pa.stepcosts.end());
+        min_cost = pa.cost_to_goal;
         step_dist = 0;
         for (auto p = it-1; p < (path_.end() - 1); ++p) {
             step_dist += std::hypot(p->x - (p + 1)->x, p->y - (p + 1)->y);
@@ -490,7 +494,7 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorn
                                                                                    const Position &p_a,
                                                                                    const Position &p_b,
                                                                                    float &step_cost) {
-    step_cost = INFINITY;
+    std::vector<float> step_costs;
     std::vector<Position> positions;
     float min_cost;
 
@@ -515,10 +519,10 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorn
         cell.g2 = getG(cell.p2.castToNode());
     }
     if (cell.g1 == INFINITY && cell.g2 == INFINITY)
-        return {{/*EMPTY*/}, INFINITY};
+        return {{/*EMPTY*/}, {/*EMPTY*/}, INFINITY};
     getBC(cell);
     if (cell.c == INFINITY)
-        return {{/*EMPTY*/}, INFINITY};
+        return {{/*EMPTY*/}, {/*EMPTY*/}, INFINITY};
     cell.f = cell.g1 - cell.g2;
 
     int type;
@@ -553,29 +557,30 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorn
 
     if (type == TYPE_I) {
         positions = TraversalTypeI::Corner::additions(cell);
-        step_cost = TraversalTypeI::Corner::stepcost(cell);
+        step_costs = TraversalTypeI::Corner::stepcosts(cell);
     } else if (type == TYPE_II) {
         positions = TraversalTypeII::Corner::additions(cell);
-        step_cost = TraversalTypeII::Corner::stepcost(cell);
+        step_costs = TraversalTypeII::Corner::stepcosts(cell);
     } else if (type == TYPE_III) {
         positions = TraversalTypeIII::Corner::additions(cell);
-        step_cost = TraversalTypeIII::Corner::stepcost(cell);
+        step_costs = TraversalTypeIII::Corner::stepcosts(cell);
     } else if (type == TYPE_A) {
         positions = TraversalTypeA::Corner::additions(cell);
-        step_cost = TraversalTypeA::Corner::stepcost(cell);
+        step_costs = TraversalTypeA::Corner::stepcosts(cell);
     } else if (type == TYPE_B) {
         positions = TraversalTypeB::Corner::additions(cell);
-        step_cost = TraversalTypeB::Corner::stepcost(cell);
+        step_costs = TraversalTypeB::Corner::stepcosts(cell);
     }
 
-    return {positions, min_cost};
+    step_cost = std::accumulate(step_costs.begin(), step_costs.end(), .0f);
+    return {positions, step_costs, min_cost};
 }
 
 FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromContiguousEdge(const Position &p,
                                                                                            const Position &p_a,
                                                                                            const Position &p_b,
                                                                                            float &step_cost) {
-    step_cost = INFINITY;
+    std::vector<float> step_costs;
     std::vector<Position> positions;
     float min_cost;
     TraversalParams cell1;
@@ -592,10 +597,10 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCont
         cell1.g2 = getG(cell1.p2.castToNode());
     }
     if (cell1.g1 == INFINITY && cell1.g2 == INFINITY)
-        return {{/*EMPTY*/}, INFINITY};
+        return {{/*EMPTY*/}, {/*EMPTY*/}, INFINITY};
     getBC(cell1);
     if (cell1.c == INFINITY)
-        return {{/*EMPTY*/}, INFINITY};
+        return {{/*EMPTY*/}, {/*EMPTY*/}, INFINITY};
     cell1.f = cell1.g1 - cell1.g2;
     cell1.q = 1 - std::abs(cell1.p1.y - p.y) - std::abs(cell1.p1.x - p.x);
     assert(cell1.q > 0 and cell1.q < 1);
@@ -618,21 +623,22 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCont
 
     if (type == TYPE_I) {
         positions = TraversalTypeI::ContiguousEdge::additions(cell1);
-        step_cost = TraversalTypeI::ContiguousEdge::stepcost(cell1);
+        step_costs = TraversalTypeI::ContiguousEdge::stepcosts(cell1);
     } else if (type == TYPE_II) {
         positions = TraversalTypeII::ContiguousEdge::additions(cell1);
-        step_cost = TraversalTypeII::ContiguousEdge::stepcost(cell1);
+        step_costs = TraversalTypeII::ContiguousEdge::stepcosts(cell1);
     } else if (type == TYPE_III) {
         positions = TraversalTypeIII::ContiguousEdge::additions(cell1);
-        step_cost = TraversalTypeIII::ContiguousEdge::stepcost(cell1);
+        step_costs = TraversalTypeIII::ContiguousEdge::stepcosts(cell1);
     } else if (type == TYPE_A) {
         positions = TraversalTypeA::ContiguousEdge::additions(cell1);
-        step_cost = TraversalTypeA::ContiguousEdge::stepcost(cell1);
+        step_costs = TraversalTypeA::ContiguousEdge::stepcosts(cell1);
     } else if (type == TYPE_B) {
         positions = TraversalTypeB::ContiguousEdge::additions(cell1);
-        step_cost = TraversalTypeB::ContiguousEdge::stepcost(cell1);
+        step_costs = TraversalTypeB::ContiguousEdge::stepcosts(cell1);
     }
-    return {positions, min_cost};
+    step_cost = std::accumulate(step_costs.begin(), step_costs.end(), .0f);
+    return {positions, step_costs, min_cost};
 }
 
 FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromOppositeEdge(const Position &p,
@@ -640,7 +646,7 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromOppo
                                                                                          const Position &p_b,
                                                                                          float &step_cost) {
 
-    step_cost = INFINITY;
+    std::vector<float> step_costs;
     std::vector<Position> positions;
     float min_cost;
     TraversalParams cell1, cell2;
@@ -670,11 +676,11 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromOppo
     }
 
     if (cell1.g1 == INFINITY && cell2.g2 == INFINITY)
-        return {{/*EMPTY*/}, INFINITY};
+        return {{/*EMPTY*/}, {/*EMPTY*/}, INFINITY};
     getBC(cell1);
     getBC(cell2);
     if (cell1.c == INFINITY)
-        return {{/*EMPTY*/}, INFINITY};
+        return {{/*EMPTY*/}, {/*EMPTY*/}, INFINITY};
     cell1.f = cell1.g1 - cell1.g2;
     cell2.f = -cell1.f;
     cell1.p = std::abs(p.y - cell1.p0.y) + std::abs(p.x - cell1.p0.x);
@@ -706,30 +712,31 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromOppo
 
     if (type == TYPE_I__1) {
         positions = TraversalTypeI::OppositeEdge::additions(cell1);
-        step_cost = TraversalTypeI::OppositeEdge::stepcost(cell1);
+        step_costs = TraversalTypeI::OppositeEdge::stepcosts(cell1);
     } else if (type == TYPE_I__2) {
         positions = TraversalTypeI::OppositeEdge::additions(cell2);
-        step_cost = TraversalTypeI::OppositeEdge::stepcost(cell2);
+        step_costs = TraversalTypeI::OppositeEdge::stepcosts(cell2);
     } else if (type == TYPE_II__1) {
         positions = TraversalTypeII::OppositeEdge::additions(cell1);
-        step_cost = TraversalTypeII::OppositeEdge::stepcost(cell1);
+        step_costs = TraversalTypeII::OppositeEdge::stepcosts(cell1);
     } else if (type == TYPE_II__2) {
         positions = TraversalTypeII::OppositeEdge::additions(cell2);
-        step_cost = TraversalTypeII::OppositeEdge::stepcost(cell2);
+        step_costs = TraversalTypeII::OppositeEdge::stepcosts(cell2);
     } else if (type == TYPE_III__1) {
         positions = TraversalTypeIII::OppositeEdge::additions(cell1);
-        step_cost = TraversalTypeIII::OppositeEdge::stepcost(cell1);
+        step_costs = TraversalTypeIII::OppositeEdge::stepcosts(cell1);
     } else if (type == TYPE_III__2) {
         positions = TraversalTypeIII::OppositeEdge::additions(cell2);
-        step_cost = TraversalTypeIII::OppositeEdge::stepcost(cell2);
+        step_costs = TraversalTypeIII::OppositeEdge::stepcosts(cell2);
     } else if (type == TYPE_A__1) {
         positions = TraversalTypeA::OppositeEdge::additions(cell1);
-        step_cost = TraversalTypeA::OppositeEdge::stepcost(cell1);
+        step_costs = TraversalTypeA::OppositeEdge::stepcosts(cell1);
     } else if (type == TYPE_A__2) {
         positions = TraversalTypeA::OppositeEdge::additions(cell2);
-        step_cost = TraversalTypeA::OppositeEdge::stepcost(cell2);
+        step_costs = TraversalTypeA::OppositeEdge::stepcosts(cell2);
     }
-    return {positions, min_cost};
+    step_cost = std::accumulate(step_costs.begin(), step_costs.end(), .0f);
+    return {positions, step_costs, min_cost};
 }
 
 FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge(const Position &p,
@@ -786,31 +793,31 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
                   << ", G:" << getG(p_a.castToNode()) << ", RHS:" << getRHS(p_a.castToNode()) << " | "
                   << "X:" << p_b.x << ", Y:" << p_b.y
                   << ", G:" << getG(p_b.castToNode()) << ", RHS:" << getRHS(p_b.castToNode())
-                  << " || cost: " << temp_pa.second << std::endl;
-        for (auto addition: temp_pa.first) {
+                  << " || cost: " << temp_pa.cost_to_goal << std::endl;
+        for (auto addition: temp_pa.steps) {
             if (lookahead and not do_lookahead) std::cout << "\t";
             std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl;
         }
         std::cout << std::endl;
         #endif
 
-        if (temp_pa.first.empty()) continue;
+        if (temp_pa.steps.empty()) continue;
 
         // LOOKAHEAD PROCEDURE documented in
         // Field D* path-finding on weighted triangulated and tetrahedral meshes (Perkins et al. 2013), Section 3
         // Only needed if next point is on edge
         float dummy;
-        if (do_lookahead and not isVertex(temp_pa.first.back())) {
-            lookahead_cost = getPathAdditions(temp_pa.first.back(), false, dummy).second;
-            if (lookahead_cost > temp_pa.second) { // Lookahead test failed
+        if (do_lookahead and not isVertex(temp_pa.steps.back())) {
+            lookahead_cost = getPathAdditions(temp_pa.steps.back(), false, dummy).cost_to_goal;
+            if (lookahead_cost > temp_pa.cost_to_goal) { // Lookahead test failed
                 #ifdef VERBOSE_EXTRACTION
                 std::cout << "Lookahead test failed" << std::endl;
                 #endif
                 continue;
             }
         }
-        if (temp_pa.second < min_cost) { // Promote as best solution
-            min_cost = temp_pa.second;
+        if (temp_pa.cost_to_goal < min_cost) { // Promote as best solution
+            min_cost = temp_pa.cost_to_goal;
             min_pa = temp_pa;
             step_cost = cur_step_cost;
         }
@@ -819,8 +826,8 @@ FieldDPlanner::path_additions FieldDPlanner::getPathAdditions(const Position &p,
     #ifdef VERBOSE_EXTRACTION
     if (lookahead and not do_lookahead) std::cout << "\t";
     std::cout << "Final choice for X:" << std::to_string(p.x) << ", Y:" << std::to_string(p.y)
-              << " || cost: " << std::to_string(min_pa.second) << std::endl;
-    for (auto addition: min_pa.first) {
+              << " || cost: " << std::to_string(min_pa.cost_to_goal) << std::endl;
+    for (auto addition: min_pa.steps) {
         if (lookahead and not do_lookahead) std::cout << "\t";
         std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl
                   << std::endl;

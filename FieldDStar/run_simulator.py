@@ -22,7 +22,6 @@ def round_patch_update(data_l, data_h, center, radius):
     if left < 0:
         off_x = left
         left = 0
-    print(off_x, off_y)
     data_rect_l = data_l[top:bottom, left:right].copy()
     data_rect_h = data_h[top:bottom, left:right].copy()
     data_rect_m = data_rect_h.copy()
@@ -64,11 +63,40 @@ def send_patch(pipe, data, pos):
     pipe.write(data.tobytes())  # patch
     pipe.flush()
 
+
 def send_map(pipe, data):
     pipe.write(struct.pack('<i', data.shape[0]))  # size
     pipe.write(struct.pack('<i', data.shape[1]))
     pipe.write(data.tobytes())  # patch
     pipe.flush()
+
+
+def receive_path(pipe):
+    n_steps = struct.unpack('<i', pipe.read(4))[0]
+    path = []
+    costs = []
+    for i in range(n_steps):
+        path.append([
+            struct.unpack('f', pipe.read(4))[0],
+            struct.unpack('f', pipe.read(4))[0]
+        ])
+    for i in range(n_steps-1):
+        costs.append(struct.unpack('f', pipe.read(4))[0])
+    dist = struct.unpack('f', pipe.read(4))[0]
+    cost = struct.unpack('f', pipe.read(4))[0]
+    return (path, costs, dist, cost)
+
+def receive_expanded(pipe):
+    n_expanded = struct.unpack('<q', pipe.read(8))[0]
+    expanded = []
+    for i in range(n_expanded):
+        expanded.append([
+            struct.unpack('<i', pipe.read(4))[0],
+            struct.unpack('<i', pipe.read(4))[0],
+            struct.unpack('f', pipe.read(4))[0],
+            struct.unpack('f', pipe.read(4))[0]
+        ])
+    return expanded
 
 
 def simulation_data(img_h, filter_radius, low_res_penalty):
@@ -79,6 +107,13 @@ def simulation_data(img_h, filter_radius, low_res_penalty):
     _l_data = _l_data + (_l_data == 0)
     _l_data = cv2.add(_l_data, low_res_penalty)
     return _l_data, _h_data
+
+
+def plot_upscaled_map_with_robot_circle(data_l, height, width, scale, center, radius):
+    frame = cv2.resize(data_l, (height * scale, width * scale))
+    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    cv2.circle(frame, (center[0] * scale, center[1] * scale), radius * scale, (0, 0, 0))
+    cv2.circle(frame, (center[0] * scale, center[1] * scale), scale, (100, 0, 100), cv2.FILLED)
 
 
 path = "/".join(os.path.abspath(__file__).split("/")[:-1])
@@ -113,21 +148,23 @@ img_h = cv2.imread(sys.argv[1], cv2.IMREAD_GRAYSCALE)
 print("[SIMULATOR] Size: [%i, %i]" % (width, height))
 send_map(p_out, data_l)
 
-cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-cv2.resizeWindow('image', 900, 900)
-cv2.moveWindow('image', 40,100)
 cv2.namedWindow('dbg', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('dbg', 900, 900)
-cv2.moveWindow('dbg', 980,100)
-scale = 5
-out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (height * scale, width * scale))
+cv2.moveWindow('dbg', 100, 100)
+out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (height * 21, width * 21+150))
 
-wait_byte(p_in, 1)
-while True:
+prev_path = []
+next_path = []
+expanded = []
+cost_from_beginning = 0
+cost_to_goal = 0
+
+while get_byte(p_in) == 1:
     pos_x = struct.unpack('f', p_in.read(4))[0]
     pos_y = struct.unpack('f', p_in.read(4))[0]
+    step_cost = struct.unpack('f', p_in.read(4))[0]
     print("[SIMULATOR] New position: [%f, %f]" % (pos_x, pos_y))
-
+    prev_path.append([pos_x, pos_y])
     center = (int(round(pos_y)), int(round(pos_x)))
     radius = 15
     (p_data, p_pos, p_ranges) = round_patch_update(data_l, data_h, center, radius=15)
@@ -137,20 +174,33 @@ while True:
     send_byte(p_out, 1)
     send_patch(p_out, p_data, p_pos)
 
-    frame = cv2.resize(data_l, (height * scale, width * scale))
-    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
-    cv2.circle(frame, (center[0] * scale, center[1] * scale), radius * scale, (0, 0, 0))
-    cv2.circle(frame, (center[0] * scale, center[1] * scale), scale, (100, 0, 100), cv2.FILLED)
-    cv2.imshow("image", frame)
-    out.write(frame)
-    cv2.waitKey(1)
-    if get_byte(p_in) == 2:
-        break
-    dbgview = plot_path(mapfile, logfile, dbgfile)
+    wait_byte(p_in, 3)
+    (next_path, costs, dist, cost) = receive_path(p_in)
+    wait_byte(p_in, 4)
+    expanded = receive_expanded(p_in)
+
+    cost_from_beginning += step_cost
+    cost_to_goal = sum(costs)
+
+    info = {"cost_from_start": cost_from_beginning, "cost_to_goal": cost_to_goal}
+    dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
     cv2.imshow("dbg", dbgview)
+    out.write(dbgview)
+    cv2.waitKey(1)
+
+cost_from_beginning += cost_to_goal
+cost_to_goal = 0
+step_cost = cost_to_goal
+pos_x = next_path[-1][0]
+pos_y = next_path[-1][1]
+prev_path.extend(next_path)
+next_path = next_path[-1:]
+info = {"cost_from_start": cost_from_beginning, "cost_to_goal": cost_to_goal}
+dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
+cv2.imshow("dbg", dbgview)
+out.write(dbgview)
 
 send_byte(p_out, 2)
-
 p.wait()
 p_in.close()
 p_out.close()
@@ -158,3 +208,4 @@ os.remove(pipe_in)
 os.remove(pipe_out)
 
 out.release()
+cv2.waitKey()
