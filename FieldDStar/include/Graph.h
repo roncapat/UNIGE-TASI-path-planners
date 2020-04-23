@@ -113,7 +113,6 @@ class Graph {
   float fwidth_;
 
   float resolution_;           // grid resolution
-  float configuration_space_;  // configuration space
 
   // constants
   float DIAGONAL_DISTANCE = sqrtf(2.0f);
@@ -131,12 +130,6 @@ class Graph {
   */
   void setOccupancyThreshold(float occupancy_threshold);
 
-  /**
-  Sets a value for the graph's configuration space
-
-  @param[in] configuration_space a value for the configuration space
-  */
-  void setConfigurationSpace(float configuration_space);
   /**
   Sets the goal node for the Field D* search problem
 

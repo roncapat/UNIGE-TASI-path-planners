@@ -30,7 +30,8 @@ def round_patch_update(data_l, data_h, center, radius):
     patch = data_rect_h - data_rect_m + data_rect_l
     position = (top, left)
     ranges = (slice(top, bottom), slice(left, right))
-    return (patch, position, ranges)
+    data_l[ranges[0], ranges[1]] = patch
+    return data_l, patch, position, ranges
 
 
 def rmf(filename):
@@ -80,11 +81,12 @@ def receive_path(pipe):
             struct.unpack('f', pipe.read(4))[0],
             struct.unpack('f', pipe.read(4))[0]
         ])
-    for i in range(n_steps-1):
+    for i in range(n_steps - 1):
         costs.append(struct.unpack('f', pipe.read(4))[0])
     dist = struct.unpack('f', pipe.read(4))[0]
     cost = struct.unpack('f', pipe.read(4))[0]
     return (path, costs, dist, cost)
+
 
 def receive_expanded(pipe):
     n_expanded = struct.unpack('<q', pipe.read(8))[0]
@@ -133,7 +135,8 @@ rmf(pipe_in)
 os.mkfifo(pipe_out, 0o666)
 os.mkfifo(pipe_in, 0o666)
 
-[mapfile, logfile, dbgfile] = [sys.argv[i] for i in [1, 9, 10]]
+[mapfile, cspace, logfile, dbgfile] = [sys.argv[i] for i in [1, 7, 9, 10]]
+cspace=int(cspace)
 
 args = [path + "/../cmake-build-release/FieldDStar/field_d_planner", *(sys.argv[1:]), pipe_out, pipe_in]
 p = subprocess.Popen(args)
@@ -142,16 +145,23 @@ p_in = open(pipe_in, 'rb')
 wait_byte(p_in, 0)
 send_byte(p_out, 0)
 
+cv2.namedWindow('dbg', cv2.WINDOW_NORMAL)
+cv2.resizeWindow('dbg', 900, 900)
+cv2.moveWindow('dbg', 100, 100)
+
+cv2.namedWindow('dbg_c', cv2.WINDOW_NORMAL)
+cv2.resizeWindow('dbg_c', 900, 900)
+cv2.moveWindow('dbg_c', 1000, 100)
+
 img_h = cv2.imread(sys.argv[1], cv2.IMREAD_GRAYSCALE)
 (data_l, data_h) = simulation_data(img_h, filter_radius=13, low_res_penalty=15)
 [height, width] = data_l.shape
 print("[SIMULATOR] Size: [%i, %i]" % (width, height))
+kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (cspace, cspace))
+data_l_cspace = cv2.dilate(data_l, kernel)
 send_map(p_out, data_l)
 
-cv2.namedWindow('dbg', cv2.WINDOW_NORMAL)
-cv2.resizeWindow('dbg', 900, 900)
-cv2.moveWindow('dbg', 100, 100)
-out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (height * 21, width * 21+150))
+out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (height * 21, width * 21 + 150))
 
 prev_path = []
 next_path = []
@@ -167,12 +177,15 @@ while get_byte(p_in) == 1:
     prev_path.append([pos_x, pos_y])
     center = (int(round(pos_y)), int(round(pos_x)))
     radius = 15
-    (p_data, p_pos, p_ranges) = round_patch_update(data_l, data_h, center, radius=15)
-    data_l[p_ranges[0], p_ranges[1]] = p_data
+    (data_l, p_data, p_pos, p_ranges) = round_patch_update(data_l, data_h, center, radius=15)
     print("[SIMULATOR] New patch: position [%i, %i], shape [%i, %i]" % (
         p_pos[0], p_pos[1], p_data.shape[1], p_data.shape[0]))
+
+    data_l_cspace = cv2.dilate(data_l, kernel)
+    p_data_cspace = data_l_cspace[p_ranges[0], p_ranges[1]]
+
     send_byte(p_out, 1)
-    send_patch(p_out, p_data, p_pos)
+    send_patch(p_out, p_data_cspace, p_pos)
 
     wait_byte(p_in, 3)
     (next_path, costs, dist, cost) = receive_path(p_in)
@@ -185,6 +198,8 @@ while get_byte(p_in) == 1:
     info = {"cost_from_start": cost_from_beginning, "cost_to_goal": cost_to_goal}
     dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
     cv2.imshow("dbg", dbgview)
+    dbgview = plot_path_on_map(~data_l_cspace, prev_path, next_path, expanded, info)
+    cv2.imshow("dbg_c", dbgview)
     out.write(dbgview)
     cv2.waitKey(1)
 
@@ -198,6 +213,8 @@ next_path = next_path[-1:]
 info = {"cost_from_start": cost_from_beginning, "cost_to_goal": cost_to_goal}
 dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
 cv2.imshow("dbg", dbgview)
+dbgview = plot_path_on_map(~data_l_cspace, prev_path, next_path, expanded, info)
+cv2.imshow("dbg_c", dbgview)
 out.write(dbgview)
 
 send_byte(p_out, 2)

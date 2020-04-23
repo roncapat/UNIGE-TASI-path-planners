@@ -79,7 +79,7 @@ int main(int _argc, char **_argv) {
 
     FieldDPlanner planner{};
     planner.occupancy_threshold_ = 1;
-    planner.configuration_space_ = std::stoi(argv[7]);
+    //planner.configuration_space_ = std::stoi(argv[7]);
     planner.optimization_lvl = std::stoi(argv[8]);
     planner.first_run_trick = false;
     planner.init();
@@ -181,8 +181,6 @@ int main(int _argc, char **_argv) {
     std::string filename(argv[11]);
     infofile.open(filename);
     infofile << "{";
-    infofile << "\"planner_cspace\":" << planner.configuration_space_;
-    infofile << ",";
     infofile << "\"planner_opt_lvl\":" << planner.optimization_lvl;
     infofile << ",";
     infofile << "\"planner_lookahead\":" << planner.lookahead;

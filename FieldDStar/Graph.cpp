@@ -5,10 +5,6 @@ void Graph::setOccupancyThreshold(float occupancy_threshold) {
     this->occupancy_threshold_uchar_ = occupancy_threshold * 255.0f;
 }
 
-void Graph::setConfigurationSpace(float configuration_space) {
-    this->configuration_space_ = configuration_space;
-}
-
 void Graph::setGoal(std::tuple<int, int> goal) {
     this->goal_.setIndex(goal);
 }
@@ -319,32 +315,11 @@ float Graph::getB(const Node &s, const Node &s_prime) {
 }
 
 float Graph::getValWithConfigurationSpace(const std::tuple<int, int> &ind) {
-    // invalid cells have infinite travel cost
     if (!isValidCell(ind))
         return INFINITY;
 
-    int x, y;
-    std::tie(x, y) = ind;
-
-    if (configuration_space_ == 0)
-        return (map_[x * width_ + y]);
-
-    int sep = configuration_space_;
-
-    //FIXME this is not a radial check
-    auto x_low = std::max(x - sep, 0);
-    auto x_high = std::min(x + sep, length_ - 1);
-    auto y_low = std::max(y - sep, 0);
-    auto y_high = std::min(y + sep, width_ - 1);
-
-    unsigned char max_val = 0;
-    for (int i = x_low; i <= x_high; ++i) {
-        for (int j = y_low; j <= y_high; ++j) {
-            max_val = std::max(max_val, map_[i * width_ + j]);
-        }
-    }
-
-    return static_cast<float>(max_val);
+    auto[x, y] = ind;
+    return (map_[x * width_ + y]);
 }
 
 float Graph::euclideanHeuristic(const Node &s) {
@@ -357,29 +332,15 @@ float Graph::euclideanHeuristic(const std::tuple<int, int> &s) {
 }
 
 std::vector<Node> Graph::getNodesAroundCellWithConfigurationSpace(const Cell &cell) {
-    //FIXME this is not a radial check
-    std::vector<Node> cell_nodes;         // nodes that require update
-
     auto top = cell.x;
     auto left = cell.y;
     auto bottom = top+1;
     auto right = left+1;
-
-    int sep = configuration_space_;
-
-    top -= sep;
-    left -= sep;
-    bottom += sep;
-    right += sep;
 
     top = std::max(top, 0);
     left = std::max(left, 0);
     bottom = std::min(bottom, width_-1);
     right = std::min(right, length_-1);
 
-    for (int i = top; i<=bottom; ++i)
-        for(int j = left; j<=right; j++)
-            cell_nodes.emplace_back(i,j);
-
-    return cell_nodes;
+    return {{top,left}, {top,right}, {bottom,left}, {bottom,right}};
 }

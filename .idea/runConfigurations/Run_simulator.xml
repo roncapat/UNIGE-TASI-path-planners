@@ -12,7 +12,7 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/FieldDStar/run_simulator.py" />
-    <option name="PARAMETERS" value="./Tests/Tests/noise-trap_90_90_25_25_.bmp 90 90 25 25 1 2 0 logfile.json dbgfile.json infofile.json" />
+    <option name="PARAMETERS" value="./Tests/Tests/noise-trap_90_90_25_25_.bmp 90 90 25 25 1 1 0 logfile.json dbgfile.json infofile.json" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

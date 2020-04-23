@@ -6,7 +6,6 @@
 FieldDPlanner::FieldDPlanner() = default;
 
 void FieldDPlanner::init() {
-    node_grid_.setConfigurationSpace(static_cast<float>(configuration_space_));
     node_grid_.setOccupancyThreshold(occupancy_threshold_);
     setGoalDistance(static_cast<float>(goal_range_));
     num_nodes_updated = 0;
