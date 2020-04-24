@@ -338,7 +338,7 @@ void FieldDPlanner::updateNode_0(const Node &s) {
     // Optimized access to element (avoids O(N) access cost each time)
     auto s_it = expanded_map_.find(s);
     if (s_it == expanded_map_.end()) {
-        s_it = expanded_map_.emplace(s, std::make_tuple(INFINITY, INFINITY)).first;
+        s_it = expanded_map_.emplace(s, std::make_pair(INFINITY, INFINITY)).first;
     } else {
         priority_queue_.remove(s);
     }
@@ -884,7 +884,7 @@ bool FieldDPlanner::isWithinRangeOfGoal(const Position &p) {
     return x == p.x && y == p.y;
 }
 
-std::unordered_map<const Node, std::tuple<float, float>>::iterator
+std::unordered_map<const Node, Key>::iterator
 FieldDPlanner::insert_or_assign(const Node &s, float g, float rhs) {
     // re-assigns value of node in unordered map or inserts new entry
     auto it = expanded_map_.find(s);
@@ -893,7 +893,7 @@ FieldDPlanner::insert_or_assign(const Node &s, float g, float rhs) {
         std::get<1>(it->second) = rhs;
         return it;
     } else {
-        auto[it, ok] = expanded_map_.emplace(s, std::make_tuple(g, rhs));
+        auto[it, ok] = expanded_map_.emplace(s, std::make_pair(g, rhs));
         return it;
     }
 }

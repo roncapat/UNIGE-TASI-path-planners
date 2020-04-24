@@ -294,7 +294,7 @@ class FieldDPlanner {
   @param[in] g g value for entry
   @param[in] rhs rhs value for entry
   */
-  std::unordered_map<const Node, std::tuple<float, float>>::iterator insert_or_assign(const Node &s, float g, float rhs);
+  std::unordered_map<const Node, Key>::iterator insert_or_assign(const Node &s, float g, float rhs);
   /**
   Returns g-value for a node s
 
@@ -310,7 +310,9 @@ class FieldDPlanner {
   */
   float getRHS(const Node &s);
 
-  std::unordered_map<Node, std::tuple<float, float>> expanded_map_;
+  #define G(map_it) std::get<0>(map_it->second)
+  #define RHS(map_it) std::get<1>(map_it->second)
+  std::unordered_map<Node, Key> expanded_map_;
 
  private:
   // hashed map contains all nodes and <g,rhs> values in search
