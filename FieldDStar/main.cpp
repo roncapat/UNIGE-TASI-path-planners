@@ -121,7 +121,7 @@ int main(int _argc, char **_argv) {
         size = width * height;
         std::shared_ptr<uint8_t[]> patch(new uint8_t[size], std::default_delete<uint8_t[]>());
         in__fifo.read((char *) patch.get(), size); //Receive image
-        planner.node_grid_.updateGraph(patch, top, left, width, height);
+        planner.grid.updateGraph(patch, top, left, width, height);
 
         auto begin = std::chrono::steady_clock::now();
         planner.step();

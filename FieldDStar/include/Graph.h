@@ -266,7 +266,7 @@ class Graph {
   @param[in] ind index of cell to calculate configuration_space_-corrected cost for
   @return cost of traversing grid cell with configuration_space_
   */
-  float getValWithConfigurationSpace(const std::tuple<int, int> &ind);
+  float getTraversalCost(const std::tuple<int, int> &ind);
 
   /**
   Calculates euclidian distance between the start node 'start_' and the
@@ -291,7 +291,7 @@ class Graph {
   @param[in] cellInd index of cell whose val has changed
   @return list of nodes who might be affected by changed cell value
   */
-  std::vector<Node> getNodesAroundCellWithConfigurationSpace(const Cell &cell);
+  std::vector<Node> getNodesAroundCell(const Cell &cell);
   void updateGraph(std::shared_ptr<uint8_t[]> patch, int x, int y, int w, int h);
 
  private:

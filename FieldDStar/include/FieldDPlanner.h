@@ -120,11 +120,14 @@ class FieldDPlanner {
 
   Position start_pos;
   void set_start_position(const Position &pos, bool update = false) {
-      node_grid_.start_ = Node(std::round(pos.x), std::round(pos.y));
       start_pos = pos;
-      if (update)
-          node_grid_.key_modifier_ += std::hypot(pos.x - std::get<0>(node_grid_.start_.getIndex()),
-                                                 pos.y - std::get<1>(node_grid_.start_.getIndex()));
+      if (update){
+        auto [prev_x, prev_y] = grid.start_.getIndex();
+          grid.key_modifier_ += std::hypot(pos.x - prev_x,
+                                           pos.y - prev_y);
+      }
+      grid.start_ = Node(std::round(pos.x), std::round(pos.y));
+      std::cout << "Modifier: " << grid.key_modifier_ << std::endl;
   }
 
   /**
@@ -152,7 +155,7 @@ class FieldDPlanner {
 
   // Graph contains methods to deal with Node(s) as well as updated occupancy
   // grid cells
-  Graph node_grid_;
+  Graph grid;
 
   std::vector<Position> path_;
   std::vector<float> cost_;
@@ -291,7 +294,7 @@ class FieldDPlanner {
   @param[in] g g value for entry
   @param[in] rhs rhs value for entry
   */
-  void insert_or_assign(const Node &s, float g, float rhs);
+  std::unordered_map<const Node, std::tuple<float, float>>::iterator insert_or_assign(const Node &s, float g, float rhs);
   /**
   Returns g-value for a node s
 
