@@ -124,6 +124,7 @@ void FieldDPlanner::set_map(const MapPtr &msg) {
         x_initial_ = map_->x_initial;
         y_initial_ = map_->y_initial;
         grid.initializeGraph(map_);
+        start_pos = Position(msg->x, msg->y);
         initialize_graph_ = false;
     } else {
         //node_grid_.updateGraph(map_); // FIXME
@@ -175,8 +176,10 @@ Key FieldDPlanner::calculateKey(const Node &s) {
     // calculate the key to order the node in the priority_queue_ with. key_modifier_ is the
     // key modifier, a value which corrects for the distance traveled by the robot
     // since the search began (source: D* Lite)
+    auto [x,y] = s.getIndex();
+    auto dist = std::hypot(start_pos.x - x, start_pos.y - y);
     // TODO: reason on key_modifier scaling with heuristic_multiplier
-    return {cost_so_far + heuristic_multiplier * grid.euclideanHeuristic(s.getIndex()) + grid.key_modifier_,
+    return {cost_so_far + heuristic_multiplier * dist + grid.key_modifier_,
             cost_so_far};
 }
 
@@ -202,9 +205,7 @@ int FieldDPlanner::computeShortestPath_1() {
     }
 
     int expanded = 0;
-    while (!priority_queue_.empty() and
-        ((priority_queue_.topKey() < calculateKey(grid.start_))
-            or (std::fabs(getRHS(grid.start_) - getG(grid.start_)) > 1e-5))) {
+    while ((not priority_queue_.empty()) and end_condition()) {
         Node s = priority_queue_.topNode();
         expanded++;
 
@@ -275,22 +276,44 @@ int FieldDPlanner::computeShortestPath_1() {
     return num_nodes_expanded;
 }
 
+bool FieldDPlanner::end_condition() {
+    // Given a position, the integer part of its indices is the cell index,
+    // and the remainder is the internal offsets
+    Cell start_cell(std::floor(start_pos.x), std::floor(start_pos.y));
+    // We need to check expansion until all 4 corners of start cell
+    // used early stof from D* LITE
+    for (auto &node: grid.getNodesAroundCell(start_cell)) {
+        if (not((priority_queue_.topKey() >= calculateKey(node)) and (getRHS(node) <= getG(node)))) {
+            return true;
+        }
+    }
+    return false; //STOP: all 4 conditions met
+}
+
 int FieldDPlanner::computeShortestPath_0() {
     // if the start node is occupied, return immediately. No path exists
     if (grid.getTraversalCost(grid.start_.getIndex()) == INFINITY) {
         std::cerr << "Start node occupied. No path is possible." << std::endl; //FIXME test
         return 0;
     }
-
+    int skipped = 0;
     int expanded = 0;
-    while ((not priority_queue_.empty()) and
-        ((priority_queue_.topKey() < calculateKey(grid.start_)) or
-            ((getRHS(grid.start_) - getG(grid.start_))>1e-5))) {
+    while ((not priority_queue_.empty()) and end_condition()) {
         Node top_node = priority_queue_.topNode();
-        auto top_node_it = expanded_map_.find(top_node);
-        assert(top_node_it != expanded_map_.end());
+        auto old_key = priority_queue_.topKey();
+        auto new_key = calculateKey(top_node);
         priority_queue_.pop();
         ++expanded;
+
+        //REFER TO D*LITE paper for key modifier handling
+        if (old_key < new_key){
+            skipped+=1;
+            priority_queue_.insert(top_node, new_key);
+            continue;
+        }
+
+        auto top_node_it = expanded_map_.find(top_node);
+        assert(top_node_it != expanded_map_.end());
 
         float g = std::get<0>(top_node_it->second);
         float rhs = std::get<1>(top_node_it->second);
@@ -307,6 +330,7 @@ int FieldDPlanner::computeShortestPath_0() {
     }
     num_nodes_expanded = expanded;
     std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
+    std::cout << skipped << " nodes skipped" << std::endl;
     return num_nodes_expanded;
 }
 

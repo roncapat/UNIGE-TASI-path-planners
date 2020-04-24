@@ -100,7 +100,7 @@ class FieldDPlanner {
   int optimization_lvl = 1;
   bool first_run_trick = true;        // Zheng trick from Update-Reducing Field-D*
   float occupancy_threshold_ = 0.5;   // maximum occupancy probability before a cell has infinite traversal cost
-  float heuristic_multiplier = 255;
+  float heuristic_multiplier = 1;
   unsigned long num_nodes_updated = 0;
   unsigned long num_nodes_expanded = 0;
 
@@ -321,6 +321,7 @@ class FieldDPlanner {
   std::pair<float, float> getBC(TraversalParams &t);
   bool consistent(const Node &s);
   float computeOptimalCost(const Position &p, const Position &p_a, const Position &p_b);
+  bool end_condition();
 };
 
 #endif
