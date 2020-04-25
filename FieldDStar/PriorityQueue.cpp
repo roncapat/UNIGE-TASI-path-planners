@@ -18,7 +18,7 @@ void PriorityQueue::remove_if_present(const Node &n) {
     }
 }
 
-void PriorityQueue::insert_or_update(const Node &n, Key k) {
+void PriorityQueue::insert_or_update(const Node &n, const Key &k) {
     auto h_it = __handles.find(n);
     if (h_it != __handles.end()) {
         __queue.update(h_it->second, ElemType(n, k));
@@ -30,7 +30,7 @@ void PriorityQueue::pop() {
     __queue.pop();
 }
 
-Key PriorityQueue::topKey() {
+PriorityQueue::Key PriorityQueue::topKey() {
     return __queue.top().second;
 }
 
@@ -45,3 +45,8 @@ int PriorityQueue::size() {
 bool PriorityQueue::empty() {
     return __queue.empty();
 }
+
+void PriorityQueue::swap(PriorityQueue &other) {
+    __queue.swap(other.__queue);
+    __handles.swap(other.__handles);
+};

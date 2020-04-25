@@ -1,36 +1,3 @@
-/**
-Field D* Incremental Path Planner Implementation
-
-Field D* is an incremental search algorithm that keeps track of data from previous
-searches to speed up replanning. The first search through the grid space is
-equivalent to A*, with nodes in the priority queue ordered by a path cost estimate:
-
-    f(s) = g(s) + h(s_start, s) + key_modifier
-
-When the graph is updated with new sensor information and the path needs replanning,
-comparatively few nodes need expanding to re-calculate the optimal path.
-
-Unlike D* Lite, the Field D* Path Planning algorithm is an "any-angle path planner",
-meaning it can compute global paths that are not restricted to a specific heading
-increment. As such, The Field D* path planning algorithm can generate smooth paths
-around high-cost regions of the cost map.
-
-FieldDPlanner interfaces with the Graph object to calculate the optimal
-path through the occupancy grid in an eight-connected grid space. This means
-that each node has 8 neighbors.
-
-Author: Alejandro Escontrela <aescontrela3@gatech.edu>
-Date Created: December 22nd, 2018
-
-Sources:
-Field D* [Dave Ferguson, Anthony Stentz]
-https://pdfs.semanticscholar.org/58f3/bc8c12ee8df30b3e9564fdd071e729408653.pdf
-
-MIT Advanced Lecture 1: Incremental Path Planning
-[MIT OCW]
-https://ocw.mit.edu/courses/aeronautics-and-astronautics/16-412j-cognitive-robotics-spring-2016/videos-for-advanced-lectures/advanced-lecture-1/
-*/
-
 #ifndef FIELDDPLANNER_H
 #define FIELDDPLANNER_H
 
@@ -49,48 +16,15 @@ https://ocw.mit.edu/courses/aeronautics-and-astronautics/16-412j-cognitive-robot
 #include "Pose.h"
 #include "interpolation.h"
 
-/**
-The CostComputation struct contains the linearly interpolated path cost as
-computed by the computeCost method. Additionally, it stores the resulting x and
-y traversal distances calculated during the traversal cost computation.
-*/
-struct CostComputation {
-  float x;
-  float y;
-  float cost;
-
-  CostComputation(float x, float y, float cost) {
-      this->x = x;
-      this->y = y;
-      this->cost = cost;
-  }
-
-  // overloaded assignment operator
-  CostComputation &operator=(const CostComputation &other) {
-      this->x = other.x;
-      this->y = other.y;
-      this->cost = other.cost;
-
-      return *this;
-  }
-};
 
 class FieldDPlanner {
  public:
-  // ---------- Node functionality ----------- //
   FieldDPlanner();
   void init();
 #define LOOP_OK 0
 #define LOOP_FAILURE_NO_GRAPH -1
 #define LOOP_FAILURE_NO_GOAL -2
   int step();
-
-  void (*poses_cb)(std::vector<Pose> &, float, float);
-  void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>> &, int, int>);
-  void set_poses_cb(void (*poses_cb)(std::vector<Pose> &, float, float)) { this->poses_cb = poses_cb; };
-  void set_expanded_cb(void (*expanded_cb)(std::tuple<std::vector<std::tuple<int, int, float>> &, int, int>)) {
-      this->expanded_cb = expanded_cb;
-  };
 
   // launch parameters
   double maximum_distance_ = 100000;  // maximum distance to goal node before warning messages spit out
@@ -111,13 +45,6 @@ class FieldDPlanner {
   bool goal_set_ = false;         // true if the goal has been set
   bool goal_changed_ = false;     // true if the goal changed and the graph must be re-initialized
 
-  /**
-    Publish expanded nodes for visualization purposes.
-
-    @param[in] expanded_cloud the PCL pointcloud which expanded node indices should be stored in
-  */
-  void publish_expanded_set();
-
   Position start_pos;
   Cell start_cell = Cell(0, 0);
   std::vector<Node> start_nodes;
@@ -133,39 +60,18 @@ class FieldDPlanner {
       priority_queue.swap(new_queue);
   }
 
-  /**
-    Set the current map to be used by the D* Lite search problem. The initial
-    map is used to perform the first search through the occupancy grid (equivalent
-    to A*). All maps thereafter are used to update edge costs for the search problem.
-
-    @param[in] msg the map recieved on the "/map" topic
-  */
   void set_map(const MapPtr &msg);
-
-  /**
-    Assigns a valid goal to the graph search problem. Goal index obtained by
-    converting from the /map frame goal coordinate to the graph index.
-
-    @param[in] msg the message received on the "/waypoint" topic
-  */
   void set_goal(std::pair<float, float> point);
   void set_heuristic_multiplier(float mult) { heuristic_multiplier = mult; }
   void set_lookahead(bool use_lookahead) { lookahead = use_lookahead; }
 
-  void publish_path();
 
-  // ---------- Path Planner Logic ----------- //
-
-  // Graph contains methods to deal with Node(s) as well as updated occupancy
-  // grid cells
   Graph grid;
-
   std::vector<Position> path_;
   std::vector<float> cost_;
   float total_cost = 0;
   float total_dist = 0;
 
-  // path additions made by one step of constructOptimalPath()
   class path_additions {
    public:
     std::vector<Position> steps;
@@ -175,86 +81,21 @@ class FieldDPlanner {
 
   float goal_dist_;
 
-  /**
-  Sets value for goal_dist_, the minumum value from the goal node a node must
-  be before the search is considered complete.
-
-  @param[in] goalDist the minimum distance from the goal
-  */
   void setGoalDistance(float goal_dist);
 
-  /**
-  Returns true if position p is a valid vertex on the graph. A position is a
-  valid vertex if both of its cartesian coordinates are integers and it lies within
-  the bounds of the graph
-
-  @param[in] p position to assess
-  @return whether or not p is a vertex
-  */
   bool isVertex(const Position &p);
 
-  /**
-  Calculate the key for a node S.
-
-  key defined as <f1(s), f2(s)>
-  where...
-  f1(s) = min(g(s), rhs(s)) + h(s_start, s) + K_M
-  f2(s)min(g(s), rhs(s))
-
-  @param[in] s Node to calculate key for
-  @return calculated key
-  */
-  Key calculateKey(const Node &s);
-  /**
-  Initializes the graph search problem by setting g and rhs values for start
-  node equal to infinity. For goal node, sets g value to infinity and rhs value
-  to 0. Inserts goal node into priority queue to initialize graph search problem.
-  */
   void initializeSearch();
-  /**
-  Updates a node's standing in the graph search problem. Update dependant upon
-  the node's g value and rhs value relative to each other.
 
-  Locally inconsistent nodes (g != rhs) are inserted into the priority queue
-  while locally consistent nodes are not.
-
-  @param[in] s Node to update
-  */
   void updateNode_0(const Node &s);
-  /**
-  Expands nodes in the priority queue until optimal path to goal node has been
-  found. The first search is equivalent to an A* heuristic search. All calls
-  to computeShortestPath() thereafter only expand the nodes necessary to
-  compute the optimal path to the goal node.
 
-  @return number of nodes expanded in graph search
-  */
   int computeShortestPath_0();
   int computeShortestPath_1();
-  /**
-  Updates nodes around cells whose occupancy values have changed. Takes into
-  account the cspace of the robot. This step is performed after the robot
-  moves and the occupancy grid is updated with new sensor information
 
-  @return the number of nodes updated
-  */
   int updateNodesAroundUpdatedCells();
-  /**
-  Constructs the optimal path through the search space by greedily moving to
-  the next position (or vertex) that minimizes the linearly interpolated
-  path cost calculation. Constructed paths populate the `path` attribute
-  */
-  void constructOptimalPath();
-  /**
-  Helper method for path reconstruction process. Finds the next path position(s)
-  when planning from a vertex or an edge position on the graph given the current
-  position p and its consecutive neighbors p_a, p_b.
 
-  @param[in] p edge on graph to plan from
-  @param[in] p_a consecutive neighbor of p
-  @param[in] p_b consecutive neighbor of p
-  @return vector containing the next positions(s) and movement cost
-  */
+  void constructOptimalPath();
+
   FieldDPlanner::path_additions computeOptimalCellTraversalFromEdge(const Position &p,
                                                                     const Position &p_a,
                                                                     const Position &p_b,
@@ -271,80 +112,41 @@ class FieldDPlanner {
                                                                       const Position &p_a,
                                                                       const Position &p_b,
                                                                       float &step_cost);
-  /**
-  Helper method for path reconstruction process. Finds the next path position(s)
-  when planning from a vertex or an edge position on the graph.
-
-  @param[in] p edge on graph to plan from
-  @return vector containing the next positions(s) and movement cost
-  */
   FieldDPlanner::path_additions getPathAdditions(const Position &p,
                                                  const bool &do_lookahead,
                                                  float &step_cost);
-  /**
-  Checks whether a specified node is within range of the goal node. This 'range'
-  is specified by the GOAL_RANGE instance variable.
-
-  @param[in] s Node to check
-  @return whether or not node s is within range of the goal
-  */
   bool isWithinRangeOfGoal(const Position &p);
-  /**
-  Tries to insert an entry into the unordered map. If an entry for that key
-  (Node) already exists, overrides the value with specified g and rhs vals.
 
-  @param[in] s key to create entry for
-  @param[in] g g value for entry
-  @param[in] rhs rhs value for entry
-  */
-  /**
-  Returns g-value for a node s
-
-  @param[in] s Node to get g-value for
-  @return g-value
-  */
   float getG(const Node &s);
-  /**
-  Returns rhs value for a node s
-
-  @param[in] s Node to get rhs-value for
-  @return rhs-value
-  */
   float getRHS(const Node &s);
+  std::pair<float, float> getGandRHS(const Node &s);
 
   #define G(map_it) std::get<0>(map_it->second)
   #define RHS(map_it) std::get<1>(map_it->second)
   #define BPTR(map_it) std::get<2>(map_it->second)
+
   class ExpandedMap : public std::unordered_map<Node, std::tuple<float, float, Node>> {
    public:
     const Node NULLNODE = Node(-1,-1);
-    iterator find_or_init(Node n) {
-        iterator it = find(n);
-        if (it == end()) { // Init node if not yet considered
-            it = emplace(n, std::make_tuple(INFINITY, INFINITY, NULLNODE)).first;
-        }
-        return it;
-    }
+    iterator find_or_init(const Node &n);
+    iterator insert_or_assign(const Node &s, float g, float rhs);
   } expanded_map;
 
-  ExpandedMap::iterator insert_or_assign(const Node &s, float g, float rhs);
 
  private:
-  // hashed map contains all nodes and <g,rhs> values in search
-  // priority queue contains all locally inconsistent nodes whose values
-  // need updating
   PriorityQueue priority_queue;
   bool initialize_search = true;  // set to true if the search problem must be initialized
   std::pair<float, float> getBC(TraversalParams &t);
-  bool consistent(const Node &s);
   float computeOptimalCost(const Position &p, const Position &p_a, const Position &p_b);
   bool end_condition();
-  Key calculateKey(const Node &s, const float cost_so_far);
-  Key calculateKey(const Node &s, const float g, const float rhs);
-  std::pair<float, float> getGandRHS(const Node &s);
+  PriorityQueue::Key calculateKey(const Node &s);
+  PriorityQueue::Key calculateKey(const Node &s, const float cost_so_far);
+  PriorityQueue::Key calculateKey(const Node &s, const float g, const float rhs);
   void enqueueIfInconsistent(ExpandedMap::iterator it);
   float minRHS_0(const Node &s);
   float minRHS_1(const Node &s, Node &bptr_idx);
+  bool consistent(const Node &s);
+  bool consistent(const ExpandedMap::iterator &it);
 };
 
 #endif

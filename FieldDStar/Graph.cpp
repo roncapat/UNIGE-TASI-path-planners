@@ -20,7 +20,6 @@ void Graph::initializeGraph(const MapPtr &msg) {
     flength_ = static_cast<float>(msg->length);
     fwidth_ = static_cast<float>(msg->width);
     size_ = length_ * width_;
-    resolution_ = msg->resolution;
     start_.setIndex(msg->x, msg->y);
     map_ = msg->image;
 }
@@ -239,78 +238,6 @@ Node Graph::clockwiseNeighbor(Node s, Node s_prime) {
 
     Node c_neighbor(new_x, new_y);
     return isValidNode(c_neighbor) ? c_neighbor : Node{false};
-}
-
-float Graph::getC(const Node &s, const Node &s_prime) {
-    // index of cell between s and s_prime. s and s_prime assumed to be
-    // diagonal neighbors
-    std::tuple<int, int> cell_ind;
-    float cell_val;
-
-    int x1, y1;  // indices of s
-    std::tie(x1, y1) = s.getIndex();
-
-    int x2, y2;  // indices of s'
-    std::tie(x2, y2) = s_prime.getIndex();
-
-    // get orientation of s_prime relative to s. Used to locate containing cell
-    int x_diff = x2 - x1;
-    int y_diff = y2 - y1;
-
-    assert((std::abs(x_diff) == 1) && (std::abs(y_diff) == 1));
-
-    if ((x_diff == 1) && (y_diff == 1)) {
-        cell_ind = std::make_tuple(x1, y1);  // top right cell
-    } else if ((x_diff == -1) && (y_diff == 1)) {
-        cell_ind = std::make_tuple(x1 - 1, y1);  // top left cell
-    } else if ((x_diff == -1) && (y_diff == -1)) {
-        cell_ind = std::make_tuple(x1 - 1, y1 - 1);  // bottom left cell
-    } else if ((x_diff == 1) && (y_diff == -1)) {
-        cell_ind = std::make_tuple(x1, y1 - 1);  // bottom right cell
-    }
-
-    // return inf cost if cell is occupied, otherwise return constant traversal cost (1)
-    cell_val = getTraversalCost(cell_ind);
-    return (cell_val >= occupancy_threshold_uchar_) ? std::numeric_limits<float>::infinity() :
-           (TRAVERSAL_COST + (cell_val / 255.0f));
-}
-
-float Graph::getB(const Node &s, const Node &s_prime) {
-    // each edge has 2 neighboring cells
-    std::tuple<int, int> cell_ind_1;
-    std::tuple<int, int> cell_ind_2;
-
-    float max_cell_val;  // maximum occupied status of both neighboring cells
-
-    int x1, y1;
-    std::tie(x1, y1) = s.getIndex();
-
-    int x2, y2;
-    std::tie(x2, y2) = s_prime.getIndex();
-
-    int x_diff = x2 - x1;
-    int y_diff = y2 - y1;
-
-    assert((std::abs(x_diff) == 1 && y_diff == 0) || (x_diff == 0 && std::abs(y_diff) == 1));
-
-    if ((x_diff == 1) && (y_diff == 0)) {
-        cell_ind_1 = std::make_tuple(x1, y1);      // top right cell
-        cell_ind_2 = std::make_tuple(x1, y1 - 1);  // bottom right cell
-    } else if ((x_diff == 0) && (y_diff == 1)) {
-        cell_ind_1 = std::make_tuple(x1 - 1, y1);  // top left cell
-        cell_ind_2 = std::make_tuple(x1, y1);      // top right cell
-    } else if ((x_diff == -1) && (y_diff == 0)) {
-        cell_ind_1 = std::make_tuple(x1 - 1, y1);      // top left cell
-        cell_ind_2 = std::make_tuple(x1 - 1, y1 - 1);  // bottom left cell
-    } else if ((x_diff == 0) && (y_diff == -1)) {
-        cell_ind_1 = std::make_tuple(x1 - 1, y1 - 1);  // bottom left cell
-        cell_ind_2 = std::make_tuple(x1, y1 - 1);      // bottom right cell
-    }
-
-    // return inf cost if cell is occupied, otherwise return constant traversal cost (1)
-    max_cell_val = std::max(getTraversalCost(cell_ind_1), getTraversalCost(cell_ind_2));
-    return (max_cell_val >= occupancy_threshold_uchar_) ? std::numeric_limits<float>::infinity() :
-           (TRAVERSAL_COST + (max_cell_val / 255.0f));
 }
 
 float Graph::getTraversalCost(const std::tuple<int, int> &ind) {

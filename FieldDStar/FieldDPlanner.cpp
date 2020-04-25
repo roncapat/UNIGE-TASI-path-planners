@@ -59,55 +59,6 @@ int FieldDPlanner::step() {
     return LOOP_OK;
 }
 
-void FieldDPlanner::publish_expanded_set() {
-
-    float max_g = -INFINITY;
-
-    for (auto e : expanded_map) {
-        // ignore infinite g-values when getting the max value
-        if (std::get<0>(e.second) == INFINITY)
-            continue;
-        max_g = std::max(max_g, std::get<0>(e.second));
-    }
-
-    std::vector<std::tuple<int, int, float>> expanded;
-    expanded.reserve(expanded_map.size());
-    for (auto e : expanded_map) {
-        auto x = static_cast<float>(std::get<0>(e.first.getIndex()) - x_initial_) * map_->resolution;
-        auto y = static_cast<float>(std::get<1>(e.first.getIndex()) - y_initial_) * map_->resolution;
-        auto g = std::get<0>(e.second) / max_g * 255.f;
-        expanded.emplace_back(x, y, g);
-    }
-    expanded_cb({expanded, num_nodes_expanded, num_nodes_updated});
-}
-
-void FieldDPlanner::publish_path() {
-    size_t num_poses = path_.size();
-    std::vector<Pose> poses;
-    poses.reserve(num_poses);
-
-    if (num_poses > 1 || !follow_old_path_) {
-        for (size_t i = 0; i < num_poses; i++) {
-            Pose pose;
-
-            // calculate the position in the "/odom" frame
-            pose.x = (path_[i].x - x_initial_) * grid.resolution_;
-            pose.y = (path_[i].y - y_initial_) * grid.resolution_;
-
-            // calculate the orientation
-            double delta_x = ((path_[i + 1].x - x_initial_) * grid.resolution_) - pose.x;
-            double delta_y = ((path_[i + 1].y - y_initial_) * grid.resolution_) - pose.y;
-            double heading = atan2(delta_y, delta_x);
-            pose.orientation = heading;
-
-            poses.push_back(pose);
-        }
-
-        poses.back().orientation = poses[num_poses - 2].orientation;
-        poses_cb(poses, total_dist, total_cost);
-    }
-}
-
 void FieldDPlanner::set_map(const MapPtr &msg) {
     map_ = msg;  // update current map
 
@@ -124,8 +75,8 @@ void FieldDPlanner::set_map(const MapPtr &msg) {
 
 void FieldDPlanner::set_goal(std::pair<float, float> point) {
     int goal_x, goal_y;
-    goal_x = static_cast<int>(std::round(point.first / grid.resolution_)) + x_initial_;
-    goal_y = static_cast<int>(std::round(point.second / grid.resolution_)) + y_initial_;
+    goal_x = static_cast<int>(point.first);
+    goal_y = static_cast<int>(point.second);
 
     Node new_goal(goal_x, goal_y);
 
@@ -134,10 +85,7 @@ void FieldDPlanner::set_goal(std::pair<float, float> point) {
 
     grid.setGoal(new_goal);
 
-    float distance_to_goal = grid.euclideanHeuristic(new_goal) * grid.resolution_;
-
-    std::cout << (goal_changed_ ? "New" : "Same") << " waypoint received. Search Problem Goal = " << grid.goal_
-              << ". Distance: " << distance_to_goal << "m." << std::endl;
+    float distance_to_goal = grid.euclideanHeuristic(new_goal);
 
     if (distance_to_goal > maximum_distance_) {
         std::cout << "Planning to waypoint more than " << maximum_distance_
@@ -161,16 +109,16 @@ bool FieldDPlanner::isVertex(const Position &p) {
     return is_vertex && satisfies_bounds;
 }
 
-Key FieldDPlanner::calculateKey(const Node &s) {
+PriorityQueue::Key FieldDPlanner::calculateKey(const Node &s) {
     auto[g, rhs] = getGandRHS(s);
     return calculateKey(s, g, rhs);
 }
 
-Key FieldDPlanner::calculateKey(const Node &s, const float g, const float rhs) {
+PriorityQueue::Key FieldDPlanner::calculateKey(const Node &s, const float g, const float rhs) {
     return calculateKey(s, std::min(g, rhs));
 }
 
-Key FieldDPlanner::calculateKey(const Node &s, const float cost_so_far) {
+PriorityQueue::Key FieldDPlanner::calculateKey(const Node &s, const float cost_so_far) {
     auto[x, y] = s.getIndex();
     auto dist = std::hypot(start_pos.x - x, start_pos.y - y);
     return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
@@ -184,8 +132,8 @@ void FieldDPlanner::initializeSearch() {
     start_cell = Cell(std::floor(x), std::floor(y));
     start_nodes = grid.getNodesAroundCell(start_cell);
     for (const auto &node: start_nodes)
-        insert_or_assign(node, INFINITY, INFINITY);
-    insert_or_assign(grid.goal_, INFINITY, 0.0f);
+        expanded_map.insert_or_assign(node, INFINITY, INFINITY);
+    expanded_map.insert_or_assign(grid.goal_, INFINITY, 0.0f);
     priority_queue.insert(grid.goal_, calculateKey(grid.goal_, 0));
 }
 
@@ -376,7 +324,7 @@ void FieldDPlanner::constructOptimalPath() {
 
     int curr_step = 0;
     // TODO do something better than this sh*t
-    int max_steps = static_cast<int>(20000.00f / (this->grid.resolution_));
+    int max_steps = 2000;
 
     float step_cost, step_dist;
     path_.push_back(start_pos);
@@ -851,15 +799,24 @@ bool FieldDPlanner::isWithinRangeOfGoal(const Position &p) {
 }
 
 FieldDPlanner::ExpandedMap::iterator
-FieldDPlanner::insert_or_assign(const Node &s, float g, float rhs) {
+FieldDPlanner::ExpandedMap::find_or_init(const Node &n) {
+    iterator it = find(n);
+    if (it == end()) { // Init node if not yet considered
+        it = emplace(n, std::make_tuple(INFINITY, INFINITY, NULLNODE)).first;
+    }
+    return it;
+}
+
+FieldDPlanner::ExpandedMap::iterator
+FieldDPlanner::ExpandedMap::insert_or_assign(const Node &s, float g, float rhs) {
     // re-assigns value of node in unordered map or inserts new entry
-    auto it = expanded_map.find(s);
-    if (it != expanded_map.end()) {
+    auto it = find(s);
+    if (it != end()) {
         std::get<0>(it->second) = g;
         std::get<1>(it->second) = rhs;
         return it;
     } else {
-        auto[it, ok] = expanded_map.emplace(s, std::make_tuple(g, rhs, expanded_map.NULLNODE));
+        auto[it, ok] = emplace(s, std::make_tuple(g, rhs, NULLNODE));
         return it;
     }
 }
@@ -897,4 +854,8 @@ float FieldDPlanner::getRHS(const Node &s) {
 bool FieldDPlanner::consistent(const Node &s) {
     auto[g, rhs] = getGandRHS(s);
     return g == rhs;
+}
+
+bool FieldDPlanner::consistent(const ExpandedMap::iterator &it) {
+    return G(it) == RHS(it);
 }
