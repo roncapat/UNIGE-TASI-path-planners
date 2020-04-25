@@ -312,13 +312,13 @@ class FieldDPlanner {
 
   #define G(map_it) std::get<0>(map_it->second)
   #define RHS(map_it) std::get<1>(map_it->second)
-  std::unordered_map<Node, Key> expanded_map_;
+  std::unordered_map<Node, Key> expanded_map;
 
  private:
   // hashed map contains all nodes and <g,rhs> values in search
   // priority queue contains all locally inconsistent nodes whose values
   // need updating
-  PriorityQueue priority_queue_;
+  PriorityQueue priority_queue;
   bool initialize_search = true;  // set to true if the search problem must be initialized
   std::pair<float, float> getBC(TraversalParams &t);
   bool consistent(const Node &s);

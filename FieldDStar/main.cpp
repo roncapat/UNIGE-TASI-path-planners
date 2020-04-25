@@ -151,9 +151,9 @@ int main(int _argc, char **_argv) {
 
         ack = 4;
         out_fifo.write((char *) &ack, 1);
-        auto expanded_size = (long long) planner.expanded_map_.size();
+        auto expanded_size = (long long) planner.expanded_map.size();
         out_fifo.write((char *) &expanded_size, 8);
-        for (const auto &expanded : planner.expanded_map_) {
+        for (const auto &expanded : planner.expanded_map) {
             auto[x, y] = expanded.first.getIndex();
             auto[g, rhs] = expanded.second;
             out_fifo.write((char *) &(x), 4);

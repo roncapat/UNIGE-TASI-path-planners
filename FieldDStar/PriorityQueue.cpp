@@ -45,5 +45,5 @@ bool PriorityQueue::empty() {
 std::set<std::pair<Node, Key>>::iterator PriorityQueue::find(const Node &n) {
     return std::find_if(pq_.begin(),
                         pq_.end(),
-                        [&n](auto e) { return e.first == n; });
+                        [&n](auto &e) { return e.first == n; });
 }
