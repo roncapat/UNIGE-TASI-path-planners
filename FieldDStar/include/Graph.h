@@ -94,12 +94,6 @@ class Graph {
   Node start_;  // start node in the search problem
   Node goal_;   // goal node in the search problem
 
-
-  // k_m, as defined in the D* lite paper, keeps track of the robot's movement
-  // in the grid space. Serves to increase each new node's key value by k_m as
-  // to maintain lower bounds in the priority queue
-  float key_modifier_ = 0;
-
   // Updated cell information is used to update nodes that lie on the 4 corners of
   // each updated cell. This is reset each time updateGraph is called. Each element
   // is composed of an <x,y> tuple representing the cell.

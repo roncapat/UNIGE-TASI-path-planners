@@ -119,15 +119,18 @@ class FieldDPlanner {
   void publish_expanded_set();
 
   Position start_pos;
-  void set_start_position(const Position &pos, bool update = false) {
+  Cell start_cell= Cell(0,0);
+  std::vector<Node> start_nodes;
+  void set_start_position(const Position &pos) {
       start_pos = pos;
-      if (update){
-        auto [prev_x, prev_y] = grid.start_.getIndex();
-          grid.key_modifier_ += std::hypot(pos.x - prev_x,
-                                           pos.y - prev_y);
-      }
-      grid.start_ = Node(std::round(pos.x), std::round(pos.y));
-      std::cout << "Modifier: " << grid.key_modifier_ << std::endl;
+      grid.start_ = Node(std::round(pos.x), std::round(pos.y)); //TODO remove usage
+      start_cell = Cell(std::floor(start_pos.x), std::floor(start_pos.y));
+      start_nodes = grid.getNodesAroundCell(start_cell);
+      PriorityQueue new_queue;
+      for (const auto& elem: priority_queue.container())
+          // Only heuristic changes, so either G or RHS is kept the same
+          new_queue.container().emplace(elem.first, calculateKey(elem.first, elem.second.second));
+      std::swap(priority_queue.container(), new_queue.container());
   }
 
   /**
@@ -324,6 +327,8 @@ class FieldDPlanner {
   bool consistent(const Node &s);
   float computeOptimalCost(const Position &p, const Position &p_a, const Position &p_b);
   bool end_condition();
+  Key calculateKey(const Node &s, const float cost_so_far);
+  Key calculateKey(const Node &s, const float g, const float rhs);
 };
 
 #endif

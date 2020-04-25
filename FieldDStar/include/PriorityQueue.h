@@ -127,6 +127,9 @@ class PriorityQueue {
   */
   bool empty();
 
+  typedef std::function<bool(std::pair<Node, Key>, std::pair<Node, Key>)> Comparator;
+  std::set<std::pair<Node, Key>, Comparator> & container(){return pq_;};
+
  private:
   /**
   Finds first state in the priority queue with the specified index. If found,
@@ -140,7 +143,6 @@ class PriorityQueue {
 
   // Defining a lambda function to compare two entries. Compares using key.
   // Comparison logic for priority queue entries
-  typedef std::function<bool(std::pair<Node, Key>, std::pair<Node, Key>)> Comparator;
   Comparator compFunctor = [](const std::pair<Node, Key> &elem1, const std::pair<Node, Key> &elem2) {
     return elem1.second <= elem2.second;
   };

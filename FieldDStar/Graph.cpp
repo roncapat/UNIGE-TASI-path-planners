@@ -22,7 +22,6 @@ void Graph::initializeGraph(const MapPtr &msg) {
     size_ = length_ * width_;
     resolution_ = msg->resolution;
     start_.setIndex(msg->x, msg->y);
-    key_modifier_ = 0;
     map_ = msg->image;
 }
 

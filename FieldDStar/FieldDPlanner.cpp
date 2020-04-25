@@ -31,10 +31,7 @@ int FieldDPlanner::step() {
     auto begin = std::chrono::steady_clock::now();
     updateNodesAroundUpdatedCells();
     auto end = std::chrono::steady_clock::now();
-
-    auto time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-    auto time_us = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-    auto u_time = time_ms + time_us / 1000.0f;
+    auto u_time = std::chrono::duration<float, std::milli>(end-begin).count();
 
     // only update the graph if nodes have been updated
     begin = std::chrono::steady_clock::now();
@@ -48,18 +45,12 @@ int FieldDPlanner::step() {
         num_nodes_expanded = 0;
     }
     end = std::chrono::steady_clock::now();
-
-    time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-    time_us = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-    auto p_time = time_ms + time_us / 1000.0f;
+    auto p_time = std::chrono::duration<float, std::milli>(end-begin).count();
 
     begin = std::chrono::steady_clock::now();
     constructOptimalPath();
     end = std::chrono::steady_clock::now();
-
-    time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-    time_us = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-    auto e_time = time_ms + time_us / 1000.0f;
+    auto e_time = std::chrono::duration<float, std::milli>(end-begin).count();
     std::cout << "Update time     = " << u_time << " ms" << std::endl;
     std::cout << "Planning time   = " << p_time << " ms" << std::endl;
     std::cout << "Extraction time = " << e_time << " ms" << std::endl;
@@ -171,27 +162,30 @@ bool FieldDPlanner::isVertex(const Position &p) {
 }
 
 Key FieldDPlanner::calculateKey(const Node &s) {
-    // obtain g-values and rhs-values for node s
-    float cost_so_far = std::min(getG(s), getRHS(s));
-    // calculate the key to order the node in the priority_queue_ with. key_modifier_ is the
-    // key modifier, a value which corrects for the distance traveled by the robot
-    // since the search began (source: D* Lite)
+    return calculateKey(s, std::min(getG(s), getRHS(s)));
+}
+
+Key FieldDPlanner::calculateKey(const Node &s, const float cost_so_far) {
     auto[x, y] = s.getIndex();
     auto dist = std::hypot(start_pos.x - x, start_pos.y - y);
-    // TODO: reason on key_modifier scaling with heuristic_multiplier
-    return {cost_so_far + heuristic_multiplier * dist + grid.key_modifier_,
-            cost_so_far};
+    return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
+}
+
+Key FieldDPlanner::calculateKey(const Node &s, const float g, const float rhs) {
+    return calculateKey(s, std::min(g, rhs));
 }
 
 void FieldDPlanner::initializeSearch() {
-    grid.key_modifier_ = 0.0f;
     expanded_map.clear();
     priority_queue.clear();
     grid.updated_cells_.clear();
-
-    insert_or_assign(grid.start_, INFINITY, INFINITY);
+    auto [x,y] = grid.start_.getIndex();
+    start_cell = Cell(std::floor(x), std::floor(y));
+    start_nodes = grid.getNodesAroundCell(start_cell);
+    for (const auto& node: start_nodes)
+        insert_or_assign(node, INFINITY, INFINITY);
     insert_or_assign(grid.goal_, INFINITY, 0.0f);
-    priority_queue.insert(grid.goal_, calculateKey(grid.goal_));
+    priority_queue.insert(grid.goal_, calculateKey(grid.goal_, 0));
 }
 
 int FieldDPlanner::computeShortestPath_1() {
@@ -277,13 +271,12 @@ int FieldDPlanner::computeShortestPath_1() {
 }
 
 bool FieldDPlanner::end_condition() {
-    // Given a position, the integer part of its indices is the cell index,
-    // and the remainder is the internal offsets
-    Cell start_cell(std::floor(start_pos.x), std::floor(start_pos.y));
     // We need to check expansion until all 4 corners of start cell
-    // used early stof from D* LITE
-    for (auto &node: grid.getNodesAroundCell(start_cell)) {
-        if (not((priority_queue.topKey() >= calculateKey(node)) and (getRHS(node) <= getG(node)))) {
+    // used early stop from D* LITE
+    auto top_key = priority_queue.topKey();
+    for (auto &node: start_nodes) {
+        float rhs = getRHS(node), g = getG(node);
+        if (not((top_key >= calculateKey(node, g, rhs)) and (rhs <= g))) {
             return true;
         }
     }
@@ -296,22 +289,12 @@ int FieldDPlanner::computeShortestPath_0() {
         std::cerr << "Start node occupied. No path is possible." << std::endl; //FIXME test
         return 0;
     }
-    int skipped = 0;
     int expanded = 0;
     while ((not priority_queue.empty()) and end_condition()) {
-        // Pop head of queue and its key
+        // Pop head of queue
         Node s = priority_queue.topNode();
-        Key old_key = priority_queue.topKey();
         priority_queue.pop();
         ++expanded;
-
-        // Handle update of key (see D* Lite paper with key modifier)
-        Key new_key = calculateKey(s);
-        if (old_key < new_key) {
-            skipped += 1;
-            priority_queue.insert(s, new_key);
-            continue;
-        }
 
         // Get reference to the node
         auto top_node_it = expanded_map.find(s);
@@ -332,7 +315,6 @@ int FieldDPlanner::computeShortestPath_0() {
     }
     num_nodes_expanded = expanded;
     std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
-    std::cout << skipped << " nodes skipped" << std::endl;
     return num_nodes_expanded;
 }
 
@@ -354,7 +336,7 @@ void FieldDPlanner::updateNode_0(const Node &s) {
     }
 
     if (g != rhs) {
-        priority_queue.insert(s, calculateKey(s));
+        priority_queue.insert(s, calculateKey(s, g, rhs));
     }
 }
 

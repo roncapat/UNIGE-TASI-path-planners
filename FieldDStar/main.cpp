@@ -98,7 +98,7 @@ int main(int _argc, char **_argv) {
     //planner.set_heuristic_multiplier(std::ceil(min)); // What I think is correct (consistent?)
     planner.set_heuristic_multiplier(1);
 
-    float time;
+    float time = 0;
 
     while (not goal_reached) {
         std::cout << "[PLANNER]   New position: [" << next_point.x << ", " << next_point.y << "]" << std::endl;
@@ -127,11 +127,7 @@ int main(int _argc, char **_argv) {
         planner.step();
         auto end = std::chrono::steady_clock::now();
 
-        auto time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-        auto time_us = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-        time = time_ms + time_us / 1000.0f;
-        std::cout << "Step time = " << time << std::endl;
-        //planner.init(); //PLAN FROM SCRATCH INSTEAD OF REPLANNING
+        time += std::chrono::duration<float, std::milli>(end-begin).count();
 
         ack = 3;
         out_fifo.write((char *) &ack, 1);
@@ -167,7 +163,7 @@ int main(int _argc, char **_argv) {
         step_cost = planner.cost_.front();
         if (next_point.x == std::stoi(_argv[4]) and next_point.y == std::stoi(_argv[5]))
             break; //Goal reached
-        planner.set_start_position(next_point, true);
+        planner.set_start_position(next_point);
     }
 
     ack = 2;
@@ -229,5 +225,6 @@ int main(int _argc, char **_argv) {
     */
     out_fifo.close();
     in__fifo.close();
+    std::cout << "Cumulative planning time = " << time << std::endl;
     return 0;
 }
