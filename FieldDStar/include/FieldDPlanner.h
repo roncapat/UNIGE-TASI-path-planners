@@ -329,6 +329,7 @@ class FieldDPlanner {
   bool end_condition();
   Key calculateKey(const Node &s, const float cost_so_far);
   Key calculateKey(const Node &s, const float g, const float rhs);
+  std::pair<float, float> getGandRHS(const Node &s);
 };
 
 #endif

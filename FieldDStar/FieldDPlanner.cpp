@@ -162,17 +162,18 @@ bool FieldDPlanner::isVertex(const Position &p) {
 }
 
 Key FieldDPlanner::calculateKey(const Node &s) {
-    return calculateKey(s, std::min(getG(s), getRHS(s)));
+    auto [g, rhs] = getGandRHS(s);
+    return calculateKey(s, g, rhs);
+}
+
+Key FieldDPlanner::calculateKey(const Node &s, const float g, const float rhs) {
+    return calculateKey(s, std::min(g, rhs));
 }
 
 Key FieldDPlanner::calculateKey(const Node &s, const float cost_so_far) {
     auto[x, y] = s.getIndex();
     auto dist = std::hypot(start_pos.x - x, start_pos.y - y);
     return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
-}
-
-Key FieldDPlanner::calculateKey(const Node &s, const float g, const float rhs) {
-    return calculateKey(s, std::min(g, rhs));
 }
 
 void FieldDPlanner::initializeSearch() {
@@ -275,7 +276,7 @@ bool FieldDPlanner::end_condition() {
     // used early stop from D* LITE
     auto top_key = priority_queue.topKey();
     for (auto &node: start_nodes) {
-        float rhs = getRHS(node), g = getG(node);
+        auto [g, rhs] = getGandRHS(node);
         if (not((top_key >= calculateKey(node, g, rhs)) and (rhs <= g))) {
             return true;
         }
@@ -320,14 +321,16 @@ int FieldDPlanner::computeShortestPath_0() {
 
 void FieldDPlanner::updateNode_0(const Node &s) {
     auto s_it = expanded_map.find(s);
+    float g, rhs;
     if (s_it == expanded_map.end()) { // Init node if not yet considered
         s_it = expanded_map.emplace(s, std::make_pair(INFINITY, INFINITY)).first;
+        g = rhs = INFINITY;
     } else { // Otherwise, remove it from the priority queue, if present
+        g = G(s_it);
+        rhs = RHS(s_it);
         priority_queue.remove(s);
     }
 
-    float g = G(s_it);
-    float rhs = RHS(s_it);
     if (s != grid.goal_) {
         rhs = INFINITY;
         for (auto &[nbr1, nbr2] : grid.consecutiveNeighbors(s))
@@ -878,6 +881,15 @@ FieldDPlanner::insert_or_assign(const Node &s, float g, float rhs) {
     }
 }
 
+std::pair<float,float> FieldDPlanner::getGandRHS(const Node &s) {
+    // return g value if node has been looked at before (is in unordered map)
+    // otherwise, return infinity
+    if (expanded_map.find(s) != expanded_map.end())
+        return expanded_map.at(s);
+    else
+        return {INFINITY, INFINITY};
+}
+
 float FieldDPlanner::getG(const Node &s) {
     // return g value if node has been looked at before (is in unordered map)
     // otherwise, return infinity
@@ -897,5 +909,6 @@ float FieldDPlanner::getRHS(const Node &s) {
 }
 
 bool FieldDPlanner::consistent(const Node &s) {
-    return getG(s) == getRHS(s);
+    auto [g, rhs] = getGandRHS(s);
+    return g==rhs;
 }
