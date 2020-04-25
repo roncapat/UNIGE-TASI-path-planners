@@ -1,49 +1,45 @@
 #include "PriorityQueue.h"
 
-PriorityQueue::PriorityQueue() : pq_(compFunctor) {
-}
-
-bool PriorityQueue::contains(const Node &n) {
-    return find(n) != pq_.end();
-}
-
 void PriorityQueue::insert(const Node &n, Key k) {
-    pq_.insert({n, k});
+    HandleType handle = __queue.emplace(n, k);
+    __handles[n] = handle;
 }
 
 void PriorityQueue::clear() {
-    pq_.clear();
+    __queue.clear();
+    __handles.clear();
 }
 
 void PriorityQueue::remove(const Node &n) {
-    auto it = this->find(n);
-    if (it != pq_.end())
-        pq_.erase(it);
+    auto h_it = __handles.find(n);
+    if (h_it != __handles.end()) {
+        __queue.erase(h_it->second);
+        __handles.erase(h_it);
+    }
+}
+
+void PriorityQueue::update(const Node &n, Key k) {
+    HandleType h = __handles[n];
+    __queue.update(h, ElemType(n, k));
 }
 
 void PriorityQueue::pop() {
-    if (this->size() > 0)
-        pq_.erase(pq_.begin());
+    __handles.erase(__queue.top().first);
+    __queue.pop();
 }
 
 Key PriorityQueue::topKey() {
-    return pq_.begin()->second;
+    return __queue.top().second;
 }
 
 Node PriorityQueue::topNode() {
-    return pq_.begin()->first;
+    return __queue.top().first;
 }
 
 int PriorityQueue::size() {
-    return pq_.size();
+    return __queue.size();
 }
 
 bool PriorityQueue::empty() {
-    return pq_.empty();
-}
-
-std::set<std::pair<Node, Key>>::iterator PriorityQueue::find(const Node &n) {
-    return std::find_if(pq_.begin(),
-                        pq_.end(),
-                        [&n](auto &e) { return e.first == n; });
+    return __queue.empty();
 }

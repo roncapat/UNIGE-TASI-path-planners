@@ -53,7 +53,7 @@ Date Created: December 20th, 2018
 #include <utility>
 
 #include "Node.h"
-
+#include <boost/heap/binomial_heap.hpp>
 /**
   key defined as <f1(s), f2(s)>
   where...
@@ -64,20 +64,42 @@ typedef std::pair<float, float> Key;
 
 class PriorityQueue {
  public:
+  typedef std::pair<Node, Key> ElemType;
+ private:
+  struct comparator {
+    inline bool operator()
+        (const ElemType &c1, const ElemType &c2) const {
+        return c1.second >= c2.second;
+    }
+  };
+
+  typedef boost::heap::compare<comparator> CompareOption;
+  typedef boost::heap::mutable_<true> MutableOption;
+  typedef boost::heap::binomial_heap<ElemType, CompareOption, MutableOption> QueueType;
+  QueueType __queue;
+  std::unordered_map<Node, QueueType::handle_type> __handles;
+
+ public:
+  typedef QueueType::handle_type HandleType;
+  typedef QueueType::iterator IteratorType;
+
+  IteratorType begin() { return __queue.begin(); };
+  IteratorType end() { return __queue.end(); };
+  void swap(PriorityQueue &other) {
+      __queue.swap(other.__queue);
+      __handles.swap(other.__handles);
+  };
+  void update(const Node& n, Key);
+
+  void remove(const Node &n);
+
   /**
   Default no-arg constructor for priority queue. Initializes priority queue
   with compFunctor Comparator. This comparator sorts the priority queue based
   on the lexicographic ordering of the key values.
   */
-  PriorityQueue();
-  /**
-  Checks whether or not the priority queue contains a state with the specified
-  index.
-
-  @param[in] ind tuple representing the indices of the state
-  @return whether or not the priority queue contains an entry for that state
-  */
-  bool contains(const Node &n);  // O(n)
+  PriorityQueue(){};
+  // O(n)
   /**
   Insert a state into the priority queue.
 
@@ -88,13 +110,7 @@ class PriorityQueue {
   Clears the priority queue's contents.
   */
   void clear();
-  /**
-  Remove an item from the priority queue for the specified node.
 
-  @param[in] n node to remove from the priority queue
-  @return whether such an item was found and removed
-  */
-  void remove(const Node &n);  // O(n)
   /**
   Pops the top (least-cost) state from the priority queue. This has the effect of
   reducing the size of the priority queue by one. If the priority queue is
@@ -126,28 +142,6 @@ class PriorityQueue {
   @return bool indicating whether or not the priority queue is empty
   */
   bool empty();
-
-  typedef std::function<bool(std::pair<Node, Key>, std::pair<Node, Key>)> Comparator;
-  std::set<std::pair<Node, Key>, Comparator> & container(){return pq_;};
-
- private:
-  /**
-  Finds first state in the priority queue with the specified index. If found,
-  returns an iterator to this state in the priority queue. Otherwise, returns
-  iterator to the end of the priority queue.
-
-  @param[in] ind index of state to find in the priority queue
-  @return iterator to the found element or iterator to end of priority queue if no such element found
-  */
-  std::set<std::pair<Node, Key>>::iterator find(const Node &n);
-
-  // Defining a lambda function to compare two entries. Compares using key.
-  // Comparison logic for priority queue entries
-  Comparator compFunctor = [](const std::pair<Node, Key> &elem1, const std::pair<Node, Key> &elem2) {
-    return elem1.second <= elem2.second;
-  };
-
-  std::set<std::pair<Node, Key>, Comparator> pq_;
 };
 
 #endif

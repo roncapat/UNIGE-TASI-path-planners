@@ -190,6 +190,7 @@ void FieldDPlanner::initializeSearch() {
 }
 
 int FieldDPlanner::computeShortestPath_1() {
+    /*
     float cost1, cost2, g_sp, rhs_sp, rhs_s, g_s;
     Node cn, ccn;
 
@@ -269,6 +270,8 @@ int FieldDPlanner::computeShortestPath_1() {
     num_nodes_expanded = expanded;
     std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
     return num_nodes_expanded;
+     */
+    return 0;
 }
 
 bool FieldDPlanner::end_condition() {

@@ -127,10 +127,10 @@ class FieldDPlanner {
       start_cell = Cell(std::floor(start_pos.x), std::floor(start_pos.y));
       start_nodes = grid.getNodesAroundCell(start_cell);
       PriorityQueue new_queue;
-      for (const auto& elem: priority_queue.container())
+      for (const auto& elem: priority_queue)
           // Only heuristic changes, so either G or RHS is kept the same
-          new_queue.container().emplace(elem.first, calculateKey(elem.first, elem.second.second));
-      std::swap(priority_queue.container(), new_queue.container());
+          new_queue.insert(elem.first, calculateKey(elem.first, elem.second.second));
+      priority_queue.swap(new_queue);
   }
 
   /**
