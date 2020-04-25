@@ -119,7 +119,7 @@ class FieldDPlanner {
   void publish_expanded_set();
 
   Position start_pos;
-  Cell start_cell= Cell(0,0);
+  Cell start_cell = Cell(0, 0);
   std::vector<Node> start_nodes;
   void set_start_position(const Position &pos) {
       start_pos = pos;
@@ -127,7 +127,7 @@ class FieldDPlanner {
       start_cell = Cell(std::floor(start_pos.x), std::floor(start_pos.y));
       start_nodes = grid.getNodesAroundCell(start_cell);
       PriorityQueue new_queue;
-      for (const auto& elem: priority_queue)
+      for (const auto &elem: priority_queue)
           // Only heuristic changes, so either G or RHS is kept the same
           new_queue.insert(elem.first, calculateKey(elem.first, elem.second.second));
       priority_queue.swap(new_queue);
@@ -166,7 +166,7 @@ class FieldDPlanner {
   float total_dist = 0;
 
   // path additions made by one step of constructOptimalPath()
-  class path_additions{
+  class path_additions {
    public:
     std::vector<Position> steps;
     std::vector<float> stepcosts;
@@ -297,7 +297,6 @@ class FieldDPlanner {
   @param[in] g g value for entry
   @param[in] rhs rhs value for entry
   */
-  std::unordered_map<const Node, Key>::iterator insert_or_assign(const Node &s, float g, float rhs);
   /**
   Returns g-value for a node s
 
@@ -315,7 +314,20 @@ class FieldDPlanner {
 
   #define G(map_it) std::get<0>(map_it->second)
   #define RHS(map_it) std::get<1>(map_it->second)
-  std::unordered_map<Node, Key> expanded_map;
+  #define BPTR(map_it) std::get<2>(map_it->second)
+  class ExpandedMap : public std::unordered_map<Node, std::tuple<float, float, Node>> {
+   public:
+    const Node NULLNODE = Node(-1,-1);
+    iterator find_or_init(Node n) {
+        iterator it = find(n);
+        if (it == end()) { // Init node if not yet considered
+            it = emplace(n, std::make_tuple(INFINITY, INFINITY, NULLNODE)).first;
+        }
+        return it;
+    }
+  } expanded_map;
+
+  ExpandedMap::iterator insert_or_assign(const Node &s, float g, float rhs);
 
  private:
   // hashed map contains all nodes and <g,rhs> values in search
@@ -330,6 +342,9 @@ class FieldDPlanner {
   Key calculateKey(const Node &s, const float cost_so_far);
   Key calculateKey(const Node &s, const float g, const float rhs);
   std::pair<float, float> getGandRHS(const Node &s);
+  void enqueueIfInconsistent(ExpandedMap::iterator it);
+  float minRHS_0(const Node &s);
+  float minRHS_1(const Node &s, Node &bptr_idx);
 };
 
 #endif

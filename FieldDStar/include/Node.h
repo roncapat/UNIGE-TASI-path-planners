@@ -77,6 +77,7 @@ class Node {
   @param[in] s_prime backpointer index of the current node
   */
   void setBptr(std::tuple<int, int> bptr);
+  void setBptr(const Node &bptr);
   /**
   Get the distance from the current Node to a provided position
 

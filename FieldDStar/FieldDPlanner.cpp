@@ -31,7 +31,7 @@ int FieldDPlanner::step() {
     auto begin = std::chrono::steady_clock::now();
     updateNodesAroundUpdatedCells();
     auto end = std::chrono::steady_clock::now();
-    auto u_time = std::chrono::duration<float, std::milli>(end-begin).count();
+    auto u_time = std::chrono::duration<float, std::milli>(end - begin).count();
 
     // only update the graph if nodes have been updated
     begin = std::chrono::steady_clock::now();
@@ -45,12 +45,12 @@ int FieldDPlanner::step() {
         num_nodes_expanded = 0;
     }
     end = std::chrono::steady_clock::now();
-    auto p_time = std::chrono::duration<float, std::milli>(end-begin).count();
+    auto p_time = std::chrono::duration<float, std::milli>(end - begin).count();
 
     begin = std::chrono::steady_clock::now();
     constructOptimalPath();
     end = std::chrono::steady_clock::now();
-    auto e_time = std::chrono::duration<float, std::milli>(end-begin).count();
+    auto e_time = std::chrono::duration<float, std::milli>(end - begin).count();
     std::cout << "Update time     = " << u_time << " ms" << std::endl;
     std::cout << "Planning time   = " << p_time << " ms" << std::endl;
     std::cout << "Extraction time = " << e_time << " ms" << std::endl;
@@ -63,7 +63,7 @@ void FieldDPlanner::publish_expanded_set() {
 
     float max_g = -INFINITY;
 
-    for (std::pair<Node, std::tuple<float, float>> e : expanded_map) {
+    for (auto e : expanded_map) {
         // ignore infinite g-values when getting the max value
         if (std::get<0>(e.second) == INFINITY)
             continue;
@@ -162,7 +162,7 @@ bool FieldDPlanner::isVertex(const Position &p) {
 }
 
 Key FieldDPlanner::calculateKey(const Node &s) {
-    auto [g, rhs] = getGandRHS(s);
+    auto[g, rhs] = getGandRHS(s);
     return calculateKey(s, g, rhs);
 }
 
@@ -180,19 +180,18 @@ void FieldDPlanner::initializeSearch() {
     expanded_map.clear();
     priority_queue.clear();
     grid.updated_cells_.clear();
-    auto [x,y] = grid.start_.getIndex();
+    auto[x, y] = grid.start_.getIndex();
     start_cell = Cell(std::floor(x), std::floor(y));
     start_nodes = grid.getNodesAroundCell(start_cell);
-    for (const auto& node: start_nodes)
+    for (const auto &node: start_nodes)
         insert_or_assign(node, INFINITY, INFINITY);
     insert_or_assign(grid.goal_, INFINITY, 0.0f);
     priority_queue.insert(grid.goal_, calculateKey(grid.goal_, 0));
 }
 
 int FieldDPlanner::computeShortestPath_1() {
-    /*
-    float cost1, cost2, g_sp, rhs_sp, rhs_s, g_s;
-    Node cn, ccn;
+    float cost1, cost2;
+    Node cn, ccn, bptr;
 
     // if the start node is occupied, return immediately. No path exists
     if (grid.getTraversalCost(grid.start_.getIndex()) == INFINITY) {
@@ -202,76 +201,65 @@ int FieldDPlanner::computeShortestPath_1() {
 
     int expanded = 0;
     while ((not priority_queue.empty()) and end_condition()) {
+        // Pop head of queue
         Node s = priority_queue.topNode();
-        expanded++;
+        ++expanded;
 
-        g_s = getG(s);
-        rhs_s = getRHS(s);
-        if (g_s > rhs_s) {
-            insert_or_assign(s, rhs_s, rhs_s);
+        auto s_it = expanded_map.find(s);
+        assert(s_it != expanded_map.end());
+
+        if (G(s_it) > RHS(s_it)) {
+            G(s_it) = RHS(s_it);
             priority_queue.pop();
             for (Node &sp : grid.neighbors(s)) {
-                if (expanded_map.find(sp) == expanded_map.end()) {
-                    insert_or_assign(sp, INFINITY, INFINITY);
-                }
+                auto sp_it = expanded_map.find_or_init(sp);
+
                 ccn = grid.counterClockwiseNeighbor(sp, s);
                 cn = grid.clockwiseNeighbor(sp, s);
                 cost1 = ccn.valid ? computeOptimalCost(sp, s, ccn) : INFINITY;
                 cost2 = cn.valid ? computeOptimalCost(sp, cn, s) : INFINITY;
-                if (cost1 <= cost2) {
-                    rhs_sp = getRHS(sp);
-                    if (rhs_sp > cost1) {
-                        sp.setBptr(s.getIndex());
-                        g_sp = getG(sp);
-                        insert_or_assign(sp, g_sp, cost1);
-                        priority_queue.remove(sp);
-                        if (g_sp != cost1) {
-                            priority_queue.insert(sp, calculateKey(sp));
-                        }
-                    } else if (rhs_sp > cost2) {
-                        sp.setBptr(cn.getIndex());
-                        g_sp = getG(sp);
-                        insert_or_assign(sp, g_sp, cost2);
-                        priority_queue.remove(sp);
-                        if (g_sp != cost2) {
-                            priority_queue.insert(sp, calculateKey(sp));
-                        }
-                    }
+                if ((cost1 <= cost2) and (RHS(sp_it) > cost1)) {
+                    RHS(sp_it) = cost1;
+                    BPTR(sp_it) = s;
                 }
+                if ((cost1>cost2) and (RHS(sp_it) > cost2)) {
+                    RHS(sp_it) = cost2;
+                    BPTR(sp_it) = cn;
+                }
+                enqueueIfInconsistent(sp_it);
             }
         } else {
-            insert_or_assign(s, INFINITY, rhs_s);
+            G(s_it) = INFINITY;
             for (Node &sp : grid.neighbors(s)) {
-                auto sp_bptr = sp.getBptr();
-                if (sp_bptr == s.getIndex() or sp_bptr == grid.clockwiseNeighbor(sp, s).getIndex()) {
-                    float min_rhs = INFINITY;
-                    for (const auto &spp : grid.neighbors(sp)) {
-                        ccn = grid.counterClockwiseNeighbor(sp, spp);
-                        if (ccn.valid) {
-                            cost1 = computeOptimalCost(sp, spp, ccn);
-                            min_rhs = std::min(min_rhs, cost1);
-                            if (min_rhs == cost1) sp.setBptr(spp.getIndex());
-                        }
-                    }
-                    g_sp = getG(sp);
-                    insert_or_assign(sp, g_sp, min_rhs);
-                    priority_queue.remove(sp);
-                    if (g_sp != min_rhs) {
-                        priority_queue.insert(sp, calculateKey(sp));
-                    }
+                auto sp_it = expanded_map.find(sp);
+                assert(sp_it != expanded_map.end());
+
+                if (BPTR(sp_it) == s or BPTR(sp_it) == grid.clockwiseNeighbor(sp, s)) {
+                    RHS(sp_it) = minRHS_1(sp, bptr);
+                    if (RHS(sp_it) < INFINITY) BPTR(sp_it)= bptr;
+                    enqueueIfInconsistent(sp_it);
                 }
             }
-            priority_queue.remove(s);
-            if (g_s != rhs_s) {
-                priority_queue.insert(s, calculateKey(s));
-            }
+            enqueueIfInconsistent(s_it);
         }
     }
     num_nodes_expanded = expanded;
-    std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
+    std::cout << num_nodes_expanded << " nodes expanded" <<
+              std::endl;
     return num_nodes_expanded;
-     */
-    return 0;
+}
+
+float FieldDPlanner::minRHS_1(const Node &s, Node &bptr) {
+    float rhs = INFINITY, cost;
+    for (const auto &sp : grid.neighbors(s)) {
+        auto ccn = grid.counterClockwiseNeighbor(s, sp);
+        if (ccn.valid) {
+            rhs = std::min(rhs, cost = computeOptimalCost(s, sp, ccn));
+            if (rhs == cost)
+                bptr = sp;
+        }
+    }
+    return rhs;
 }
 
 bool FieldDPlanner::end_condition() {
@@ -279,7 +267,7 @@ bool FieldDPlanner::end_condition() {
     // used early stop from D* LITE
     auto top_key = priority_queue.topKey();
     for (auto &node: start_nodes) {
-        auto [g, rhs] = getGandRHS(node);
+        auto[g, rhs] = getGandRHS(node);
         if (not((top_key >= calculateKey(node, g, rhs)) and (rhs <= g))) {
             return true;
         }
@@ -301,17 +289,15 @@ int FieldDPlanner::computeShortestPath_0() {
         ++expanded;
 
         // Get reference to the node
-        auto top_node_it = expanded_map.find(s);
-        assert(top_node_it != expanded_map.end());
+        auto s_it = expanded_map.find(s);
+        assert(s_it != expanded_map.end());
 
-        float g = G(top_node_it);
-        float rhs = RHS(top_node_it);
-        if (g > rhs) { // Overconsistent
-            G(top_node_it) = rhs;
+        if (G(s_it) > RHS(s_it)) { // Overconsistent
+            G(s_it) = RHS(s_it);
             for (const Node &nbr : grid.neighbors(s))
                 updateNode_0(nbr);
         } else { // Underconsistent
-            G(top_node_it) = INFINITY;
+            G(s_it) = INFINITY;
             for (const Node &nbr : grid.neighbors(s))
                 updateNode_0(nbr);
             updateNode_0(s);
@@ -323,27 +309,19 @@ int FieldDPlanner::computeShortestPath_0() {
 }
 
 void FieldDPlanner::updateNode_0(const Node &s) {
-    auto s_it = expanded_map.find(s);
-    float g, rhs;
-    if (s_it == expanded_map.end()) { // Init node if not yet considered
-        s_it = expanded_map.emplace(s, std::make_pair(INFINITY, INFINITY)).first;
-        g = rhs = INFINITY;
-    } else { // Otherwise, remove it from the priority queue, if present
-        g = G(s_it);
-        rhs = RHS(s_it);
-        priority_queue.remove(s);
-    }
+    auto s_it = expanded_map.find_or_init(s);
 
-    if (s != grid.goal_) {
-        rhs = INFINITY;
-        for (auto &[nbr1, nbr2] : grid.consecutiveNeighbors(s))
-            rhs = std::min(rhs, computeOptimalCost(s, nbr1, nbr2));
-        RHS(s_it) = rhs;
-    }
+    if (s != grid.goal_)
+        RHS(s_it) = minRHS_0(s);
 
-    if (g != rhs) {
-        priority_queue.insert(s, calculateKey(s, g, rhs));
-    }
+    enqueueIfInconsistent(s_it);
+}
+
+float FieldDPlanner::minRHS_0(const Node &s){
+    float rhs = INFINITY;
+    for (auto &[nbr1, nbr2] : grid.consecutiveNeighbors(s))
+        rhs = std::min(rhs, computeOptimalCost(s, nbr1, nbr2));
+    return rhs;
 }
 
 int FieldDPlanner::updateNodesAroundUpdatedCells() {
@@ -359,24 +337,18 @@ int FieldDPlanner::updateNodesAroundUpdatedCells() {
         if (optimization_lvl == 0) {
             updateNode_0(s);
         } else {
-            float cost = INFINITY, min_rhs = INFINITY;
-            if (expanded_map.find(s) == expanded_map.end()) {
-                insert_or_assign(s, INFINITY, INFINITY);
-            }
-            if (s == grid.goal_) continue;
-            for (const auto &sp : grid.neighbors(s)) {
-                auto ccn = grid.counterClockwiseNeighbor(s, sp);
-                if (ccn.valid) {
-                    cost = computeOptimalCost(s, sp, ccn);
-                    min_rhs = std::min(min_rhs, cost);
-                    if (min_rhs == cost) s.setBptr(sp.getIndex());
+            auto s_it = expanded_map.find_or_init(s);
+
+            if(s != grid.goal_){
+                RHS(s_it) = INFINITY;
+                for (const auto &sp : grid.neighbors(s)) {
+                    auto ccn = grid.counterClockwiseNeighbor(s, sp);
+                    if (ccn.valid) {
+                        auto cost1 = computeOptimalCost(s, sp, ccn);
+                        RHS(s_it) = std::min(RHS(s_it), cost1);
+                    }
                 }
-            }
-            auto g_sp = getG(s);
-            insert_or_assign(s, g_sp, min_rhs);
-            priority_queue.remove(s);
-            if (g_sp != min_rhs) {
-                priority_queue.insert(s, calculateKey(s));
+                enqueueIfInconsistent(s_it);
             }
         }
     }
@@ -384,6 +356,13 @@ int FieldDPlanner::updateNodesAroundUpdatedCells() {
     num_nodes_updated = to_update.size();
     std::cout << num_nodes_updated << " nodes updated" << std::endl;
     return num_nodes_updated;
+}
+
+void FieldDPlanner::enqueueIfInconsistent(ExpandedMap::iterator it){
+    if (G(it) != RHS(it))
+        priority_queue.insert_or_update(it->first, calculateKey(it->first, G(it), RHS(it)));
+    else
+        priority_queue.remove_if_present(it->first);
 }
 
 void FieldDPlanner::constructOptimalPath() {
@@ -405,6 +384,7 @@ void FieldDPlanner::constructOptimalPath() {
     do {
         // move one step and calculate the optimal path additions
         pa = getPathAdditions(last, lookahead, step_cost);
+        assert(step_cost<=255*SQRT2);
         path_.reserve(path_.size() + pa.steps.size());
         cost_.reserve(cost_.size() + pa.stepcosts.size());
         auto it = path_.insert(path_.end(), pa.steps.begin(), pa.steps.end());
@@ -870,7 +850,7 @@ bool FieldDPlanner::isWithinRangeOfGoal(const Position &p) {
     return x == p.x && y == p.y;
 }
 
-std::unordered_map<const Node, Key>::iterator
+FieldDPlanner::ExpandedMap::iterator
 FieldDPlanner::insert_or_assign(const Node &s, float g, float rhs) {
     // re-assigns value of node in unordered map or inserts new entry
     auto it = expanded_map.find(s);
@@ -879,16 +859,17 @@ FieldDPlanner::insert_or_assign(const Node &s, float g, float rhs) {
         std::get<1>(it->second) = rhs;
         return it;
     } else {
-        auto[it, ok] = expanded_map.emplace(s, std::make_pair(g, rhs));
+        auto[it, ok] = expanded_map.emplace(s, std::make_tuple(g, rhs, expanded_map.NULLNODE));
         return it;
     }
 }
 
-std::pair<float,float> FieldDPlanner::getGandRHS(const Node &s) {
+std::pair<float, float> FieldDPlanner::getGandRHS(const Node &s) {
     // return g value if node has been looked at before (is in unordered map)
     // otherwise, return infinity
-    if (expanded_map.find(s) != expanded_map.end())
-        return expanded_map.at(s);
+    ExpandedMap::iterator it;
+    if ((it=expanded_map.find(s)) != expanded_map.end())
+        return {G(it), RHS(it)};
     else
         return {INFINITY, INFINITY};
 }
@@ -896,8 +877,9 @@ std::pair<float,float> FieldDPlanner::getGandRHS(const Node &s) {
 float FieldDPlanner::getG(const Node &s) {
     // return g value if node has been looked at before (is in unordered map)
     // otherwise, return infinity
-    if (expanded_map.find(s) != expanded_map.end())
-        return std::get<0>(expanded_map.at(s));
+    ExpandedMap::iterator it;
+    if ((it=expanded_map.find(s)) != expanded_map.end())
+        return G(it);
     else
         return INFINITY;
 }
@@ -905,13 +887,14 @@ float FieldDPlanner::getG(const Node &s) {
 float FieldDPlanner::getRHS(const Node &s) {
     // return rhs value if node has been looked at before (is in unordered map)
     // otherwise, return infinity
-    if (expanded_map.find(s) != expanded_map.end())
-        return std::get<1>(expanded_map.at(s));
+    ExpandedMap::iterator it;
+    if ((it=expanded_map.find(s)) != expanded_map.end())
+        return RHS(it);
     else
         return INFINITY;
 }
 
 bool FieldDPlanner::consistent(const Node &s) {
-    auto [g, rhs] = getGandRHS(s);
-    return g==rhs;
+    auto[g, rhs] = getGandRHS(s);
+    return g == rhs;
 }

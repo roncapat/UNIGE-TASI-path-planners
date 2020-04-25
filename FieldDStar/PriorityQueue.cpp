@@ -10,7 +10,7 @@ void PriorityQueue::clear() {
     __handles.clear();
 }
 
-void PriorityQueue::remove(const Node &n) {
+void PriorityQueue::remove_if_present(const Node &n) {
     auto h_it = __handles.find(n);
     if (h_it != __handles.end()) {
         __queue.erase(h_it->second);
@@ -18,9 +18,11 @@ void PriorityQueue::remove(const Node &n) {
     }
 }
 
-void PriorityQueue::update(const Node &n, Key k) {
-    HandleType h = __handles[n];
-    __queue.update(h, ElemType(n, k));
+void PriorityQueue::insert_or_update(const Node &n, Key k) {
+    auto h_it = __handles.find(n);
+    if (h_it != __handles.end()) {
+        __queue.update(h_it->second, ElemType(n, k));
+    } else insert(n,k);
 }
 
 void PriorityQueue::pop() {

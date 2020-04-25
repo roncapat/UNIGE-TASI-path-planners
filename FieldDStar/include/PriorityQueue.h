@@ -1,46 +1,3 @@
-/**
-Priority Queue implementation for Field D* path planning algorithm. Specializes
-std::priority_queue to provide Node-specific helper methods for manipulating
-the priority queue and a comparator to deal with the ordering of key-value pairs.
-
-The PriorityQueue class orders states based on ascending order of key value.
-Because the key value of each state contains two quantities a lexicographic
-ordering is used, where key(s) < key(s') iff the first element of key(s) is less
-than the first element of key(s') or the first element of key(s) equals the first
-element of key(s') and the second element of key(s) is less than the second
-element of key(s').
-
-Each State is composed of the following:
-1. x and y index representing the node on the graph
-2. f-value and g-value
-
-Author: Alejandro Escontrela <aescontrela3@gatech.edu>
-Date Created: December 20th, 2018
-
-                    Because this software was written
-                         during christmas 2018:
-
-                                     *
-                                     ^
-                                    ^^^
-                                   ^^^^^
-                                  ^^^#^^^
-                                 ^^^^^$^^^
-                                ^^^^^^^^^^^
-                               ^^J^^^^^^^0^^
-                              ^^^^^^^^^^^^^^^
-                             ^^^^^@^^^^^^^^^&^
-                            ^^^^^^^^^^^^^^^^^^^
-                                ||       ||
-                                ||       ||
-                            ||_______________||
-
-                     yes, some of the ascii characters
-                               are ornaments
-
-                                                - Alejandro
-*/
-
 #ifndef PRIORITYQUEUE_H
 #define PRIORITYQUEUE_H
 
@@ -89,9 +46,9 @@ class PriorityQueue {
       __queue.swap(other.__queue);
       __handles.swap(other.__handles);
   };
-  void update(const Node& n, Key);
+  void insert_or_update(const Node& n, Key k);
 
-  void remove(const Node &n);
+  void remove_if_present(const Node &n);
 
   /**
   Default no-arg constructor for priority queue. Initializes priority queue

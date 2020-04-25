@@ -33,6 +33,10 @@ void Node::setBptr(std::tuple<int, int> bptr) {
     this->bptr_ = bptr;
 }
 
+void Node::setBptr(const Node &bptr) {
+    this->bptr_ = bptr.getIndex();
+}
+
 std::tuple<int, int> Node::getBptr() const {
     return this->bptr_;
 }
