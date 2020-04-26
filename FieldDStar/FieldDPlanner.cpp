@@ -288,14 +288,9 @@ int FieldDPlanner::updateNodesAroundUpdatedCells() {
             auto s_it = expanded_map.find_or_init(s);
 
             if(s != grid.goal_){
-                RHS(s_it) = INFINITY;
-                for (const auto &sp : grid.neighbors(s)) {
-                    auto ccn = grid.counterClockwiseNeighbor(s, sp);
-                    if (ccn.valid) {
-                        auto cost1 = computeOptimalCost(s, sp, ccn);
-                        RHS(s_it) = std::min(RHS(s_it), cost1);
-                    }
-                }
+                Node bptr;
+                RHS(s_it) = minRHS_1(s, bptr);
+                if (RHS(s_it) < INFINITY) BPTR(s_it)= bptr;
                 enqueueIfInconsistent(s_it);
             }
         }

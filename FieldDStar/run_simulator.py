@@ -152,7 +152,7 @@ kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (cspace, cspace))
 data_l_cspace = cv2.dilate(data_l, kernel)
 send_map(p_out, data_l)
 
-out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (width * 21, height * 21 + 150))
+out = None
 
 prev_path = []
 next_path = []
@@ -191,7 +191,11 @@ while get_byte(p_in) == 1:
     cv2.imshow("dbg", dbgview)
     dbgview = plot_path_on_map(~data_l_cspace, prev_path, next_path, expanded, info)
     cv2.imshow("dbg_c", dbgview)
+    [w,h,_] = dbgview.shape
+    if out is None:
+        out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (h, w))
     out.write(dbgview)
+    print(dbgview.shape)
     cv2.waitKey(1)
 
 cost_from_beginning += cost_to_goal
@@ -207,7 +211,6 @@ cv2.imshow("dbg", dbgview)
 dbgview = plot_path_on_map(~data_l_cspace, prev_path, next_path, expanded, info)
 cv2.imshow("dbg_c", dbgview)
 out.write(dbgview)
-
 out.release()
 cv2.waitKey()
 
