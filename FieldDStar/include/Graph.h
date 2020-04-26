@@ -1,7 +1,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include "Node.h"
 #include "Map.h"
 
 #include <cassert>
@@ -12,53 +11,63 @@
 #include <utility>
 #include <vector>
 
+class Node;
 
-struct Position {
-  float x;
-  float y;
-
-  Node castToNode() const {
-      return {static_cast<int>(roundf(x)), static_cast<int>(roundf(y))};
-  }
+struct Position : public std::pair<float, float> {
+  float &x = std::get<0>(*this);
+  float &y = std::get<1>(*this);
 
   Position() = default;
-
-  Position(float x, float y) : x(x), y(y) {}
-
-  Position(std::tuple<float, float> position) : Position(std::get<0>(position), std::get<1>(position)) {}
-
-  Position(const Node &n) : Position(static_cast<std::tuple<float, float>>(n.getIndex())) {}
-
-  Position &operator=(const Position &other) = default;
-
-  // Cells equal if their corresponding indices are equal
-  bool operator==(const Position &other) const {
-      return (this->x == other.x) && (this->y == other.y);
-  }
-
-  bool operator!=(const Position &other) const {
-      return !(*this == other);
-  }
+  Position(float x, float y);
+  Position(const Position &other);
+  explicit Position(const std::pair<float, float> &other);
+  explicit Position(const Node &n);
+  Position &operator=(const Position &other);;
 };
 
-struct Cell {
-  int x;
-  int y;
+class Node : public std::pair<int, int> {
+ private:
+  bool valid = true;
+ public:
+  int &x = std::get<0>(*this);
+  int &y = std::get<1>(*this);
 
-  Cell(int x, int y) : x(x), y(y) {}
+  Node() = default;
+  explicit Node(bool valid);
+  Node(int x, int y);
+  Node(const Node &other);
+  explicit Node(const std::pair<int, int> &other);
+  explicit Node(const Position &n);
+  Node &operator=(const Node &other);
+  bool isValid();
+  void setValidity(bool is_valid);
+};
 
-  Cell(std::tuple<int, int> cell) : Cell(std::get<0>(cell), std::get<1>(cell)) {}
-
-  Cell &operator=(const Cell &other) = default;
-
-  bool operator==(const Cell &other) const {
-      return (this->x == other.x) && (this->y == other.y);
-  }
-
-  bool operator!=(const Cell &other) const {
-      return !(*this == other);
+namespace std {
+template<>
+struct hash<Node> {
+  std::size_t operator()(const Node &n) const {
+      std::size_t result = 17;
+      result = 31 * result + hash<int>()(n.x);
+      result = 31 * result + hash<int>()(n.y);
+      return result;
   }
 };
+}
+
+struct Cell : std::pair<int, int> {
+ public:
+  int &x = std::get<0>(*this);
+  int &y = std::get<1>(*this);
+
+  Cell(int x, int y);
+  Cell(const Cell &other);
+  explicit Cell(const std::pair<int, int> &other);
+  explicit Cell(const Position &n);
+  Cell &operator=(const Cell &other);
+};
+
+typedef std::pair<Node, Node> Edge;
 
 class Graph {
  public:
@@ -77,7 +86,6 @@ class Graph {
 
   void setOccupancyThreshold(float occupancy_threshold);
 
-  void setGoal(std::tuple<int, int> goal);
   void setGoal(Node goal);
 
   void initializeGraph(const MapPtr &msg);
@@ -88,13 +96,13 @@ class Graph {
 
   bool isValidCell(const std::tuple<int, int> &ind);
 
-  bool isDiagonal(const Node &s, const Node &s_prime);
+  bool unaligned(const Node &s, const Node &sp);
 
   bool isDiagonalContinuous(const Position &p, const Position &p_prime);
 
   std::vector<Node> neighbors(const Node &s, bool include_invalid = false);
 
-  std::vector<std::pair<Position, Position>> consecutiveNeighbors(const Position &p);
+  std::vector<Edge> consecutiveNeighbors(const Position &p);
 
   Node counterClockwiseNeighbor(Node s, Node s_prime);
 
@@ -105,7 +113,6 @@ class Graph {
   float getTraversalCost(const std::tuple<int, int> &ind);
 
   float euclideanHeuristic(const Node &s);
-  float euclideanHeuristic(const std::tuple<int, int> &ind);
 
   std::vector<Node> getNodesAroundCell(const Cell &cell);
   void updateGraph(std::shared_ptr<uint8_t[]> patch, int x, int y, int w, int h);

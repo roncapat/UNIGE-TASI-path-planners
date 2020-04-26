@@ -77,7 +77,7 @@ struct BMP {
           // BMP pixels rows are 4-bytes aligned, 0 padded at the end of each line
           width = bmp_info_header.width;
           height = bmp_info_header.height;
-          size = width*height;
+          size = width * height;
           int padding = (width % 4 == 0) ? 0 : 4 - width % 4;
 
           // Jump to the pixel data location

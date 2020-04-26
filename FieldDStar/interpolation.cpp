@@ -37,10 +37,10 @@ std::vector<Position> additions(TraversalParams &t) {
     assert(x >= 0 and x <= 1);
     if (t.p0.x == t.p1.x) { // p lies on a vertical edge
         assert(t.p0.y != t.p1.y);
-        return {{t.p0.x, INTERP_1(t.p0.y, t.p1.y, x)}, t.p2};
+        return {{t.p0.x, INTERP_1(t.p0.y, t.p1.y, x)}, Position(t.p2)};
     } else {            // p lies on a horizontal edge
         assert(t.p0.x != t.p1.x);
-        return {{INTERP_1(t.p0.x, t.p1.x, x), t.p0.y}, t.p2};
+        return {{INTERP_1(t.p0.x, t.p1.x, x), t.p0.y}, Position(t.p2)};
     }
 }
 }
@@ -74,10 +74,10 @@ std::vector<Position> additions(TraversalParams &t) {
     assert(x >= 0 and x <= (1 - t.q));
     if (t.p0.x == t.p1.x) { // p lies on a vertical edge
         assert(t.p0.y != t.p1.y);
-        return {{t.p0.x, INTERP_ABS(t.p0.y, t.p1.y, x)}, t.p2};
+        return {{t.p0.x, INTERP_ABS(t.p0.y, t.p1.y, x)}, Position(t.p2)};
     } else {            // p lies on a horizontal edge
         assert(t.p0.x != t.p1.x);
-        return {{INTERP_ABS(t.p0.x, t.p1.x, x), t.p0.y}, t.p2};
+        return {{INTERP_ABS(t.p0.x, t.p1.x, x), t.p0.y}, Position(t.p2)};
     }
 }
 }
@@ -114,11 +114,11 @@ std::vector<Position> additions(TraversalParams &t) {
     if (t.p0.x == t.p1.x) {
         return {{t.p0.x, INTERP_1(t.p0.y, t.p1.y, v)},
                 {t.p0.x, INTERP_1(t.p0.y, t.p1.y, v + x)},
-                t.p2};
+                Position(t.p2)};
     } else {
         return {{INTERP_1(t.p0.x, t.p1.x, v), t.p0.y},
                 {INTERP_1(t.p0.x, t.p1.x, v + x), t.p0.y},
-                t.p2};
+                Position(t.p2)};
     }
 }
 }
@@ -154,10 +154,10 @@ std::vector<Position> additions(TraversalParams &t) {
     assert(y >= 0 and y <= 1);
     if (t.p0.x == t.p1.x) {
         assert(t.p1.x != t.p2.x);
-        return {{INTERP_1(t.p1.x, t.p2.x, y), t.p1.y}};
+        return {{INTERP_1(t.p1.x, t.p2.x, y), (float) t.p1.y}};
     } else {            // p lies on a horizontal edge
         assert(t.p1.y != t.p2.y);
-        return {{t.p1.x, INTERP_1(t.p1.y, t.p2.y, y)}};
+        return {{(float) t.p1.x, INTERP_1(t.p1.y, t.p2.y, y)}};
     }
 }
 }
@@ -190,10 +190,10 @@ std::vector<Position> additions(TraversalParams &t) {
     assert(y >= 0 and y <= 1);
     if (t.p0.x == t.p1.x) {
         assert(t.p1.x != t.p2.x);
-        return {{INTERP_ABS(t.p1.x, t.p2.x, y), t.p1.y}};
+        return {{INTERP_ABS(t.p1.x, t.p2.x, y), (float) t.p1.y}};
     } else {
         assert(t.p1.y != t.p2.y);
-        return {{t.p1.x, INTERP_ABS(t.p1.y, t.p2.y, y)}};
+        return {{(float) t.p1.x, INTERP_ABS(t.p1.y, t.p2.y, y)}};
     }
 }
 }
@@ -226,10 +226,10 @@ std::vector<Position> additions(TraversalParams &t) {
     assert(y >= 0 and y <= 1);
     if (t.p0.x == t.p1.x) {
         assert(t.p1.x != t.p2.x);
-        return {{INTERP_1(t.p1.x, t.p2.x, y), t.p1.y}};
+        return {{INTERP_1(t.p1.x, t.p2.x, y), (float) t.p1.y}};
     } else {
         assert(t.p1.y != t.p2.y);
-        return {{t.p1.x, INTERP_1(t.p1.y, t.p2.y, y)}};
+        return {{(float) t.p1.x, INTERP_1(t.p1.y, t.p2.y, y)}};
     }
 }
 }
@@ -258,7 +258,7 @@ float condcost(TraversalParams &t) {
 }
 
 std::vector<Position> additions(TraversalParams &t) {
-    return {t.p1};
+    return {Position(t.p1)};
 }
 }
 namespace ContiguousEdge {
@@ -283,7 +283,7 @@ float condcost(TraversalParams &t) {
 }
 
 std::vector<Position> additions(TraversalParams &t) {
-    return {t.p1};
+    return {Position(t.p1)};
 }
 }
 
@@ -315,9 +315,9 @@ std::vector<Position> additions(TraversalParams &t) {
     float x = t.p * t.b / CATH(t.c, t.b);
     assert(x >= 0 and x <= 1);
     if (t.p0.x == t.p1.x) {
-        return {{t.p0.x, INTERP_1(t.p0.y, t.p1.y, x)}, t.p1};
+        return {{t.p0.x, INTERP_1(t.p0.y, t.p1.y, x)}, Position(t.p1)};
     } else {            // p lies on a horizontal edge
-        return {{INTERP_1(t.p0.x, t.p1.x, x), t.p0.y}, t.p1};
+        return {{INTERP_1(t.p0.x, t.p1.x, x), t.p0.y}, Position(t.p1)};
     }
 }
 }
@@ -346,7 +346,7 @@ float condcost(TraversalParams &t) {
 }
 
 std::vector<Position> additions(TraversalParams &t) {
-    return {t.p2};
+    return {Position(t.p2)};
 }
 }
 namespace ContiguousEdge {
@@ -372,7 +372,7 @@ float condcost(TraversalParams &t) {
 }
 
 std::vector<Position> additions(TraversalParams &t) {
-    return {t.p2};
+    return {Position(t.p2)};
 }
 }
 namespace OppositeEdge {
@@ -397,7 +397,7 @@ float condcost(TraversalParams &t) {
 }
 
 std::vector<Position> additions(TraversalParams &t) {
-    return {t.p2};
+    return {Position(t.p2)};
 }
 }
 }
@@ -425,7 +425,7 @@ float condcost(TraversalParams &t) {
 }
 
 std::vector<Position> additions(TraversalParams &t) {
-    return {t.p1};
+    return {Position(t.p1)};
 }
 
 }
@@ -451,7 +451,7 @@ float condcost(TraversalParams &t) {
 }
 
 std::vector<Position> additions(TraversalParams &t) {
-    return {t.p1};
+    return {Position(t.p1)};
 }
 }
 namespace OppositeEdge {
@@ -476,7 +476,7 @@ float condcost(TraversalParams &t) {
 }
 
 std::vector<Position> additions(TraversalParams &t) {
-    return {t.p1};
+    return {Position(t.p1)};
 }
 }
 }

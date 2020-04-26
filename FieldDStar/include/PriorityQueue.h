@@ -7,7 +7,7 @@
 #include <tuple>
 #include <utility>
 
-#include "Node.h"
+#include "Graph.h"
 #include <boost/heap/binomial_heap.hpp>
 
 class PriorityQueue {
@@ -33,12 +33,12 @@ class PriorityQueue {
   typedef QueueType::handle_type HandleType;
   typedef QueueType::iterator IteratorType;
 
-  PriorityQueue(){};
+  PriorityQueue() {};
 
   IteratorType begin() { return __queue.begin(); };
   IteratorType end() { return __queue.end(); };
   void swap(PriorityQueue &other);
-  void insert_or_update(const Node& n, const Key &k);
+  void insert_or_update(const Node &n, const Key &k);
   void remove_if_present(const Node &n);
   void insert(const Node &n, Key k);
   void clear();

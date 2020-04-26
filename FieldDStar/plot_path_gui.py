@@ -1,6 +1,7 @@
-from plot_path import *
-import cv2
 import sys
+
+import cv2
+from plot_path import *
 
 if len(sys.argv) < 5:
     sys.stderr.write("Usage:\n\t %s <mapfile.bmp> <logfile.json> <dbgfile.json> <outfile.jpg>\n" % sys.argv[0])

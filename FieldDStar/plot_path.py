@@ -1,5 +1,5 @@
 import json
-import sys, os
+import sys
 from math import modf, ceil, floor
 
 import cv2
@@ -76,13 +76,13 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
         caption1 = "Cost so far   %10.02f" % info["cost_from_start"]
         caption2 = "Cost to goal  %10.02f" % info["cost_to_goal"]
         fontpath = "./SourceCodePro-Regular.ttf"
-        font = ImageFont.truetype(fontpath, int(width/30))
+        font = ImageFont.truetype(fontpath, int(width / 30))
         out_map = cv2.copyMakeBorder(out_map, 140, 0, 0, 0, cv2.BORDER_CONSTANT, value=(255, 255, 255))
         img_pil = Image.fromarray(out_map)
         draw = ImageDraw.Draw(img_pil)
-        draw.text((width/20, 30), "Field D*", font=font, fill=(100, 100, 100))
-        draw.text((width*2/5, 5), caption1, font=font, fill=(100, 100, 100))
-        draw.text((width*2/5, 55), caption2, font=font, fill=(100, 100, 100))
+        draw.text((width / 20, 30), "Field D*", font=font, fill=(100, 100, 100))
+        draw.text((width * 2 / 5, 5), caption1, font=font, fill=(100, 100, 100))
+        draw.text((width * 2 / 5, 55), caption2, font=font, fill=(100, 100, 100))
         out_map = numpy.array(img_pil)
     return out_map
 

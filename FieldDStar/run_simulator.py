@@ -1,6 +1,5 @@
 import os
 import struct
-import subprocess
 import sys
 
 import cv2
@@ -191,7 +190,7 @@ while get_byte(p_in) == 1:
     cv2.imshow("dbg", dbgview)
     dbgview = plot_path_on_map(~data_l_cspace, prev_path, next_path, expanded, info)
     cv2.imshow("dbg_c", dbgview)
-    [w,h,_] = dbgview.shape
+    [w, h, _] = dbgview.shape
     if out is None:
         out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (h, w))
     out.write(dbgview)

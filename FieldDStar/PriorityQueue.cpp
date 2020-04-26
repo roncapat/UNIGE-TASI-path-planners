@@ -22,7 +22,7 @@ void PriorityQueue::insert_or_update(const Node &n, const Key &k) {
     auto h_it = __handles.find(n);
     if (h_it != __handles.end()) {
         __queue.update(h_it->second, ElemType(n, k));
-    } else insert(n,k);
+    } else insert(n, k);
 }
 
 void PriorityQueue::pop() {

@@ -40,8 +40,9 @@ int main(int _argc, char **_argv) {
         return 1;
     }
 
-    std::system((std::string("python3 ../FieldDStar/run_simulator.py ") +
+    auto res = std::system((std::string("python3 ../FieldDStar/run_simulator.py ") +
         _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " &").data());
+    (void) res;
 
     char ack = -1;
     unsigned int size;
@@ -66,14 +67,10 @@ int main(int _argc, char **_argv) {
 
     map_info = std::make_shared<Map>(Map{
         .image = data,
-        .resolution = 1,
-        .orientation = 0,
         .length = static_cast<int>(height),
         .width = static_cast<int>(width),
         .x = std::stoi(_argv[2]),
-        .y = std::stoi(_argv[3]),
-        .x_initial = 0,
-        .y_initial = 0
+        .y = std::stoi(_argv[3])
     });
 
     next_point.x = map_info->x;
@@ -90,7 +87,7 @@ int main(int _argc, char **_argv) {
     std::cout << "Maximum traversability: " << max << std::endl;
 
     planner.set_map(map_info);
-    planner.set_start_position(next_point);
+    planner.set_start(next_point);
     planner.set_goal({std::stoi(_argv[4]), std::stoi(_argv[5])});
     planner.set_lookahead(std::stoi(_argv[6]));
     // FIXME handle remplanning, for now i put the lowest possible value for consistency
@@ -127,7 +124,7 @@ int main(int _argc, char **_argv) {
         planner.step();
         auto end = std::chrono::steady_clock::now();
 
-        time += std::chrono::duration<float, std::milli>(end-begin).count();
+        time += std::chrono::duration<float, std::milli>(end - begin).count();
 
         ack = 3;
         out_fifo.write((char *) &ack, 1);
@@ -150,10 +147,10 @@ int main(int _argc, char **_argv) {
         auto expanded_size = (long long) planner.expanded_map.size();
         out_fifo.write((char *) &expanded_size, 8);
         for (const auto &expanded : planner.expanded_map) {
-            auto[x, y] = expanded.first.getIndex();
-            auto[g, rhs, _bptr] = expanded.second;
-            out_fifo.write((char *) &(x), 4);
-            out_fifo.write((char *) &(y), 4);
+            Node exp = expanded.first;
+            auto[g, rhs, _] = expanded.second;
+            out_fifo.write((char *) &(exp.x), 4);
+            out_fifo.write((char *) &(exp.y), 4);
             out_fifo.write((char *) &(g), 4);
             out_fifo.write((char *) &(rhs), 4);
         }
@@ -163,7 +160,7 @@ int main(int _argc, char **_argv) {
         step_cost = planner.cost_.front();
         if (next_point.x == std::stoi(_argv[4]) and next_point.y == std::stoi(_argv[5]))
             break; //Goal reached
-        planner.set_start_position(next_point);
+        planner.set_start(next_point);
     }
 
     ack = 2;

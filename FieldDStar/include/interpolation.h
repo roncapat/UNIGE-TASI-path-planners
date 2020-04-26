@@ -21,7 +21,8 @@ extern const float SQRT2;
 #endif
 
 struct TraversalParams {
-  Position p0, p1, p2;
+  Position p0;
+  Node p1, p2;
   float b, c, f, g1, g2, p, q;
 };
 
