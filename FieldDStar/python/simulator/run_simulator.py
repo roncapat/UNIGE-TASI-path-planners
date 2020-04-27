@@ -3,7 +3,7 @@ import struct
 import sys
 
 import cv2
-from plot_path import *
+from simulator.plot_path import *
 
 
 # Takes a round region of data from data_h and pastes it in data_l

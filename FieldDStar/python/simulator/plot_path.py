@@ -1,10 +1,13 @@
 import json
+import os
 import sys
 from math import modf, ceil, floor
 
 import cv2
 import numpy
 from PIL import ImageFont, ImageDraw, Image
+
+import simulator
 
 
 def plot_path(mapfile, pathfile, dbgfile):
@@ -75,7 +78,7 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
     if info is not None:
         caption1 = "Cost so far   %10.02f" % info["cost_from_start"]
         caption2 = "Cost to goal  %10.02f" % info["cost_to_goal"]
-        fontpath = "./SourceCodePro-Regular.ttf"
+        fontpath = os.path.dirname(os.path.abspath(simulator.__file__)) + "/SourceCodePro-Regular.ttf"
         font = ImageFont.truetype(fontpath, int(width / 30))
         out_map = cv2.copyMakeBorder(out_map, 140, 0, 0, 0, cv2.BORDER_CONSTANT, value=(255, 255, 255))
         img_pil = Image.fromarray(out_map)

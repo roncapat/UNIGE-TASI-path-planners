@@ -21,8 +21,7 @@ int main(int _argc, char **_argv) {
     float next_step_cost = 0;
 
     std::shared_ptr<Map> map_info = nullptr;
-
-    auto res = std::system((std::string("python3 ../FieldDStar/run_simulator.py ") +
+    auto res = std::system((std::string("python3 -m simulator.run_simulator ") +
         _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " &").data());
     (void) res;
 
