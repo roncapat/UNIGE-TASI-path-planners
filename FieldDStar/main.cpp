@@ -6,22 +6,6 @@
 #include "bitmap/BMP.h"
 #include "Graph.h"
 
-
-std::tuple<int, int, float> map_traversability_stats(uint8_t *data, unsigned int size) {
-    float avg = 0;
-    int count = 0, min = 254, max = 0;
-    for (auto p = data; p < (data + size); ++p) {
-        if (*p < 255) {
-            avg += (float) *p;
-            ++count;
-            if (*p < min) min = *p;
-            if (*p > max) max = *p;
-        }
-    }
-    avg /= (float) count;
-    return {min, max, avg};
-}
-
 int main(int _argc, char **_argv) {
     if (_argc < 11) {
         std::cerr << "Missing required argument." << std::endl;
@@ -33,11 +17,10 @@ int main(int _argc, char **_argv) {
         return 1;
     }
 
-    Position next_point;
+    Position next_point, goal;
     float next_step_cost = 0;
 
     std::shared_ptr<Map> map_info = nullptr;
-
 
     auto res = std::system((std::string("python3 ../FieldDStar/run_simulator.py ") +
         _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " &").data());
@@ -67,32 +50,26 @@ int main(int _argc, char **_argv) {
     map_info = std::make_shared<Map>(Map{
         .image = data,
         .length = static_cast<int>(height),
-        .width = static_cast<int>(width),
-        .x = std::stoi(_argv[2]),
-        .y = std::stoi(_argv[3])
+        .width = static_cast<int>(width)
     });
 
-    next_point.x = map_info->x;
-    next_point.y = map_info->y;
+    next_point.x = std::stof(_argv[2]);
+    next_point.y = std::stof(_argv[3]);
+
+    goal.x = std::stof(_argv[4]);
+    goal.y = std::stof(_argv[5]);
 
     FieldDPlanner planner{};
-    planner.occupancy_threshold_ = 1;
-    planner.optimization_lvl = std::stoi(_argv[8]);
-    planner.first_run_trick = false;
     planner.init();
-    auto[min, max, avg] = map_traversability_stats(data.get(), size);
-    std::cout << "Average traversability: " << avg << std::endl;
-    std::cout << "Minimum traversability: " << min << std::endl;
-    std::cout << "Maximum traversability: " << max << std::endl;
-
-    planner.set_map(map_info);
-    planner.set_start(next_point);
-    planner.set_goal({std::stoi(_argv[4]), std::stoi(_argv[5])});
+    planner.set_optimization_lvl(std::stoi(_argv[8]));
+    planner.set_first_run_trick(false);
+    planner.set_occupancy_threshold(1);
     planner.set_lookahead(std::stoi(_argv[6]));
     // FIXME handle remplanning, for now i put the lowest possible value for consistency
-    //planner.set_heuristic_multiplier(std::ceil(0.5*min)); // Ferguson and Stenz heuristic
-    //planner.set_heuristic_multiplier(std::ceil(min)); // What I think is correct (consistent?)
     planner.set_heuristic_multiplier(1);
+    planner.set_map(map_info);
+    planner.set_start(next_point);
+    planner.set_goal(goal);
 
     float time = 0;
 
@@ -112,12 +89,12 @@ int main(int _argc, char **_argv) {
         in__fifo.read((char *) &left, 4);
         in__fifo.read((char *) &height, 4);
         in__fifo.read((char *) &width, 4);
-        std::cout << "[PLANNER]   New patch: position [" << top << ", " << left << "], shape [" << width << ", "
-                  << height << "]" << std::endl;
+        std::cout << "[PLANNER]   New patch: position [" << top << ", " << left
+                  << "], shape [" << width << ", " << height << "]" << std::endl;
         size = width * height;
         std::shared_ptr<uint8_t[]> patch(new uint8_t[size], std::default_delete<uint8_t[]>());
         in__fifo.read((char *) patch.get(), size); //Receive image
-        planner.grid.updateGraph(patch, top, left, width, height);
+        planner.patch_map(patch, top, left, width, height);
 
         auto begin = std::chrono::steady_clock::now();
         planner.step();
@@ -157,7 +134,7 @@ int main(int _argc, char **_argv) {
 
         next_point = {planner.path_[1].x, planner.path_[1].y};
         next_step_cost = planner.cost_.front();
-        if (next_point.x == std::stof(_argv[4]) and next_point.y == std::stof(_argv[5]))
+        if (next_point == goal)
             break; //Goal reached
         planner.set_start(next_point);
     }

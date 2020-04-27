@@ -8,7 +8,6 @@
 FieldDPlanner::FieldDPlanner() = default;
 
 void FieldDPlanner::init() {
-    grid.setOccupancyThreshold(occupancy_threshold_);
     num_nodes_updated = 0;
     num_nodes_expanded = 0;
     initialize_search = true;
@@ -60,16 +59,11 @@ int FieldDPlanner::step() {
 }
 
 void FieldDPlanner::set_map(const MapPtr &msg) {
-    if (initialize_graph_) {
-        grid.initializeGraph(msg);
-        start_pos = Position(msg->x, msg->y);
-        initialize_graph_ = false;
-    } else {
-        //node_grid_.updateGraph(map_); // FIXME
-    }
+    grid.initializeGraph(msg);
+    initialize_graph_ = false;
 }
 
-void FieldDPlanner::set_goal(std::pair<float, float> point) {
+void FieldDPlanner::set_goal(const Position &point) {
     int goal_x, goal_y;
     goal_x = static_cast<int>(point.first);
     goal_y = static_cast<int>(point.second);
@@ -121,7 +115,7 @@ unsigned long FieldDPlanner::computeShortestPath_1() {
     //TODO check initial point for traversability
 
     int expanded = 0;
-    while ((not priority_queue.empty()) and end_condition()) {
+    while ((not priority_queue.empty()) and not end_condition()) {
         // Pop head of queue
         Node s = priority_queue.topNode();
         ++expanded;
@@ -189,11 +183,11 @@ bool FieldDPlanner::end_condition() {
     auto top_key = priority_queue.topKey();
     for (auto &node: start_nodes) {
         auto[g, rhs] = getKey(node);
-        if (not((top_key >= calculateKey(node, g, rhs)) and (rhs <= g))) {
-            return true;
+        if ((top_key < calculateKey(node, g, rhs)) or (rhs > g)) {
+            return false;
         }
     }
-    return false; //STOP: all 4 conditions met
+    return true; //STOP: all 4 conditions met
 }
 
 unsigned long FieldDPlanner::computeShortestPath_0() {
@@ -201,7 +195,7 @@ unsigned long FieldDPlanner::computeShortestPath_0() {
     //TODO check initial point for traversability
 
     int expanded = 0;
-    while ((not priority_queue.empty()) and end_condition()) {
+    while ((not priority_queue.empty()) and not end_condition()) {
         // Pop head of queue
         Node s = priority_queue.topNode();
         priority_queue.pop();
@@ -352,8 +346,8 @@ void FieldDPlanner::getBC(TraversalParams &t) {
 
     t.b = grid.getTraversalCost(cell_ind_b);
     t.c = grid.getTraversalCost(cell_ind_c);
-    if (t.b >= 255 * occupancy_threshold_) t.b = INFINITY;
-    if (t.c >= 255 * occupancy_threshold_) t.c = INFINITY;
+    if (t.b >= grid.occupancy_threshold_uchar_) t.b = INFINITY;
+    if (t.c >= grid.occupancy_threshold_uchar_) t.c = INFINITY;
 }
 
 float FieldDPlanner::computeOptimalCost(const Node &n,
@@ -817,3 +811,11 @@ void FieldDPlanner::set_start(const Position &pos) {
         new_queue.insert(elem.node, calculateKey(elem.node, elem.key.second));
     priority_queue.swap(new_queue);
 }
+void FieldDPlanner::patch_map(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h) {
+    grid.updateGraph(patch, x, y, w, h);
+}
+void FieldDPlanner::set_occupancy_threshold(float threshold) { grid.setOccupancyThreshold(threshold); }
+void FieldDPlanner::set_heuristic_multiplier(float mult) { heuristic_multiplier = mult; }
+void FieldDPlanner::set_lookahead(bool use_lookahead) { lookahead = use_lookahead; }
+void FieldDPlanner::set_optimization_lvl(int lvl) {optimization_lvl=lvl;}
+void FieldDPlanner::set_first_run_trick(bool enable) {first_run_trick=enable;}

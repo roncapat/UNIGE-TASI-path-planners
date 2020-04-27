@@ -119,7 +119,6 @@ class Graph {
   std::vector<Node> getNodesAroundCell(const Cell &cell);
   void updateGraph(const std::shared_ptr<uint8_t[]>& patch, int x, int y, int w, int h);
 
- private:
   float occupancy_threshold_uchar_ = 178.5f;
 };
 

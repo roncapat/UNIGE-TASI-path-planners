@@ -16,7 +16,6 @@ void Graph::initializeGraph(const MapPtr &msg) {
     flength_ = static_cast<float>(msg->length);
     fwidth_ = static_cast<float>(msg->width);
     size_ = length_ * width_;
-    start_ = Node(msg->x, msg->y);
     map_ = msg->image;
 }
 
