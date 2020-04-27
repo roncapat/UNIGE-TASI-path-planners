@@ -1,11 +1,12 @@
 #include "Graph.h"
 #include <cmath>
+#include <interpolation.h>
 
 void Graph::setOccupancyThreshold(float occupancy_threshold) {
     this->occupancy_threshold_uchar_ = occupancy_threshold * 255.0f;
 }
 
-void Graph::setGoal(const Node& goal) {
+void Graph::setGoal(const Node &goal) {
     this->goal_ = goal;
 }
 
@@ -19,7 +20,7 @@ void Graph::initializeGraph(const MapPtr &msg) {
     map_ = msg->image;
 }
 
-void Graph::updateGraph(const std::shared_ptr<uint8_t[]>& patch, int x, int y, int w, int h) {
+void Graph::updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h) {
     updated_cells_.clear();  // clear the vector of cells that need updating
     assert(x >= 0);
     assert(y >= 0);
@@ -193,7 +194,7 @@ std::vector<Edge> Graph::consecutiveNeighbors(const Node &s) {
     return consecutive_neighbors;
 }
 
-Node Graph::counterClockwiseNeighbor(const Node& s, const Node& sp) {
+Node Graph::counterClockwiseNeighbor(const Node &s, const Node &sp) {
     int delta_x = sp.x - s.x + 1;
     int delta_y = sp.y - s.y + 1;
 
@@ -207,7 +208,7 @@ Node Graph::counterClockwiseNeighbor(const Node& s, const Node& sp) {
     return isValidNode(cc_neighbor) ? cc_neighbor : Node{false};
 }
 
-Node Graph::clockwiseNeighbor(const Node& s, const Node& sp) {
+Node Graph::clockwiseNeighbor(const Node &s, const Node &sp) {
     int delta_x = sp.x - s.x + 1;
     int delta_y = sp.y - s.y + 1;
 
@@ -224,7 +225,8 @@ Node Graph::clockwiseNeighbor(const Node& s, const Node& sp) {
 float Graph::getTraversalCost(const Cell &c) {
     if (!isValidCell(c))
         return INFINITY;
-    return (map_[c.x * width_ + c.y]);
+    auto cost = map_[c.x * width_ + c.y];
+    return (cost >= occupancy_threshold_uchar_) ? INFINITY : (float)cost;
 }
 
 float Graph::euclideanHeuristic(const Node &s) {
@@ -297,4 +299,16 @@ Cell &Cell::operator=(const Cell &other) {
     x = other.x;
     y = other.y;
     return *this;
+}
+
+Cell Node::cellBottomLeft() { return {x, y - 1}; }
+Cell Node::cellBottomRight() { return {x, y}; }
+Cell Node::cellTopLeft() { return {x - 1, y - 1}; }
+Cell Node::cellTopRight() { return {x - 1, y}; }
+
+Cell Node::neighborCell(bool bottom_TOP, bool left_RIGHT) {
+    if (bottom_TOP)
+        return left_RIGHT ? cellTopRight() : cellTopLeft();
+    else
+        return left_RIGHT ? cellBottomRight() : cellBottomLeft();
 }

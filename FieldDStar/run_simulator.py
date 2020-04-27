@@ -139,10 +139,6 @@ cv2.namedWindow('dbg', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('dbg', 900, 900)
 cv2.moveWindow('dbg', 100, 100)
 
-cv2.namedWindow('dbg_c', cv2.WINDOW_NORMAL)
-cv2.resizeWindow('dbg_c', 900, 900)
-cv2.moveWindow('dbg_c', 1000, 100)
-
 img_h = cv2.imread(sys.argv[1], cv2.IMREAD_GRAYSCALE)
 (data_l, data_h) = simulation_data(img_h, filter_radius=13, low_res_penalty=15)
 [height, width] = data_l.shape
@@ -188,8 +184,6 @@ while get_byte(p_in) == 1:
     info = {"cost_from_start": cost_from_beginning, "cost_to_goal": cost_to_goal}
     dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
     cv2.imshow("dbg", dbgview)
-    dbgview = plot_path_on_map(~data_l_cspace, prev_path, next_path, expanded, info)
-    cv2.imshow("dbg_c", dbgview)
     [w, h, _] = dbgview.shape
     if out is None:
         out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (h, w))
@@ -206,8 +200,6 @@ next_path = next_path[-1:]
 info = {"cost_from_start": cost_from_beginning, "cost_to_goal": cost_to_goal}
 dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
 cv2.imshow("dbg", dbgview)
-dbgview = plot_path_on_map(~data_l_cspace, prev_path, next_path, expanded, info)
-cv2.imshow("dbg_c", dbgview)
 out.write(dbgview)
 out.release()
 cv2.waitKey()

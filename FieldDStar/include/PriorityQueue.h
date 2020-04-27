@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "Graph.h"
-#include <boost/heap/binomial_heap.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
 
 class PriorityQueue {
  public:
@@ -30,7 +30,7 @@ class PriorityQueue {
 
   typedef boost::heap::compare<comparator> CompareOption;
   typedef boost::heap::mutable_<true> MutableOption;
-  typedef boost::heap::binomial_heap<ElemType, CompareOption, MutableOption> QueueType;
+  typedef boost::heap::fibonacci_heap<ElemType, CompareOption, MutableOption> QueueType;
   QueueType __queue;
   std::unordered_map<Node, QueueType::handle_type> __handles;
 

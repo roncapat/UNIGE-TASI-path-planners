@@ -2,8 +2,8 @@
 #include <string>
 #include <chrono>
 #include <iomanip>
+#include <fstream>
 #include "FieldDPlanner.h"
-#include "bitmap/BMP.h"
 #include "Graph.h"
 
 int main(int _argc, char **_argv) {
@@ -120,9 +120,9 @@ int main(int _argc, char **_argv) {
 
         ack = 4;
         out_fifo.write((char *) &ack, 1);
-        auto expanded_size = (long long) planner.expanded_map.size();
+        auto expanded_size = (long long) planner.map.size();
         out_fifo.write((char *) &expanded_size, 8);
-        for (const auto &expanded : planner.expanded_map) {
+        for (const auto &expanded : planner.map) {
             const Node &exp = expanded.first;
             auto[g, rhs, _] = expanded.second;
             out_fifo.write((char *) &(exp.x), 4);

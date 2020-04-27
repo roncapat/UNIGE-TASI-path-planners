@@ -47,6 +47,9 @@ class FieldDPlanner {
     const Node NULLNODE = Node(-1, -1);
     iterator find_or_init(const Node &n);
     iterator insert_or_assign(const Node &s, float g, float rhs);
+    float getG(const Node &s);
+    float getRHS(const Node &s);
+    PriorityQueue::Key getKey(const Node &s);
   };
 
   static inline const Node &NODE(const ExpandedMap::iterator &map_it) { return (map_it)->first; }
@@ -54,7 +57,7 @@ class FieldDPlanner {
   static inline float &RHS(const ExpandedMap::iterator &map_it) { return std::get<1>((map_it)->second); }
   static inline Node &BPTR(const ExpandedMap::iterator &map_it) { return std::get<2>((map_it)->second); }
 
-  ExpandedMap expanded_map;
+  ExpandedMap map;
 
  private:
   class path_additions {
@@ -81,11 +84,6 @@ class FieldDPlanner {
   Graph grid;
   bool initialize_search = true;  // set to true if the search problem must be initialized
 
-
-  void getBC(TraversalParams &t);
-  float getG(const Node &s);
-  float getRHS(const Node &s);
-  PriorityQueue::Key getKey(const Node &s);
   float computeOptimalCost(const Node &p, const Node &p_a, const Node &p_b);
   bool end_condition();
   PriorityQueue::Key calculateKey(const Node &s);
@@ -104,25 +102,26 @@ class FieldDPlanner {
   unsigned long updateNodesAroundUpdatedCells();
   void constructOptimalPath();
 
-  path_additions computeOptimalCellTraversalFromEdge(const Position &p,
-                                                     const Node &p_a,
-                                                     const Node &p_b,
-                                                     float &step_cost);
-  path_additions computeOptimalCellTraversalFromContiguousEdge(const Position &p,
-                                                               const Node &p_a,
-                                                               const Node &p_b,
-                                                               float &step_cost);
-  path_additions computeOptimalCellTraversalFromOppositeEdge(const Position &p,
-                                                             const Node &p_a,
-                                                             const Node &p_b,
-                                                             float &step_cost);
-  path_additions computeOptimalCellTraversalFromCorner(const Position &p,
-                                                       const Node &p_a,
-                                                       const Node &p_b,
-                                                       float &step_cost);
+  path_additions traversalFromEdge(const Position &p,
+                                   const Node &p_a,
+                                   const Node &p_b,
+                                   float &step_cost);
+  path_additions traversalFromContiguousEdge(const Position &p,
+                                             const Node &p_a,
+                                             const Node &p_b,
+                                             float &step_cost);
+  path_additions traversalFromOppositeEdge(const Position &p,
+                                           const Node &p_a,
+                                           const Node &p_b,
+                                           float &step_cost);
+  path_additions traversalFromCorner(const Position &p,
+                                     const Node &p_a,
+                                     const Node &p_b,
+                                     float &step_cost);
   path_additions getPathAdditions(const Position &p,
                                   const bool &do_lookahead,
                                   float &step_cost);
+  void getBC(TraversalParams &t);
 };
 
 #endif

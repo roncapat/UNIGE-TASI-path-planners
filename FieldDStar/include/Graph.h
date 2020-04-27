@@ -2,7 +2,6 @@
 #define GRAPH_H
 
 #include "Map.h"
-
 #include <cassert>
 #include <cmath>
 #include <limits>
@@ -12,6 +11,8 @@
 #include <vector>
 
 class Node;
+class Cell;
+class Position;
 
 class Position : public std::pair<float, float> {
  public:
@@ -40,8 +41,14 @@ class Node : public std::pair<int, int> {
   Node &operator=(const Node &other);
   bool isValid();
   void setValidity(bool is_valid);
+  Cell cellBottomLeft();
+  Cell cellBottomRight();
+  Cell cellTopLeft();
+  Cell cellTopRight();
+  Cell neighborCell(bool bottom_TOP, bool left_RIGHT);
  private:
   bool valid = true;
+
 
 };
 
@@ -68,6 +75,10 @@ class Cell : std::pair<int, int> {
   explicit Cell(const std::pair<int, int> &other);
   explicit Cell(const Position &n);
   Cell &operator=(const Cell &other);
+  Cell neighborCell(const Node &p, bool bottom_TOP, bool left_RIGHT);
+  Cell cellTopRight(const Node &p);
+  Cell cellTopLeft(const Node &p);
+  Cell cellBottomLeft(const Node &p);
 };
 
 typedef std::pair<Node, Node> Edge;
@@ -119,7 +130,12 @@ class Graph {
   std::vector<Node> getNodesAroundCell(const Cell &cell);
   void updateGraph(const std::shared_ptr<uint8_t[]>& patch, int x, int y, int w, int h);
 
-  float occupancy_threshold_uchar_ = 178.5f;
+  int occupancy_threshold_uchar_ = 254;
+  static Cell cellBottomLeft(const Node &p);
+  static Cell cellBottomRight(const Node &p);
+  static Cell cellTopLeft(const Node &p);
+  static Cell cellTopRight(const Node &p);
+  static Cell neighborCell(const Node &p, bool bottom_TOP, bool left_RIGHT);
 };
 
 #endif  // GRAPHSEARCH_H
