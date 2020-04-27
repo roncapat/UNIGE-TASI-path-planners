@@ -89,7 +89,7 @@ bool FieldDPlanner::isVertex(const Position &p) {
 }
 
 PriorityQueue::Key FieldDPlanner::calculateKey(const Node &s) {
-    auto[g, rhs] = getGandRHS(s);
+    auto[g, rhs] = getKey(s);
     return calculateKey(s, g, rhs);
 }
 
@@ -118,11 +118,7 @@ unsigned long FieldDPlanner::computeShortestPath_1() {
     float cost1, cost2;
     Node cn, ccn, bptr;
 
-    // if the start node is occupied, return immediately. No path exists
-    if (grid.getTraversalCost(grid.start_) == INFINITY) {
-        std::cerr << "Start node occupied. No path is possible." << std::endl; //FIXME test
-        return 0;
-    }
+    //TODO check initial point for traversability
 
     int expanded = 0;
     while ((not priority_queue.empty()) and end_condition()) {
@@ -192,7 +188,7 @@ bool FieldDPlanner::end_condition() {
     // used early stop from D* LITE
     auto top_key = priority_queue.topKey();
     for (auto &node: start_nodes) {
-        auto[g, rhs] = getGandRHS(node);
+        auto[g, rhs] = getKey(node);
         if (not((top_key >= calculateKey(node, g, rhs)) and (rhs <= g))) {
             return true;
         }
@@ -201,11 +197,9 @@ bool FieldDPlanner::end_condition() {
 }
 
 unsigned long FieldDPlanner::computeShortestPath_0() {
-    // if the start node is occupied, return immediately. No path exists
-    if (grid.getTraversalCost(grid.start_) == INFINITY) {
-        std::cerr << "Start node occupied. No path is possible." << std::endl; //FIXME test
-        return 0;
-    }
+
+    //TODO check initial point for traversability
+
     int expanded = 0;
     while ((not priority_queue.empty()) and end_condition()) {
         // Pop head of queue
@@ -280,9 +274,9 @@ unsigned long FieldDPlanner::updateNodesAroundUpdatedCells() {
 
 void FieldDPlanner::enqueueIfInconsistent(ExpandedMap::iterator it) {
     if (G(it) != RHS(it))
-        priority_queue.insert_or_update(it->first, calculateKey(it->first, G(it), RHS(it)));
+        priority_queue.insert_or_update(NODE(it), calculateKey(NODE(it), G(it), RHS(it)));
     else
-        priority_queue.remove_if_present(it->first);
+        priority_queue.remove_if_present(NODE(it));
 }
 
 void FieldDPlanner::constructOptimalPath() {
@@ -332,12 +326,12 @@ void FieldDPlanner::constructOptimalPath() {
     std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
 }
 
-std::tuple<float, float> cell_idx_bottom_left(const Node &p) { return {p.x, p.y - 1}; }
-std::tuple<float, float> cell_idx_bottom_right(const Node &p) { return {p.x, p.y}; }
-std::tuple<float, float> cell_idx_top_left(const Node &p) { return {p.x - 1, p.y - 1}; }
-std::tuple<float, float> cell_idx_top_right(const Node &p) { return {p.x - 1, p.y}; }
+Cell cell_idx_bottom_left(const Node &p) { return {p.x, p.y - 1}; }
+Cell cell_idx_bottom_right(const Node &p) { return {p.x, p.y}; }
+Cell cell_idx_top_left(const Node &p) { return {p.x - 1, p.y - 1}; }
+Cell cell_idx_top_right(const Node &p) { return {p.x - 1, p.y}; }
 
-std::tuple<float, float> cell_idx_4n(const Node &p, bool bottom_TOP, bool left_RIGHT) {
+Cell cell_idx_4n(const Node &p, bool bottom_TOP, bool left_RIGHT) {
     if (bottom_TOP)
         return left_RIGHT ? cell_idx_top_right(p) : cell_idx_top_left(p);
     else
@@ -345,8 +339,8 @@ std::tuple<float, float> cell_idx_4n(const Node &p, bool bottom_TOP, bool left_R
 }
 
 // p must be aligned with p_1, p_1 aligned with p_2, p and P_2 diagonal neighbors
-std::pair<float, float> FieldDPlanner::getBC(TraversalParams &t) {
-    std::tuple<int, int> cell_ind_b, cell_ind_c;
+void FieldDPlanner::getBC(TraversalParams &t) {
+    Cell cell_ind_b, cell_ind_c;
 
     if (t.p0.x == t.p1.x) {
         cell_ind_b = cell_idx_4n(t.p1, t.p2.x > t.p1.x, t.p0.y > t.p1.y);
@@ -360,7 +354,6 @@ std::pair<float, float> FieldDPlanner::getBC(TraversalParams &t) {
     t.c = grid.getTraversalCost(cell_ind_c);
     if (t.b >= 255 * occupancy_threshold_) t.b = INFINITY;
     if (t.c >= 255 * occupancy_threshold_) t.c = INFINITY;
-    return {t.b, t.c};
 }
 
 float FieldDPlanner::computeOptimalCost(const Node &n,
@@ -372,12 +365,10 @@ float FieldDPlanner::computeOptimalCost(const Node &n,
     float min_cost;
 
     assert(isVertex(p));
-    assert(isVertex(p_a));
-    assert(isVertex(p_b));
 
     TraversalParams cell{};
     cell.p0 = p;
-    bool cond = grid.isDiagonalContinuous(p, Position(p_a));
+    bool cond = grid.unaligned(p, Position(p_a));
     cell.p1 = cond ? p_b : p_a;
     cell.p2 = cond ? p_a : p_b;
 
@@ -430,12 +421,10 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromCorn
     float min_cost;
 
     assert(isVertex(p));
-    assert(isVertex(p_a));
-    assert(isVertex(p_b));
 
     TraversalParams cell{};
     cell.p0 = p;
-    bool cond = grid.isDiagonalContinuous(p, Position(p_a));
+    bool cond = grid.unaligned(p, Position(p_a));
     cell.p1 = cond ? p_b : p_a;
     cell.p2 = cond ? p_a : p_b;
 
@@ -676,8 +665,6 @@ FieldDPlanner::path_additions FieldDPlanner::computeOptimalCellTraversalFromEdge
                                                                                  float &step_cost) {
 
     assert(!isVertex(p));
-    assert(isVertex(p_a));
-    assert(isVertex(p_b));
 
     bool cond_1 = (p.x == p_a.x || p.y == p_a.y);
     bool cond_2 = (p.x == p_b.x || p.y == p_b.y);
@@ -781,13 +768,13 @@ FieldDPlanner::ExpandedMap::insert_or_assign(const Node &s, float g, float rhs) 
         std::get<1>(it->second) = rhs;
         return it;
     } else {
-        auto[it, ok] = emplace(s, std::make_tuple(g, rhs, NULLNODE));
+        [[maybe_unused]] auto[it, ok] = emplace(s, std::make_tuple(g, rhs, NULLNODE));
         assert(ok);
         return it;
     }
 }
 
-std::pair<float, float> FieldDPlanner::getGandRHS(const Node &s) {
+PriorityQueue::Key FieldDPlanner::getKey(const Node &s) {
     ExpandedMap::iterator it;
     if ((it = expanded_map.find(s)) != expanded_map.end())
         return {G(it), RHS(it)};
@@ -812,7 +799,7 @@ float FieldDPlanner::getRHS(const Node &s) {
 }
 
 bool FieldDPlanner::consistent(const Node &s) {
-    auto[g, rhs] = getGandRHS(s);
+    auto[g, rhs] = getKey(s);
     return g == rhs;
 }
 
@@ -827,6 +814,6 @@ void FieldDPlanner::set_start(const Position &pos) {
     PriorityQueue new_queue;
     for (const auto &elem: priority_queue)
         // Only heuristic changes, so either G or RHS is kept the same
-        new_queue.insert(elem.first, calculateKey(elem.first, elem.second.second));
+        new_queue.insert(elem.node, calculateKey(elem.node, elem.key.second));
     priority_queue.swap(new_queue);
 }

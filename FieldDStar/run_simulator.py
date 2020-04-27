@@ -194,7 +194,6 @@ while get_byte(p_in) == 1:
     if out is None:
         out = cv2.VideoWriter('test.avi', cv2.VideoWriter_fourcc(*'DIVX'), 15, (h, w))
     out.write(dbgview)
-    print(dbgview.shape)
     cv2.waitKey(1)
 
 cost_from_beginning += cost_to_goal

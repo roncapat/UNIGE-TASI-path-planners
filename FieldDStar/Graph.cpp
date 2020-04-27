@@ -5,7 +5,7 @@ void Graph::setOccupancyThreshold(float occupancy_threshold) {
     this->occupancy_threshold_uchar_ = occupancy_threshold * 255.0f;
 }
 
-void Graph::setGoal(Node goal) {
+void Graph::setGoal(const Node& goal) {
     this->goal_ = goal;
 }
 
@@ -20,8 +20,7 @@ void Graph::initializeGraph(const MapPtr &msg) {
     map_ = msg->image;
 }
 
-//FIXME need check
-void Graph::updateGraph(std::shared_ptr<uint8_t[]> patch, int x, int y, int w, int h) {
+void Graph::updateGraph(const std::shared_ptr<uint8_t[]>& patch, int x, int y, int w, int h) {
     updated_cells_.clear();  // clear the vector of cells that need updating
     assert(x >= 0);
     assert(y >= 0);
@@ -33,7 +32,6 @@ void Graph::updateGraph(std::shared_ptr<uint8_t[]> patch, int x, int y, int w, i
             if (map_.get()[(i + x) * width_ + (y + j)] != patch.get()[i * w + j]) {
                 updated_cells_.emplace_back(x + i, y + j);
             }
-            assert(patch.get()[i * w + j] > 0); //Positive cost
             map_.get()[(i + x) * width_ + (y + j)] = patch.get()[i * w + j];
         }
     }
@@ -55,17 +53,16 @@ bool Graph::isValidPosition(const Position &p) {
     return (p.x >= 0.0f) && (p.x <= flength_) && (p.y >= 0.0f) && (p.y <= fwidth_);
 }
 
-bool Graph::isValidCell(const std::tuple<int, int> &ind) {
-    auto[x, y] = ind;
-    return (x >= 0) && (x < length_) && (y >= 0) && (y < width_);
+bool Graph::isValidCell(const Cell &c) {
+    return (c.x >= 0) && (c.x < length_) && (c.y >= 0) && (c.y < width_);
 }
 
 bool Graph::unaligned(const Node &s, const Node &sp) {
     return ((s.x != sp.x) && (s.y != sp.y));
 }
 
-bool Graph::isDiagonalContinuous(const Position &p, const Position &p_prime) {
-    return ((p.x != p_prime.x) && (p.y != p_prime.y));
+bool Graph::unaligned(const Position &p, const Position &sp) {
+    return ((p.x != sp.x) && (p.y != sp.y));
 }
 
 std::vector<Node> Graph::neighbors(const Node &s, bool include_invalid) {
@@ -166,9 +163,9 @@ std::vector<Edge> Graph::consecutiveNeighbors(const Position &p) {
     return consecutive_neighbors;
 }
 
-std::vector<std::tuple<Node, Node>> Graph::consecutiveNeighbors(const Node &s) {
+std::vector<Edge> Graph::consecutiveNeighbors(const Node &s) {
     std::vector<Node> neighbors;
-    std::vector<std::tuple<Node, Node>> consecutive_neighbors;
+    std::vector<Edge> consecutive_neighbors;
     neighbors.reserve(8);
     consecutive_neighbors.reserve(8);
 
@@ -197,7 +194,7 @@ std::vector<std::tuple<Node, Node>> Graph::consecutiveNeighbors(const Node &s) {
     return consecutive_neighbors;
 }
 
-Node Graph::counterClockwiseNeighbor(Node s, Node sp) {
+Node Graph::counterClockwiseNeighbor(const Node& s, const Node& sp) {
     int delta_x = sp.x - s.x + 1;
     int delta_y = sp.y - s.y + 1;
 
@@ -211,7 +208,7 @@ Node Graph::counterClockwiseNeighbor(Node s, Node sp) {
     return isValidNode(cc_neighbor) ? cc_neighbor : Node{false};
 }
 
-Node Graph::clockwiseNeighbor(Node s, Node sp) {
+Node Graph::clockwiseNeighbor(const Node& s, const Node& sp) {
     int delta_x = sp.x - s.x + 1;
     int delta_y = sp.y - s.y + 1;
 
@@ -225,12 +222,10 @@ Node Graph::clockwiseNeighbor(Node s, Node sp) {
     return isValidNode(c_neighbor) ? c_neighbor : Node{false};
 }
 
-float Graph::getTraversalCost(const std::tuple<int, int> &ind) {
-    if (!isValidCell(ind))
+float Graph::getTraversalCost(const Cell &c) {
+    if (!isValidCell(c))
         return INFINITY;
-
-    auto[x, y] = ind;
-    return (map_[x * width_ + y]);
+    return (map_[c.x * width_ + c.y]);
 }
 
 float Graph::euclideanHeuristic(const Node &s) {
@@ -257,8 +252,8 @@ Position::Position(float x, float y) {
 Position::Position(const Position &other) : pair(other) {}
 Position::Position(const std::pair<float, float> &other) : pair(other) {}
 Position::Position(const Node &n) {
-    this->x = n.x;
-    this->y = n.y;
+    this->x = static_cast<float>(n.x);
+    this->y = static_cast<float>(n.y);
 }
 Position &Position::operator=(const Position &other) {
     if (this == &other) return *this;

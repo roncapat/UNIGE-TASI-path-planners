@@ -95,11 +95,12 @@ class FieldDPlanner {
 
   float getG(const Node &s);
   float getRHS(const Node &s);
-  std::pair<float, float> getGandRHS(const Node &s);
+  PriorityQueue::Key getKey(const Node &s);
 
-  #define G(map_it) std::get<0>(map_it->second)
-  #define RHS(map_it) std::get<1>(map_it->second)
-  #define BPTR(map_it) std::get<2>(map_it->second)
+  #define NODE(map_it) (map_it)->first
+  #define G(map_it) std::get<0>((map_it)->second)
+  #define RHS(map_it) std::get<1>((map_it)->second)
+  #define BPTR(map_it) std::get<2>((map_it)->second)
 
   class ExpandedMap : public std::unordered_map<Node, std::tuple<float, float, Node>> {
    public:
@@ -116,7 +117,7 @@ class FieldDPlanner {
 
   PriorityQueue priority_queue;
   bool initialize_search = true;  // set to true if the search problem must be initialized
-  std::pair<float, float> getBC(TraversalParams &t);
+  void getBC(TraversalParams &t);
   float computeOptimalCost(const Node &p, const Node &p_a, const Node &p_b);
   bool end_condition();
   PriorityQueue::Key calculateKey(const Node &s);

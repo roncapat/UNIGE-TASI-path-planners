@@ -1,6 +1,6 @@
 #include "PriorityQueue.h"
 
-void PriorityQueue::insert(const Node &n, Key k) {
+void PriorityQueue::insert(const Node &n, const Key &k) {
     HandleType handle = __queue.emplace(n, k);
     __handles[n] = handle;
 }
@@ -26,16 +26,16 @@ void PriorityQueue::insert_or_update(const Node &n, const Key &k) {
 }
 
 void PriorityQueue::pop() {
-    __handles.erase(__queue.top().first);
+    __handles.erase(__queue.top().node);
     __queue.pop();
 }
 
 PriorityQueue::Key PriorityQueue::topKey() {
-    return __queue.top().second;
+    return __queue.top().key;
 }
 
 Node PriorityQueue::topNode() {
-    return __queue.top().first;
+    return __queue.top().node;
 }
 
 int PriorityQueue::size() {
@@ -49,4 +49,4 @@ bool PriorityQueue::empty() {
 void PriorityQueue::swap(PriorityQueue &other) {
     __queue.swap(other.__queue);
     __handles.swap(other.__handles);
-};
+}

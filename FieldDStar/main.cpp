@@ -6,13 +6,6 @@
 #include "bitmap/BMP.h"
 #include "Graph.h"
 
-Position next_point;
-float step_cost = 0;
-bool goal_reached = false;
-
-std::shared_ptr<Map> map_info = nullptr;
-float g_length = INFINITY;
-float g_cost = INFINITY;
 
 std::tuple<int, int, float> map_traversability_stats(uint8_t *data, unsigned int size) {
     float avg = 0;
@@ -40,12 +33,18 @@ int main(int _argc, char **_argv) {
         return 1;
     }
 
+    Position next_point;
+    float next_step_cost = 0;
+
+    std::shared_ptr<Map> map_info = nullptr;
+
+
     auto res = std::system((std::string("python3 ../FieldDStar/run_simulator.py ") +
         _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " &").data());
     (void) res;
 
     char ack = -1;
-    unsigned int size;
+    long size;
     int32_t width = 0, height = 0, top = 0, left = 0;
     std::ifstream in__fifo{_argv[9], std::ios::in | std::ios::binary};
     std::ofstream out_fifo{_argv[10], std::ios::out | std::ios::binary};
@@ -97,13 +96,13 @@ int main(int _argc, char **_argv) {
 
     float time = 0;
 
-    while (not goal_reached) {
+    while (true) {
         std::cout << "[PLANNER]   New position: [" << next_point.x << ", " << next_point.y << "]" << std::endl;
         ack = 1;
         out_fifo.write((char *) &ack, 1);
         out_fifo.write((char *) &(next_point.x), 4);
         out_fifo.write((char *) &(next_point.y), 4);
-        out_fifo.write((char *) &(step_cost), 4);
+        out_fifo.write((char *) &(next_step_cost), 4);
         out_fifo.flush();
         ack = -1;
         while (ack != 1) {
@@ -147,7 +146,7 @@ int main(int _argc, char **_argv) {
         auto expanded_size = (long long) planner.expanded_map.size();
         out_fifo.write((char *) &expanded_size, 8);
         for (const auto &expanded : planner.expanded_map) {
-            Node exp = expanded.first;
+            const Node &exp = expanded.first;
             auto[g, rhs, _] = expanded.second;
             out_fifo.write((char *) &(exp.x), 4);
             out_fifo.write((char *) &(exp.y), 4);
@@ -157,8 +156,8 @@ int main(int _argc, char **_argv) {
         out_fifo.flush();
 
         next_point = {planner.path_[1].x, planner.path_[1].y};
-        step_cost = planner.cost_.front();
-        if (next_point.x == std::stoi(_argv[4]) and next_point.y == std::stoi(_argv[5]))
+        next_step_cost = planner.cost_.front();
+        if (next_point.x == std::stof(_argv[4]) and next_point.y == std::stof(_argv[5]))
             break; //Goal reached
         planner.set_start(next_point);
     }

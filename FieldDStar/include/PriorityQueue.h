@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <functional>
 #include <set>
-#include <tuple>
 #include <utility>
 
 #include "Graph.h"
@@ -13,13 +12,19 @@
 class PriorityQueue {
  public:
   typedef std::pair<float, float> Key;
-  typedef std::pair<Node, Key> ElemType;
+
+  class ElemType {
+   public:
+    Node node;
+    Key key;
+    ElemType(const Node &node, const Key &key) : node(node), key(key){};
+  };
 
  private:
   struct comparator {
     inline bool operator()
         (const ElemType &c1, const ElemType &c2) const {
-        return c1.second >= c2.second;
+        return c1.key >= c2.key;
     }
   };
 
@@ -33,14 +38,19 @@ class PriorityQueue {
   typedef QueueType::handle_type HandleType;
   typedef QueueType::iterator IteratorType;
 
-  PriorityQueue() {};
+  PriorityQueue() = default;
 
-  IteratorType begin() { return __queue.begin(); };
-  IteratorType end() { return __queue.end(); };
+  IteratorType begin() {
+      return __queue.begin();
+  };
+  IteratorType end() {
+      return __queue.end();
+  };
+
   void swap(PriorityQueue &other);
   void insert_or_update(const Node &n, const Key &k);
   void remove_if_present(const Node &n);
-  void insert(const Node &n, Key k);
+  void insert(const Node &n, const Key &k);
   void clear();
   void pop();
   Key topKey();
