@@ -8,8 +8,6 @@
 FieldDPlanner::FieldDPlanner() = default;
 
 void FieldDPlanner::init() {
-    num_nodes_updated = 0;
-    num_nodes_expanded = 0;
     initialize_search = true;
 }
 
@@ -20,17 +18,22 @@ int FieldDPlanner::step() {
     // don't plan unless a goal node has been set
     if (not goal_set_) return LOOP_FAILURE_NO_GOAL;
 
-    if (initialize_search or goal_changed_) {
-        std::cout << "Initializing Search..." << std::endl;
-        goal_changed_ = false;
-        initializeSearch();
-    }
-
-    // gather cells with updated edge costs and update affected nodes
     auto begin = std::chrono::steady_clock::now();
+    if (initialize_search or new_goal_) {
+        new_goal_ = false;
+        initializeSearch();
+    } else if (new_start) {
+        new_start = false;
+        PriorityQueue new_queue;
+        for (const auto &elem: priority_queue)
+            // Only heuristic changes, so either G or RHS is kept the same
+            new_queue.insert(elem.node, calculateKey(elem.node, elem.key.second));
+        priority_queue.swap(new_queue);
+    }
+    // gather cells with updated edge costs and update affected nodes
     updateNodesAroundUpdatedCells();
     auto end = std::chrono::steady_clock::now();
-    auto u_time = std::chrono::duration<float, std::milli>(end - begin).count();
+    u_time = std::chrono::duration<float, std::milli>(end - begin).count();
 
     // only update the graph if nodes have been updated
     begin = std::chrono::steady_clock::now();
@@ -44,12 +47,12 @@ int FieldDPlanner::step() {
         num_nodes_expanded = 0;
     }
     end = std::chrono::steady_clock::now();
-    auto p_time = std::chrono::duration<float, std::milli>(end - begin).count();
+    p_time = std::chrono::duration<float, std::milli>(end - begin).count();
 
     begin = std::chrono::steady_clock::now();
     constructOptimalPath();
     end = std::chrono::steady_clock::now();
-    auto e_time = std::chrono::duration<float, std::milli>(end - begin).count();
+    e_time = std::chrono::duration<float, std::milli>(end - begin).count();
     std::cout << "Update time     = " << u_time << " ms" << std::endl;
     std::cout << "Planning time   = " << p_time << " ms" << std::endl;
     std::cout << "Extraction time = " << e_time << " ms" << std::endl;
@@ -71,7 +74,7 @@ void FieldDPlanner::set_goal(const Position &point) {
     Node new_goal(goal_x, goal_y);
 
     if (grid.goal_ != new_goal)
-        goal_changed_ = true;
+        new_goal_ = true;
     grid.setGoal(new_goal);
     goal_set_ = true;
 }
@@ -97,11 +100,11 @@ PriorityQueue::Key FieldDPlanner::calculateKey(const Node &s, const float cost_s
 }
 
 void FieldDPlanner::initializeSearch() {
+    num_nodes_updated = 0;
+    num_nodes_expanded = 0;
     map.clear();
     priority_queue.clear();
     grid.updated_cells_.clear();
-    start_cell = Cell(std::floor(grid.start_.x), std::floor(grid.start_.y));
-    start_nodes = grid.getNodesAroundCell(start_cell);
     for (const auto &node: start_nodes)
         map.insert_or_assign(node, INFINITY, INFINITY);
     map.insert_or_assign(grid.goal_, INFINITY, 0.0f);
@@ -775,11 +778,7 @@ void FieldDPlanner::set_start(const Position &pos) {
     grid.start_ = Node(std::round(pos.x), std::round(pos.y)); //TODO remove usage
     start_cell = Cell(std::floor(start_pos.x), std::floor(start_pos.y));
     start_nodes = grid.getNodesAroundCell(start_cell);
-    PriorityQueue new_queue;
-    for (const auto &elem: priority_queue)
-        // Only heuristic changes, so either G or RHS is kept the same
-        new_queue.insert(elem.node, calculateKey(elem.node, elem.key.second));
-    priority_queue.swap(new_queue);
+    new_start = true;
 }
 void FieldDPlanner::patch_map(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h) {
     grid.updateGraph(patch, x, y, w, h);

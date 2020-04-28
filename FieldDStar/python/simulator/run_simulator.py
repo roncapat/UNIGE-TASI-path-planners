@@ -1,7 +1,7 @@
 import struct
+import time
 
 from .plot_path import *
-import time
 
 
 # Takes a round region of data from data_h and pastes it in data_l
@@ -74,7 +74,10 @@ def receive_path(pipe):
         costs.append(struct.unpack('f', pipe.read(4))[0])
     buf = pipe.read(8)
     dist, cost = struct.unpack('ff', buf)
-    return path, costs, dist, cost
+    buf = pipe.read(12)
+    ut, pt, et = struct.unpack('fff', buf)
+    times = {"update": ut, "planning": pt, "extraction": et}
+    return path, costs, dist, cost, times
 
 
 def receive_expanded(pipe):
@@ -125,10 +128,6 @@ def main():
     wait_byte(p_in, 0)
     send_byte(p_out, 0)
 
-    cv2.namedWindow('dbg', cv2.WINDOW_NORMAL)
-    cv2.resizeWindow('dbg', 900, 900)
-    cv2.moveWindow('dbg', 100, 100)
-
     mapname = os.path.basename(sys.argv[1])
     mappath = os.path.abspath(sys.argv[1])
     img_h = cv2.imread(mappath, cv2.IMREAD_GRAYSCALE)
@@ -145,6 +144,9 @@ def main():
     expanded = []
     cost_from_beginning = 0
     cost_to_goal = 0
+    utt = 0
+    ptt = 0
+    ett = 0
 
     while get_byte(p_in) == 1:
         pos_x, pos_y, step_cost = receive_traversal_update(p_in)
@@ -153,7 +155,7 @@ def main():
         center = (int(round(pos_y)), int(round(pos_x)))
         (data_l, p_data, p_pos, p_ranges) = round_patch_update(data_l, data_h, center, radius=15)
         print("[SIMULATOR] New patch: position [%i, %i], shape [%i, %i]" % (
-        p_pos[0], p_pos[1], p_data.shape[1], p_data.shape[0]))
+            p_pos[0], p_pos[1], p_data.shape[1], p_data.shape[0]))
 
         data_l_cspace = cv2.dilate(data_l, kernel)
         p_data_cspace = data_l_cspace[p_ranges[0], p_ranges[1]]
@@ -162,23 +164,33 @@ def main():
         send_patch(p_out, p_data_cspace, p_pos)
 
         wait_byte(p_in, 3)
-        (next_path, costs, dist, cost) = receive_path(p_in)
+        (next_path, costs, dist, cost, times) = receive_path(p_in)
         wait_byte(p_in, 4)
-        start = time.time()
         expanded = receive_expanded(p_in)
-        end = time.time()
-        print(end - start)
 
         cost_from_beginning += step_cost
         cost_to_goal = sum(costs)
+        utt = utt + times['update']
+        ptt = ptt + times['planning']
+        ett = ett + times['extraction']
 
-        info = {"cost_from_start": cost_from_beginning, "cost_to_goal": cost_to_goal}
+        info = {"cost_from_start": cost_from_beginning,
+                "cost_to_goal": cost_to_goal,
+                "update_tot": utt,
+                "planning_tot": ptt,
+                "extraction_tot": ett,
+                "cum": times['update']+times['planning']+times['extraction'],
+                "cum_tot": utt+ptt+ett}
+        info.update(times)
         dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
-        cv2.imshow("dbg", dbgview)
         [w, h, _] = dbgview.shape
         if out is None:
+            cv2.namedWindow('Field D* planner', cv2.WINDOW_NORMAL)
+            cv2.resizeWindow('Field D* planner', 900, 900) #TODO keep image aspect ratio
+            cv2.moveWindow('Field D* planner', 100, 100)
             out = cv2.VideoWriter(mapname.split('.')[0] + '.avi', cv2.VideoWriter_fourcc(*'DIVX'), 5, (h, w))
         out.write(dbgview)
+        cv2.imshow('Field D* planner', dbgview)
         cv2.waitKey(1)
 
     cost_from_beginning += cost_to_goal
@@ -188,9 +200,18 @@ def main():
     pos_y = next_path[-1][1]
     prev_path.extend(next_path)
     next_path = next_path[-1:]
-    info = {"cost_from_start": cost_from_beginning, "cost_to_goal": cost_to_goal}
+    info = {"cost_from_start": cost_from_beginning,
+            "cost_to_goal": cost_to_goal,
+            "update_tot": utt,
+            "planning_tot": ptt,
+            "extraction_tot": ett,
+            "update": 0,
+            "planning": 0,
+            "extraction": 0,
+            "cum": 0,
+            "cum_tot": utt+ptt+ett}
     dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
-    cv2.imshow("dbg", dbgview)
+    cv2.imshow('Field D* planner', dbgview)
     out.write(dbgview)
     out.release()
     cv2.waitKey()

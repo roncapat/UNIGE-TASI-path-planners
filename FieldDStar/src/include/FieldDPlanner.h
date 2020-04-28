@@ -23,6 +23,7 @@ class FieldDPlanner {
   FieldDPlanner();
   void init();
   int step();
+  float e_time, u_time, p_time;
 
   void set_optimization_lvl(int lvl);
   void set_first_run_trick(bool enable);;
@@ -76,7 +77,7 @@ class FieldDPlanner {
   float heuristic_multiplier = 1;
   bool initialize_graph_ = true;  // set to true if the graph must be initialized
   bool goal_set_ = false;         // true if the goal has been set
-  bool goal_changed_ = false;     // true if the goal changed and the graph must be re-initialized
+  bool new_goal_ = false;     // true if the goal changed and the graph must be re-initialized
   Position start_pos;
   Cell start_cell = Cell(0, 0);
   std::vector<Node> start_nodes;
@@ -122,6 +123,7 @@ class FieldDPlanner {
                                   const bool &do_lookahead,
                                   float &step_cost);
   void getBC(TraversalParams &t);
+  bool new_start;
 };
 
 #endif

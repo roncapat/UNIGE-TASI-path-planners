@@ -79,21 +79,36 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
     if info is not None:
         vmargin = 5
         lmargin = 20
-        #char_width = font.getsize('h')[0]  # this should be 0.6*fsize
-        fsize = int((width - 2 * lmargin) / 50 / 0.6)  # scale to get a usable line size of 50 chars
-        caption1 = "Cost so far   %10.02f" % info["cost_from_start"]
-        caption2 = "Cost to goal  %10.02f" % info["cost_to_goal"]
+        fsize = int((width - 2 * lmargin) / 70 / 0.6)  # scale to get a usable line size of 50 chars
+        captionc = "           cost[wu]"
+        caption1 = "So far   %10.02f" % info["cost_from_start"]
+        caption2 = "To goal  %10.02f" % info["cost_to_goal"]
+        captiont = "           step[ms] total[ms]"
+        caption3 = "Update     %8.2f  %8.2f" % (info['update'], info['update_tot'])
+        caption4 = "Planning   %8.2f  %8.2f" % (info['planning'], info['planning_tot'])
+        caption5 = "Extraction %8.2f  %8.2f" % (info['extraction'], info['extraction_tot'])
+        caption6 = "Cumulative %8.2f  %8.2f" % (info['cum'], info['cum_tot'])
         fontpath = os.path.dirname(os.path.abspath(thismodule.__file__)) + "/SourceCodePro-Regular.ttf"
         font = ImageFont.truetype(fontpath, fsize)
+        char_width = font.getsize('h')[0]  # this should be 0.6*fsize
         line_height = font.getsize('hg')[1]
-        out_map = cv2.copyMakeBorder(out_map, line_height * 2 + vmargin * 2, 0, 0, 0, cv2.BORDER_CONSTANT,
+        out_map = cv2.copyMakeBorder(out_map, line_height * 5 + vmargin * 2, 0, 0, 0, cv2.BORDER_CONSTANT,
                                      value=(255, 255, 255))
         img_pil = Image.fromarray(out_map)
         draw = ImageDraw.Draw(img_pil)
+        tw = font.getsize(caption3)[0]
         cw = font.getsize(caption1)[0]
+        base_t = width - cw - tw - char_width*5
+        base_c = width - cw - lmargin
         draw.text((lmargin, vmargin), "Field D*", font=font, fill=(100, 100, 100))
-        draw.text((width - cw - lmargin, vmargin), caption1, font=font, fill=(100, 100, 100))
-        draw.text((width - cw - lmargin, vmargin + line_height), caption2, font=font, fill=(100, 100, 100))
+        draw.text((base_c, vmargin), captionc, font=font, fill=(100, 100, 100))
+        draw.text((base_c, vmargin + line_height), caption1, font=font, fill=(100, 100, 100))
+        draw.text((base_c, vmargin + line_height*2), caption2, font=font, fill=(100, 100, 100))
+        draw.text((base_t, vmargin), captiont, font=font, fill=(100, 100, 100))
+        draw.text((base_t, vmargin + line_height), caption3, font=font, fill=(100, 100, 100))
+        draw.text((base_t, vmargin + line_height*2), caption4, font=font, fill=(100, 100, 100))
+        draw.text((base_t, vmargin + line_height*3), caption5, font=font, fill=(100, 100, 100))
+        draw.text((base_t, vmargin + line_height*4), caption6, font=font, fill=(100, 100, 100))
         out_map = numpy.array(img_pil)
     return out_map
 

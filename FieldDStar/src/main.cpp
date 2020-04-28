@@ -116,6 +116,11 @@ int main(int _argc, char **_argv) {
         out_fifo.flush();
         out_fifo.write((char *) &(planner.total_dist), 4);
         out_fifo.write((char *) &(planner.total_cost), 4);
+        out_fifo.flush();
+        out_fifo.write((char *) &(planner.u_time), 4);
+        out_fifo.write((char *) &(planner.p_time), 4);
+        out_fifo.write((char *) &(planner.e_time), 4);
+        out_fifo.flush();
 
         ack = 4;
         out_fifo.write((char *) &ack, 1);
