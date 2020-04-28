@@ -112,12 +112,14 @@ def plot_upscaled_map_with_robot_circle(data_l, height, width, scale, center, ra
 
 
 def main():
-    if len(sys.argv) < 5:
+    if len(sys.argv) < 7:
         print("Usage:")
-        print("\t %s <mapfile.bmp> cspace pipe_in pipe_out")
+        print("\t %s <mapfile.bmp> cspace pipe_in pipe_out gui outpath")
 
     pipe_in = os.path.abspath(sys.argv[3])
     pipe_out = os.path.abspath(sys.argv[4])
+    gui = bool(int(sys.argv[5]))
+    outpath = sys.argv[6]
     cspace = int(sys.argv[2])
 
     print(pipe_out)
@@ -179,19 +181,22 @@ def main():
                 "update_tot": utt,
                 "planning_tot": ptt,
                 "extraction_tot": ett,
-                "cum": times['update']+times['planning']+times['extraction'],
-                "cum_tot": utt+ptt+ett}
+                "cum": times['update'] + times['planning'] + times['extraction'],
+                "cum_tot": utt + ptt + ett}
         info.update(times)
         dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
         [w, h, _] = dbgview.shape
         if out is None:
-            cv2.namedWindow('Field D* planner', cv2.WINDOW_NORMAL)
-            cv2.resizeWindow('Field D* planner', 900, 900) #TODO keep image aspect ratio
-            cv2.moveWindow('Field D* planner', 100, 100)
-            out = cv2.VideoWriter(mapname.split('.')[0] + '.avi', cv2.VideoWriter_fourcc(*'DIVX'), 5, (h, w))
+            if gui:
+                cv2.namedWindow('Field D* planner', cv2.WINDOW_NORMAL)
+                cv2.resizeWindow('Field D* planner', 900, 900)  # TODO keep image aspect ratio
+                cv2.moveWindow('Field D* planner', 100, 100)
+            video_path = os.path.join(os.path.abspath(outpath), mapname.split('.')[0] + '.avi')
+            out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'DIVX'), 5, (h, w))
         out.write(dbgview)
-        cv2.imshow('Field D* planner', dbgview)
-        cv2.waitKey(1)
+        if gui:
+            cv2.imshow('Field D* planner', dbgview)
+            cv2.waitKey(1)
 
     cost_from_beginning += cost_to_goal
     cost_to_goal = 0
@@ -209,9 +214,10 @@ def main():
             "planning": 0,
             "extraction": 0,
             "cum": 0,
-            "cum_tot": utt+ptt+ett}
-    dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
-    cv2.imshow('Field D* planner', dbgview)
+            "cum_tot": utt + ptt + ett}
+    if gui:
+        dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
+        cv2.imshow('Field D* planner', dbgview)
     out.write(dbgview)
     out.release()
     cv2.waitKey()

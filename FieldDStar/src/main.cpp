@@ -7,12 +7,12 @@
 #include "Graph.h"
 
 int main(int _argc, char **_argv) {
-    if (_argc < 11) {
+    if (_argc < 13) {
         std::cerr << "Missing required argument." << std::endl;
         std::cerr << "Usage:" << std::endl;
         std::cerr << "\t" << _argv[0]
                   << " <mapfile.bmp> <from_x> <from_y> <to_x> <to_y>"
-                     " lookahead cspace optimiziation_lvl <fifo_in> <fifo_out>"
+                     " lookahead cspace optimiziation_lvl <fifo_in> <fifo_out> <gui> <outpath>"
                   << std::endl;
         return 1;
     }
@@ -22,7 +22,7 @@ int main(int _argc, char **_argv) {
 
     std::shared_ptr<Map> map_info = nullptr;
     auto res = std::system((std::string("python3 -m simulator.run_simulator ") +
-        _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " &").data());
+        _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " + _argv[12] + " &").data());
     (void) res;
 
     char ack = -1;

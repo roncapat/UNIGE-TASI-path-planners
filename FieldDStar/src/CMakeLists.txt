@@ -29,13 +29,3 @@ add_executable(field_d_planner
                interpolation.cpp)
 
 target_link_libraries(field_d_planner gcov)
-
-add_executable(field_d_planner_gui
-               FieldDPlanner.cpp
-               main.cpp
-               Graph.cpp
-               PriorityQueue.cpp
-               interpolation.cpp)
-
-target_link_libraries(field_d_planner_gui gcov)
-target_compile_definitions(field_d_planner_gui PRIVATE FDSTAR_SHOW_RESULT)
