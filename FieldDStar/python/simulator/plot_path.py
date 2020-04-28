@@ -79,17 +79,17 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
     if info is not None:
         vmargin = 5
         lmargin = 20
-        fsize = int((width-2*lmargin)/50/0.6)
+        #char_width = font.getsize('h')[0]  # this should be 0.6*fsize
+        fsize = int((width - 2 * lmargin) / 50 / 0.6)  # scale to get a usable line size of 50 chars
         caption1 = "Cost so far   %10.02f" % info["cost_from_start"]
         caption2 = "Cost to goal  %10.02f" % info["cost_to_goal"]
         fontpath = os.path.dirname(os.path.abspath(thismodule.__file__)) + "/SourceCodePro-Regular.ttf"
         font = ImageFont.truetype(fontpath, fsize)
-        char_width = font.getsize('h')[0] #this should be 0.6*fsize
         line_height = font.getsize('hg')[1]
-        out_map = cv2.copyMakeBorder(out_map, line_height*2+vmargin*2, 0, 0, 0, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+        out_map = cv2.copyMakeBorder(out_map, line_height * 2 + vmargin * 2, 0, 0, 0, cv2.BORDER_CONSTANT,
+                                     value=(255, 255, 255))
         img_pil = Image.fromarray(out_map)
         draw = ImageDraw.Draw(img_pil)
-        tw = font.getsize('Field D*')[0]
         cw = font.getsize(caption1)[0]
         draw.text((lmargin, vmargin), "Field D*", font=font, fill=(100, 100, 100))
         draw.text((width - cw - lmargin, vmargin), caption1, font=font, fill=(100, 100, 100))
