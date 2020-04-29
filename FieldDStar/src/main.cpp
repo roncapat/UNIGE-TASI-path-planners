@@ -27,7 +27,7 @@ int main(int _argc, char **_argv) {
 
     char ack = -1;
     long size;
-    int32_t width = 0, height = 0, top = 0, left = 0;
+    int32_t width = 0, height = 0, top = 0, left = 0, min=0;
     std::ifstream in__fifo{_argv[9], std::ios::in | std::ios::binary};
     std::ofstream out_fifo{_argv[10], std::ios::out | std::ios::binary};
 
@@ -45,6 +45,7 @@ int main(int _argc, char **_argv) {
     size = width * height;
     std::shared_ptr<uint8_t[]> data(new uint8_t[size], std::default_delete<uint8_t[]>());
     in__fifo.read((char *) data.get(), size); //Receive image
+    in__fifo.read((char *) &min, 4); //Receive heuristic hint
 
     map_info = std::make_shared<Map>(Map{
         .image = data,
@@ -65,7 +66,7 @@ int main(int _argc, char **_argv) {
     planner.set_occupancy_threshold(1);
     planner.set_lookahead(std::stoi(_argv[6]));
     // FIXME handle remplanning, for now i put the lowest possible value for consistency
-    planner.set_heuristic_multiplier(1);
+    planner.set_heuristic_multiplier(min);
     planner.set_map(map_info);
     planner.set_start(next_point);
     planner.set_goal(goal);
@@ -94,6 +95,8 @@ int main(int _argc, char **_argv) {
         std::shared_ptr<uint8_t[]> patch(new uint8_t[size], std::default_delete<uint8_t[]>());
         in__fifo.read((char *) patch.get(), size); //Receive image
         planner.patch_map(patch, top, left, width, height);
+        in__fifo.read((char *) &min, 4); //Receive heuristic hint
+        planner.set_heuristic_multiplier(min);
 
         auto begin = std::chrono::steady_clock::now();
         planner.step();

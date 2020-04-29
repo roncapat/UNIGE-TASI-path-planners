@@ -51,6 +51,11 @@ def send_byte(pipe, val):
     pipe.flush()
 
 
+def send_int(pipe, val):
+    pipe.write(struct.pack('i', val))  # reply with 0
+    pipe.flush()
+
+
 def send_patch(pipe, data, pos):
     pipe.write(struct.pack('iiii', *pos, *data.shape))
     pipe.write(data.tobytes())  # patch
@@ -130,14 +135,18 @@ def main():
     wait_byte(p_in, 0)
     send_byte(p_out, 0)
 
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (cspace, cspace))
+
     mapname = os.path.basename(sys.argv[1])
     mappath = os.path.abspath(sys.argv[1])
     img_h = cv2.imread(mappath, cv2.IMREAD_GRAYSCALE)
     (data_l, data_h) = simulation_data(img_h, filter_radius=13, low_res_penalty=15)
     [height, width] = data_l.shape
     print("[SIMULATOR] Size: [%i, %i]" % (width, height))
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (cspace, cspace))
-    send_map(p_out, data_l)
+    data_l_cspace = cv2.dilate(data_l, kernel)
+    min_cost = cv2.minMaxLoc(data_l_cspace)[0]
+    send_map(p_out, data_l_cspace)
+    send_int(p_out, int(min_cost))
 
     out = None
 
@@ -161,9 +170,11 @@ def main():
 
         data_l_cspace = cv2.dilate(data_l, kernel)
         p_data_cspace = data_l_cspace[p_ranges[0], p_ranges[1]]
+        min_cost = cv2.minMaxLoc(data_l_cspace)[0]
 
         send_byte(p_out, 1)
         send_patch(p_out, p_data_cspace, p_pos)
+        send_int(p_out, int(min_cost))
 
         wait_byte(p_in, 3)
         (next_path, costs, dist, cost, times) = receive_path(p_in)
