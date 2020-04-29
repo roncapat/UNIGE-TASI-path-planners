@@ -1,9 +1,0 @@
-Average traversability: 1
-Minimum traversability: 1
-Maximum traversability: 1
-New waypoint received. Search Problem Goal = [27, 40]. Distance: 30m.
-Initializing Search...
-0 nodes updated
-193 nodes expanded
-Found path. Cost: 35.084 Distance: 35.084
-Step time = 2.383

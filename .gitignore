@@ -1,8 +1,3 @@
-# Created by .ignore support plugin (hsz.mobi)
-### Example user template template
-### Example user template
-
-# IntelliJ project files
 .idea/*
 !.idea/runConfigurations
 *__pycache__
@@ -13,3 +8,12 @@ gen
 Makefile
 doc/
 /venv/
+*.json
+*.jpg
+*.jpeg
+*.bmp
+*.mpg
+*.mpeg
+*.avi
+*.mp4
+*pipe*

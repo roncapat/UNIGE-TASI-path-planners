@@ -1,0 +1,878 @@
+[PLANNER]   Size: [60, 40]
+[PLANNER]   New position: [27, 10]
+[PLANNER]   New patch: position [12, 0], shape [26, 28]
+2258 nodes expanded
+Found path. Cost: 1203.34 Distance: 89.0422
+Update time     = 0.013506 ms
+Planning time   = 29.7949 ms
+Extraction time = 0.690521 ms
+[PLANNER]   New position: [26.6597, 11]
+[PLANNER]   New patch: position [12, 0], shape [27, 28]
+74 nodes updated
+403 nodes expanded
+Found path. Cost: 1187.52 Distance: 87.9754
+Update time     = 0.307348 ms
+Planning time   = 6.23629 ms
+Extraction time = 0.933984 ms
+[PLANNER]   New position: [26.2987, 12]
+[PLANNER]   New patch: position [11, 0], shape [28, 29]
+90 nodes updated
+692 nodes expanded
+Found path. Cost: 1168.37 Distance: 86.9391
+Update time     = 0.271795 ms
+Planning time   = 6.90555 ms
+Extraction time = 0.568297 ms
+[PLANNER]   New position: [26, 12.8784]
+[PLANNER]   New patch: position [11, 0], shape [29, 29]
+76 nodes updated
+811 nodes expanded
+Found path. Cost: 1152.93 Distance: 86.0072
+Update time     = 0.245749 ms
+Planning time   = 6.64212 ms
+Extraction time = 0.673016 ms
+[PLANNER]   New position: [25.9608, 13]
+[PLANNER]   New patch: position [11, 0], shape [29, 29]
+0 nodes updated
+Found path. Cost: 1152.8 Distance: 85.8795
+Update time     = 0.112341 ms
+Planning time   = 6.2e-05 ms
+Extraction time = 0.592342 ms
+[PLANNER]   New position: [25.6206, 14]
+[PLANNER]   New patch: position [11, 0], shape [30, 29]
+78 nodes updated
+402 nodes expanded
+Found path. Cost: 1137.19 Distance: 84.8191
+Update time     = 0.269608 ms
+Planning time   = 3.34739 ms
+Extraction time = 0.512108 ms
+[PLANNER]   New position: [25.2595, 15]
+[PLANNER]   New patch: position [10, 0], shape [31, 30]
+88 nodes updated
+692 nodes expanded
+Found path. Cost: 1118.19 Distance: 83.7902
+Update time     = 0.419128 ms
+Planning time   = 9.74053 ms
+Extraction time = 0.551954 ms
+[PLANNER]   New position: [25, 15.7633]
+[PLANNER]   New patch: position [10, 1], shape [31, 30]
+76 nodes updated
+830 nodes expanded
+Found path. Cost: 1102.54 Distance: 82.9695
+Update time     = 0.249693 ms
+Planning time   = 9.68142 ms
+Extraction time = 0.51359 ms
+[PLANNER]   New position: [24.9237, 16]
+[PLANNER]   New patch: position [10, 1], shape [31, 30]
+0 nodes updated
+Found path. Cost: 1102.3 Distance: 82.7208
+Update time     = 0.132138 ms
+Planning time   = 6.3e-05 ms
+Extraction time = 0.518088 ms
+[PLANNER]   New position: [24.5835, 17]
+[PLANNER]   New patch: position [10, 2], shape [31, 30]
+82 nodes updated
+409 nodes expanded
+Found path. Cost: 1086.76 Distance: 81.6561
+Update time     = 0.260027 ms
+Planning time   = 3.38292 ms
+Extraction time = 0.519271 ms
+[PLANNER]   New position: [24.2224, 18]
+[PLANNER]   New patch: position [9, 3], shape [31, 31]
+88 nodes updated
+710 nodes expanded
+Found path. Cost: 1067.98 Distance: 80.6406
+Update time     = 0.302261 ms
+Planning time   = 6.07029 ms
+Extraction time = 0.499786 ms
+[PLANNER]   New position: [24, 18.6541]
+[PLANNER]   New patch: position [9, 4], shape [31, 31]
+76 nodes updated
+829 nodes expanded
+Found path. Cost: 1052.5 Distance: 79.948
+Update time     = 0.28985 ms
+Planning time   = 7.03653 ms
+Extraction time = 0.53009 ms
+[PLANNER]   New position: [23.8886, 19]
+[PLANNER]   New patch: position [9, 4], shape [31, 31]
+0 nodes updated
+Found path. Cost: 1052.13 Distance: 79.5846
+Update time     = 0.158229 ms
+Planning time   = 7.9e-05 ms
+Extraction time = 0.513856 ms
+[PLANNER]   New position: [23.5483, 20]
+[PLANNER]   New patch: position [9, 5], shape [31, 31]
+84 nodes updated
+415 nodes expanded
+Found path. Cost: 1036.21 Distance: 78.4865
+Update time     = 0.446586 ms
+Planning time   = 6.8674 ms
+Extraction time = 1.14674 ms
+[PLANNER]   New position: [23.1985, 21]
+[PLANNER]   New patch: position [8, 6], shape [31, 31]
+88 nodes updated
+761 nodes expanded
+Found path. Cost: 1017.99 Distance: 77.5099
+Update time     = 0.532551 ms
+Planning time   = 10.8706 ms
+Extraction time = 0.852355 ms
+[PLANNER]   New position: [23, 21.5838]
+[PLANNER]   New patch: position [8, 7], shape [31, 31]
+76 nodes updated
+866 nodes expanded
+Found path. Cost: 1002.39 Distance: 76.882
+Update time     = 0.443244 ms
+Planning time   = 13.7809 ms
+Extraction time = 0.851792 ms
+[PLANNER]   New position: [22.8659, 22]
+[PLANNER]   New patch: position [8, 7], shape [31, 31]
+0 nodes updated
+Found path. Cost: 1001.95 Distance: 76.4447
+Update time     = 0.226781 ms
+Planning time   = 6.3e-05 ms
+Extraction time = 0.832586 ms
+[PLANNER]   New position: [22.5258, 23]
+[PLANNER]   New patch: position [8, 8], shape [31, 31]
+84 nodes updated
+453 nodes expanded
+Found path. Cost: 986.066 Distance: 75.347
+Update time     = 0.439685 ms
+Planning time   = 7.38663 ms
+Extraction time = 0.78933 ms
+[PLANNER]   New position: [22.1758, 24]
+[PLANNER]   New patch: position [7, 9], shape [31, 31]
+88 nodes updated
+775 nodes expanded
+Found path. Cost: 968.4 Distance: 74.4059
+Update time     = 0.508984 ms
+Planning time   = 12.6889 ms
+Extraction time = 0.490997 ms
+[PLANNER]   New position: [22, 24.5171]
+[PLANNER]   New patch: position [7, 10], shape [31, 31]
+76 nodes updated
+872 nodes expanded
+Found path. Cost: 952.837 Distance: 73.8425
+Update time     = 0.350951 ms
+Planning time   = 8.90508 ms
+Extraction time = 0.461637 ms
+[PLANNER]   New position: [21.8444, 25]
+[PLANNER]   New patch: position [7, 10], shape [31, 31]
+0 nodes updated
+Found path. Cost: 952.329 Distance: 73.3351
+Update time     = 0.210586 ms
+Planning time   = 6.4e-05 ms
+Extraction time = 0.464768 ms
+[PLANNER]   New position: [21.5043, 26]
+[PLANNER]   New patch: position [7, 11], shape [31, 31]
+84 nodes updated
+468 nodes expanded
+Found path. Cost: 936.219 Distance: 72.2248
+Update time     = 0.327059 ms
+Planning time   = 4.20703 ms
+Extraction time = 0.428963 ms
+[PLANNER]   New position: [21.1538, 27]
+[PLANNER]   New patch: position [6, 12], shape [31, 31]
+88 nodes updated
+565 nodes expanded
+Found path. Cost: 920.117 Distance: 71.1228
+Update time     = 0.42776 ms
+Planning time   = 5.10619 ms
+Extraction time = 0.45805 ms
+[PLANNER]   New position: [21, 27.5426]
+[PLANNER]   New patch: position [6, 13], shape [31, 31]
+76 nodes updated
+874 nodes expanded
+Found path. Cost: 903.027 Distance: 70.3945
+Update time     = 0.557124 ms
+Planning time   = 9.01382 ms
+Extraction time = 0.500711 ms
+[PLANNER]   New position: [20.8526, 28]
+[PLANNER]   New patch: position [6, 13], shape [31, 31]
+0 nodes updated
+Found path. Cost: 902.546 Distance: 69.914
+Update time     = 0.276498 ms
+Planning time   = 5.2e-05 ms
+Extraction time = 0.437334 ms
+[PLANNER]   New position: [20.5126, 29]
+[PLANNER]   New patch: position [6, 14], shape [31, 31]
+84 nodes updated
+475 nodes expanded
+Found path. Cost: 883.435 Distance: 68.803
+Update time     = 0.580477 ms
+Planning time   = 7.51809 ms
+Extraction time = 0.756739 ms
+[PLANNER]   New position: [20.162, 30]
+[PLANNER]   New patch: position [5, 15], shape [31, 31]
+88 nodes updated
+809 nodes expanded
+Found path. Cost: 861.876 Distance: 67.2289
+Update time     = 0.656251 ms
+Planning time   = 11.8965 ms
+Extraction time = 0.743488 ms
+[PLANNER]   New position: [20, 30.4766]
+[PLANNER]   New patch: position [5, 15], shape [31, 31]
+0 nodes updated
+Found path. Cost: 861.373 Distance: 66.7255
+Update time     = 0.376153 ms
+Planning time   = 7.5e-05 ms
+Extraction time = 0.734331 ms
+[PLANNER]   New position: [19.822, 31]
+[PLANNER]   New patch: position [5, 16], shape [31, 31]
+76 nodes updated
+520 nodes expanded
+Found path. Cost: 842.801 Distance: 66.1541
+Update time     = 0.616835 ms
+Planning time   = 5.62134 ms
+Extraction time = 0.527674 ms
+[PLANNER]   New position: [19.4791, 32]
+[PLANNER]   New patch: position [4, 17], shape [31, 31]
+90 nodes updated
+891 nodes expanded
+Found path. Cost: 815.04 Distance: 64.9059
+Update time     = 0.755784 ms
+Planning time   = 14.1289 ms
+Extraction time = 0.677339 ms
+[PLANNER]   New position: [19.0777, 33]
+[PLANNER]   New patch: position [4, 18], shape [31, 31]
+76 nodes updated
+451 nodes expanded
+Found path. Cost: 769.831 Distance: 55.4605
+Update time     = 0.733378 ms
+Planning time   = 7.13739 ms
+Extraction time = 0.744106 ms
+[PLANNER]   New position: [19, 33.1311]
+[PLANNER]   New patch: position [4, 18], shape [31, 31]
+0 nodes updated
+Found path. Cost: 769.679 Distance: 55.308
+Update time     = 0.40311 ms
+Planning time   = 7.2e-05 ms
+Extraction time = 0.8686 ms
+[PLANNER]   New position: [18.4849, 34]
+[PLANNER]   New patch: position [3, 19], shape [31, 31]
+90 nodes updated
+217 nodes expanded
+Found path. Cost: 376.464 Distance: 52.2428
+Update time     = 0.441842 ms
+Planning time   = 2.07975 ms
+Extraction time = 0.353523 ms
+[PLANNER]   New position: [18, 34.8658]
+[PLANNER]   New patch: position [3, 20], shape [31, 31]
+76 nodes updated
+239 nodes expanded
+Found path. Cost: 375.473 Distance: 51.252
+Update time     = 0.516361 ms
+Planning time   = 2.17381 ms
+Extraction time = 0.400296 ms
+[PLANNER]   New position: [17.9248, 35]
+[PLANNER]   New patch: position [3, 20], shape [31, 31]
+0 nodes updated
+Found path. Cost: 375.319 Distance: 51.0981
+Update time     = 0.336879 ms
+Planning time   = 7.7e-05 ms
+Extraction time = 0.367208 ms
+[PLANNER]   New position: [17.3109, 36]
+[PLANNER]   New patch: position [2, 21], shape [31, 31]
+90 nodes updated
+124 nodes expanded
+Found path. Cost: 374.146 Distance: 49.9248
+Update time     = 0.571095 ms
+Planning time   = 1.14061 ms
+Extraction time = 0.369801 ms
+[PLANNER]   New position: [17, 36.5396]
+[PLANNER]   New patch: position [2, 22], shape [31, 31]
+76 nodes updated
+26 nodes expanded
+Found path. Cost: 373.523 Distance: 49.3021
+Update time     = 0.574254 ms
+Planning time   = 0.3082 ms
+Extraction time = 0.353021 ms
+[PLANNER]   New position: [16.7347, 37]
+[PLANNER]   New patch: position [2, 22], shape [31, 31]
+0 nodes updated
+Found path. Cost: 372.992 Distance: 48.7707
+Update time     = 0.463089 ms
+Planning time   = 5e-05 ms
+Extraction time = 0.344859 ms
+[PLANNER]   New position: [16.0873, 38]
+[PLANNER]   New patch: position [1, 23], shape [31, 31]
+90 nodes updated
+12 nodes expanded
+Found path. Cost: 371.8 Distance: 47.5795
+Update time     = 0.570824 ms
+Planning time   = 0.150409 ms
+Extraction time = 0.33397 ms
+[PLANNER]   New position: [16, 38.1448]
+[PLANNER]   New patch: position [1, 23], shape [31, 31]
+0 nodes updated
+Found path. Cost: 371.631 Distance: 47.4104
+Update time     = 0.591041 ms
+Planning time   = 7.8e-05 ms
+Extraction time = 0.560189 ms
+[PLANNER]   New position: [15.4843, 39]
+[PLANNER]   New patch: position [0, 24], shape [31, 31]
+100 nodes updated
+153 nodes expanded
+Found path. Cost: 359.335 Distance: 46.1014
+Update time     = 0.846899 ms
+Planning time   = 2.64622 ms
+Extraction time = 0.517735 ms
+[PLANNER]   New position: [15, 39.8884]
+[PLANNER]   New patch: position [0, 25], shape [31, 31]
+76 nodes updated
+27 nodes expanded
+Found path. Cost: 358.323 Distance: 45.0896
+Update time     = 0.844432 ms
+Planning time   = 0.500924 ms
+Extraction time = 0.514643 ms
+[PLANNER]   New position: [14.9392, 40]
+[PLANNER]   New patch: position [0, 25], shape [31, 31]
+0 nodes updated
+Found path. Cost: 358.196 Distance: 44.9625
+Update time     = 0.575133 ms
+Planning time   = 6.1e-05 ms
+Extraction time = 0.470891 ms
+[PLANNER]   New position: [14.2797, 41]
+[PLANNER]   New patch: position [0, 26], shape [31, 30]
+88 nodes updated
+4 nodes expanded
+Found path. Cost: 356.999 Distance: 43.7646
+Update time     = 0.542995 ms
+Planning time   = 0.05188 ms
+Extraction time = 0.291542 ms
+[PLANNER]   New position: [14, 41.4792]
+[PLANNER]   New patch: position [0, 26], shape [31, 30]
+0 nodes updated
+Found path. Cost: 356.444 Distance: 43.2098
+Update time     = 0.397671 ms
+Planning time   = 5e-05 ms
+Extraction time = 0.273903 ms
+[PLANNER]   New position: [13.6961, 42]
+[PLANNER]   New patch: position [0, 27], shape [31, 30]
+72 nodes updated
+0 nodes expanded
+Found path. Cost: 355.841 Distance: 42.6068
+Update time     = 0.912205 ms
+Planning time   = 0.008302 ms
+Extraction time = 0.445939 ms
+[PLANNER]   New position: [13, 43]
+[PLANNER]   New patch: position [0, 28], shape [31, 29]
+68 nodes updated
+0 nodes expanded
+Found path. Cost: 354.622 Distance: 41.3884
+Update time     = 0.755007 ms
+Planning time   = 0.006544 ms
+Extraction time = 0.431475 ms
+[PLANNER]   New position: [12, 44]
+[PLANNER]   New patch: position [0, 29], shape [31, 28]
+64 nodes updated
+4 nodes expanded
+Found path. Cost: 353.208 Distance: 39.9742
+Update time     = 0.82317 ms
+Planning time   = 0.089946 ms
+Extraction time = 0.420235 ms
+[PLANNER]   New position: [11, 44]
+[PLANNER]   New patch: position [0, 29], shape [31, 27]
+27 nodes updated
+12 nodes expanded
+Found path. Cost: 352.208 Distance: 38.9742
+Update time     = 0.748181 ms
+Planning time   = 0.202255 ms
+Extraction time = 0.391472 ms
+[PLANNER]   New position: [10, 44]
+[PLANNER]   New patch: position [0, 29], shape [31, 26]
+24 nodes updated
+4 nodes expanded
+Found path. Cost: 351.208 Distance: 37.9742
+Update time     = 0.792389 ms
+Planning time   = 0.105025 ms
+Extraction time = 0.408521 ms
+[PLANNER]   New position: [9, 44]
+[PLANNER]   New patch: position [0, 29], shape [31, 25]
+22 nodes updated
+27 nodes expanded
+Found path. Cost: 350.208 Distance: 36.9742
+Update time     = 0.773325 ms
+Planning time   = 0.473205 ms
+Extraction time = 0.481127 ms
+[PLANNER]   New position: [8, 44]
+[PLANNER]   New patch: position [0, 29], shape [31, 24]
+14 nodes updated
+3 nodes expanded
+Found path. Cost: 349.208 Distance: 35.9742
+Update time     = 0.536161 ms
+Planning time   = 0.062331 ms
+Extraction time = 0.254683 ms
+[PLANNER]   New position: [7, 44]
+[PLANNER]   New patch: position [0, 29], shape [31, 23]
+18 nodes updated
+615 nodes expanded
+Found path. Cost: 334.886 Distance: 34.8861
+Update time     = 0.598565 ms
+Planning time   = 5.34798 ms
+Extraction time = 0.259215 ms
+[PLANNER]   New position: [6.63964, 43]
+[PLANNER]   New patch: position [0, 28], shape [31, 23]
+11 nodes updated
+508 nodes expanded
+Found path. Cost: 318.784 Distance: 33.7835
+Update time     = 0.542832 ms
+Planning time   = 4.47685 ms
+Extraction time = 0.262393 ms
+[PLANNER]   New position: [6.27928, 42]
+[PLANNER]   New patch: position [0, 27], shape [31, 22]
+14 nodes updated
+499 nodes expanded
+Found path. Cost: 302.69 Distance: 32.6896
+Update time     = 0.769748 ms
+Planning time   = 8.11456 ms
+Extraction time = 0.343477 ms
+[PLANNER]   New position: [6, 41.0694]
+[PLANNER]   New patch: position [0, 26], shape [31, 22]
+13 nodes updated
+507 nodes expanded
+Found path. Cost: 286.673 Distance: 31.6731
+Update time     = 0.77985 ms
+Planning time   = 7.90406 ms
+Extraction time = 0.36637 ms
+[PLANNER]   New position: [5.98032, 41]
+[PLANNER]   New patch: position [0, 26], shape [31, 22]
+0 nodes updated
+Found path. Cost: 286.601 Distance: 31.601
+Update time     = 0.663663 ms
+Planning time   = 6.5e-05 ms
+Extraction time = 0.368406 ms
+[PLANNER]   New position: [5.68021, 40]
+[PLANNER]   New patch: position [0, 25], shape [31, 22]
+15 nodes updated
+424 nodes expanded
+Found path. Cost: 270.525 Distance: 30.5251
+Update time     = 0.813474 ms
+Planning time   = 6.68147 ms
+Extraction time = 0.329239 ms
+[PLANNER]   New position: [5.3801, 39]
+[PLANNER]   New patch: position [0, 24], shape [31, 21]
+18 nodes updated
+386 nodes expanded
+Found path. Cost: 254.452 Distance: 29.4517
+Update time     = 0.563001 ms
+Planning time   = 3.70322 ms
+Extraction time = 0.254235 ms
+[PLANNER]   New position: [5.07999, 38]
+[PLANNER]   New patch: position [0, 23], shape [31, 21]
+18 nodes updated
+378 nodes expanded
+Found path. Cost: 238.392 Distance: 28.3917
+Update time     = 0.602471 ms
+Planning time   = 3.63939 ms
+Extraction time = 0.224433 ms
+[PLANNER]   New position: [5, 37.6654]
+[PLANNER]   New patch: position [0, 23], shape [31, 21]
+0 nodes updated
+Found path. Cost: 238.048 Distance: 28.0477
+Update time     = 0.509225 ms
+Planning time   = 4.5e-05 ms
+Extraction time = 0.1959 ms
+[PLANNER]   New position: [4.84092, 37]
+[PLANNER]   New patch: position [0, 22], shape [31, 21]
+18 nodes updated
+351 nodes expanded
+Found path. Cost: 222.337 Distance: 27.3369
+Update time     = 0.583921 ms
+Planning time   = 3.34515 ms
+Extraction time = 0.197201 ms
+[PLANNER]   New position: [4.60183, 36]
+[PLANNER]   New patch: position [0, 21], shape [31, 21]
+18 nodes updated
+313 nodes expanded
+Found path. Cost: 206.292 Distance: 26.2917
+Update time     = 0.57916 ms
+Planning time   = 3.00976 ms
+Extraction time = 0.183352 ms
+[PLANNER]   New position: [4.36275, 35]
+[PLANNER]   New patch: position [0, 20], shape [31, 20]
+20 nodes updated
+294 nodes expanded
+Found path. Cost: 190.254 Distance: 25.2541
+Update time     = 0.616227 ms
+Planning time   = 2.99716 ms
+Extraction time = 0.265535 ms
+[PLANNER]   New position: [4.12367, 34]
+[PLANNER]   New patch: position [0, 19], shape [31, 20]
+20 nodes updated
+284 nodes expanded
+Found path. Cost: 174.207 Distance: 24.2071
+Update time     = 0.610153 ms
+Planning time   = 2.78 ms
+Extraction time = 0.164926 ms
+[PLANNER]   New position: [4, 33.2984]
+[PLANNER]   New patch: position [0, 18], shape [31, 20]
+20 nodes updated
+268 nodes expanded
+Found path. Cost: 158.487 Distance: 23.487
+Update time     = 0.58488 ms
+Planning time   = 2.93392 ms
+Extraction time = 0.190826 ms
+[PLANNER]   New position: [3.95029, 33]
+[PLANNER]   New patch: position [0, 18], shape [31, 20]
+0 nodes updated
+Found path. Cost: 158.185 Distance: 23.1845
+Update time     = 0.566466 ms
+Planning time   = 4.7e-05 ms
+Extraction time = 0.16179 ms
+[PLANNER]   New position: [3.774, 32]
+[PLANNER]   New patch: position [0, 17], shape [31, 20]
+22 nodes updated
+241 nodes expanded
+Found path. Cost: 142.159 Distance: 22.1592
+Update time     = 0.583796 ms
+Planning time   = 2.31966 ms
+Extraction time = 0.16439 ms
+[PLANNER]   New position: [3.59771, 31]
+[PLANNER]   New patch: position [0, 16], shape [31, 20]
+22 nodes updated
+224 nodes expanded
+Found path. Cost: 126.138 Distance: 21.1375
+Update time     = 0.608903 ms
+Planning time   = 2.15581 ms
+Extraction time = 0.167448 ms
+[PLANNER]   New position: [3.4214, 30]
+[PLANNER]   New patch: position [0, 15], shape [31, 19]
+22 nodes updated
+214 nodes expanded
+Found path. Cost: 108.624 Distance: 20.3899
+Update time     = 0.825528 ms
+Planning time   = 3.92524 ms
+Extraction time = 0.210021 ms
+[PLANNER]   New position: [3.31835, 29]
+[PLANNER]   New patch: position [0, 14], shape [31, 19]
+22 nodes updated
+216 nodes expanded
+Found path. Cost: 92.6183 Distance: 19.3845
+Update time     = 0.502277 ms
+Planning time   = 2.0262 ms
+Extraction time = 0.110036 ms
+[PLANNER]   New position: [3.2153, 28]
+[PLANNER]   New patch: position [0, 13], shape [31, 19]
+25 nodes updated
+206 nodes expanded
+Found path. Cost: 76.6131 Distance: 18.3796
+Update time     = 0.530209 ms
+Planning time   = 1.91483 ms
+Extraction time = 0.115874 ms
+[PLANNER]   New position: [3.11224, 27]
+[PLANNER]   New patch: position [0, 12], shape [31, 19]
+25 nodes updated
+209 nodes expanded
+Found path. Cost: 60.6073 Distance: 17.3759
+Update time     = 0.527062 ms
+Planning time   = 1.92611 ms
+Extraction time = 0.105529 ms
+[PLANNER]   New position: [3.0092, 26]
+[PLANNER]   New patch: position [0, 11], shape [31, 19]
+25 nodes updated
+209 nodes expanded
+Found path. Cost: 44.6985 Distance: 16.4143
+Update time     = 0.541974 ms
+Planning time   = 1.9376 ms
+Extraction time = 0.083798 ms
+[PLANNER]   New position: [3, 25]
+[PLANNER]   New patch: position [0, 10], shape [31, 19]
+27 nodes updated
+199 nodes expanded
+Found path. Cost: 30.0666 Distance: 15.0666
+Update time     = 0.559058 ms
+Planning time   = 1.86361 ms
+Extraction time = 0.118698 ms
+[PLANNER]   New position: [2.89096, 24]
+[PLANNER]   New patch: position [0, 9], shape [31, 19]
+27 nodes updated
+190 nodes expanded
+Found path. Cost: 14.0573 Distance: 14.0573
+Update time     = 0.671468 ms
+Planning time   = 1.7814 ms
+Extraction time = 0.106661 ms
+[PLANNER]   New position: [2.78192, 23]
+/home/patrick/Università/Tesi/roncapat_global_planners/Tests/build__field_d_star/pipe_1
+/home/patrick/Università/Tesi/roncapat_global_planners/Tests/build__field_d_star/pipe_2
+[SIMULATOR] Size: [60, 40]
+[SIMULATOR] New position: [27.000000, 10.000000]
+[SIMULATOR] New patch: position [12, 0], shape [26, 28]
+[SIMULATOR] New position: [26.659716, 11.000000]
+[SIMULATOR] New patch: position [12, 0], shape [27, 28]
+[SIMULATOR] New position: [26.298658, 12.000000]
+[SIMULATOR] New patch: position [11, 0], shape [28, 29]
+[SIMULATOR] New position: [26.000000, 12.878448]
+[SIMULATOR] New patch: position [11, 0], shape [29, 29]
+[SIMULATOR] New position: [25.960840, 13.000000]
+[SIMULATOR] New patch: position [11, 0], shape [29, 29]
+[SIMULATOR] New position: [25.620556, 14.000000]
+[SIMULATOR] New patch: position [11, 0], shape [30, 29]
+[SIMULATOR] New position: [25.259499, 15.000000]
+[SIMULATOR] New patch: position [10, 0], shape [31, 30]
+[SIMULATOR] New position: [25.000000, 15.763267]
+[SIMULATOR] New patch: position [10, 1], shape [31, 30]
+[SIMULATOR] New position: [24.923735, 16.000000]
+[SIMULATOR] New patch: position [10, 1], shape [31, 30]
+[SIMULATOR] New position: [24.583450, 17.000000]
+[SIMULATOR] New patch: position [10, 2], shape [31, 30]
+[SIMULATOR] New position: [24.222393, 18.000000]
+[SIMULATOR] New patch: position [9, 3], shape [31, 31]
+[SIMULATOR] New position: [24.000000, 18.654127]
+[SIMULATOR] New patch: position [9, 4], shape [31, 31]
+[SIMULATOR] New position: [23.888573, 19.000000]
+[SIMULATOR] New patch: position [9, 4], shape [31, 31]
+[SIMULATOR] New position: [23.548288, 20.000000]
+[SIMULATOR] New patch: position [9, 5], shape [31, 31]
+[SIMULATOR] New position: [23.198467, 21.000000]
+[SIMULATOR] New patch: position [8, 6], shape [31, 31]
+[SIMULATOR] New position: [23.000000, 21.583755]
+[SIMULATOR] New patch: position [8, 7], shape [31, 31]
+[SIMULATOR] New position: [22.865902, 22.000000]
+[SIMULATOR] New patch: position [8, 7], shape [31, 31]
+[SIMULATOR] New position: [22.525833, 23.000000]
+[SIMULATOR] New patch: position [8, 8], shape [31, 31]
+[SIMULATOR] New position: [22.175795, 24.000000]
+[SIMULATOR] New patch: position [7, 9], shape [31, 31]
+[SIMULATOR] New position: [22.000000, 24.517067]
+[SIMULATOR] New patch: position [7, 10], shape [31, 31]
+[SIMULATOR] New position: [21.844418, 25.000000]
+[SIMULATOR] New patch: position [7, 10], shape [31, 31]
+[SIMULATOR] New position: [21.504349, 26.000000]
+[SIMULATOR] New patch: position [7, 11], shape [31, 31]
+[SIMULATOR] New position: [21.153801, 27.000000]
+[SIMULATOR] New patch: position [6, 12], shape [31, 31]
+[SIMULATOR] New position: [21.000000, 27.542603]
+[SIMULATOR] New patch: position [6, 13], shape [31, 31]
+[SIMULATOR] New position: [20.852644, 28.000000]
+[SIMULATOR] New patch: position [6, 13], shape [31, 31]
+[SIMULATOR] New position: [20.512575, 29.000000]
+[SIMULATOR] New patch: position [6, 14], shape [31, 31]
+[SIMULATOR] New position: [20.162027, 30.000000]
+[SIMULATOR] New patch: position [5, 15], shape [31, 31]
+[SIMULATOR] New position: [20.000000, 30.476574]
+[SIMULATOR] New patch: position [5, 15], shape [31, 31]
+[SIMULATOR] New position: [19.821999, 31.000000]
+[SIMULATOR] New patch: position [5, 16], shape [31, 31]
+[SIMULATOR] New position: [19.479122, 32.000000]
+[SIMULATOR] New patch: position [4, 17], shape [31, 31]
+[SIMULATOR] New position: [19.077738, 33.000000]
+[SIMULATOR] New patch: position [4, 18], shape [31, 31]
+[SIMULATOR] New position: [19.000000, 33.131145]
+[SIMULATOR] New patch: position [4, 18], shape [31, 31]
+[SIMULATOR] New position: [18.484924, 34.000000]
+[SIMULATOR] New patch: position [3, 19], shape [31, 31]
+[SIMULATOR] New position: [18.000000, 34.865776]
+[SIMULATOR] New patch: position [3, 20], shape [31, 31]
+[SIMULATOR] New position: [17.924826, 35.000000]
+[SIMULATOR] New patch: position [3, 20], shape [31, 31]
+[SIMULATOR] New position: [17.310854, 36.000000]
+[SIMULATOR] New patch: position [2, 21], shape [31, 31]
+[SIMULATOR] New position: [17.000000, 36.539562]
+[SIMULATOR] New patch: position [2, 22], shape [31, 31]
+[SIMULATOR] New position: [16.734749, 37.000000]
+[SIMULATOR] New patch: position [2, 22], shape [31, 31]
+[SIMULATOR] New position: [16.087341, 38.000000]
+[SIMULATOR] New patch: position [1, 23], shape [31, 31]
+[SIMULATOR] New position: [16.000000, 38.144821]
+[SIMULATOR] New patch: position [1, 23], shape [31, 31]
+[SIMULATOR] New position: [15.484280, 39.000000]
+[SIMULATOR] New patch: position [0, 24], shape [31, 31]
+[SIMULATOR] New position: [15.000000, 39.888401]
+[SIMULATOR] New patch: position [0, 25], shape [31, 31]
+[SIMULATOR] New position: [14.939163, 40.000000]
+[SIMULATOR] New patch: position [0, 25], shape [31, 31]
+[SIMULATOR] New position: [14.279688, 41.000000]
+[SIMULATOR] New patch: position [0, 26], shape [31, 30]
+[SIMULATOR] New position: [14.000000, 41.479244]
+[SIMULATOR] New patch: position [0, 26], shape [31, 30]
+[SIMULATOR] New position: [13.696098, 42.000000]
+[SIMULATOR] New patch: position [0, 27], shape [31, 30]
+[SIMULATOR] New position: [13.000000, 43.000000]
+[SIMULATOR] New patch: position [0, 28], shape [31, 29]
+[SIMULATOR] New position: [12.000000, 44.000000]
+[SIMULATOR] New patch: position [0, 29], shape [31, 28]
+[SIMULATOR] New position: [11.000000, 44.000000]
+[SIMULATOR] New patch: position [0, 29], shape [31, 27]
+[SIMULATOR] New position: [10.000000, 44.000000]
+[SIMULATOR] New patch: position [0, 29], shape [31, 26]
+[SIMULATOR] New position: [9.000000, 44.000000]
+[SIMULATOR] New patch: position [0, 29], shape [31, 25]
+[SIMULATOR] New position: [8.000000, 44.000000]
+[SIMULATOR] New patch: position [0, 29], shape [31, 24]
+[SIMULATOR] New position: [7.000000, 44.000000]
+[SIMULATOR] New patch: position [0, 29], shape [31, 23]
+[SIMULATOR] New position: [6.639639, 43.000000]
+[SIMULATOR] New patch: position [0, 28], shape [31, 23]
+[SIMULATOR] New position: [6.279279, 42.000000]
+[SIMULATOR] New patch: position [0, 27], shape [31, 22]
+[SIMULATOR] New position: [6.000000, 41.069447]
+[SIMULATOR] New patch: position [0, 26], shape [31, 22]
+[SIMULATOR] New position: [5.980320, 41.000000]
+[SIMULATOR] New patch: position [0, 26], shape [31, 22]
+[SIMULATOR] New position: [5.680210, 40.000000]
+[SIMULATOR] New patch: position [0, 25], shape [31, 22]
+[SIMULATOR] New position: [5.380099, 39.000000]
+[SIMULATOR] New patch: position [0, 24], shape [31, 21]
+[SIMULATOR] New position: [5.079988, 38.000000]
+[SIMULATOR] New patch: position [0, 23], shape [31, 21]
+[SIMULATOR] New position: [5.000000, 37.665398]
+[SIMULATOR] New patch: position [0, 23], shape [31, 21]
+[SIMULATOR] New position: [4.840915, 37.000000]
+[SIMULATOR] New patch: position [0, 22], shape [31, 21]
+[SIMULATOR] New position: [4.601833, 36.000000]
+[SIMULATOR] New patch: position [0, 21], shape [31, 21]
+[SIMULATOR] New position: [4.362751, 35.000000]
+[SIMULATOR] New patch: position [0, 20], shape [31, 20]
+[SIMULATOR] New position: [4.123670, 34.000000]
+[SIMULATOR] New patch: position [0, 19], shape [31, 20]
+[SIMULATOR] New position: [4.000000, 33.298405]
+[SIMULATOR] New patch: position [0, 18], shape [31, 20]
+[SIMULATOR] New position: [3.950290, 33.000000]
+[SIMULATOR] New patch: position [0, 18], shape [31, 20]
+[SIMULATOR] New position: [3.773998, 32.000000]
+[SIMULATOR] New patch: position [0, 17], shape [31, 20]
+[SIMULATOR] New position: [3.597707, 31.000000]
+[SIMULATOR] New patch: position [0, 16], shape [31, 20]
+[SIMULATOR] New position: [3.421399, 30.000000]
+[SIMULATOR] New patch: position [0, 15], shape [31, 19]
+[SIMULATOR] New position: [3.318347, 29.000000]
+[SIMULATOR] New patch: position [0, 14], shape [31, 19]
+[SIMULATOR] New position: [3.215296, 28.000000]
+[SIMULATOR] New patch: position [0, 13], shape [31, 19]
+[SIMULATOR] New position: [3.112245, 27.000000]
+[SIMULATOR] New patch: position [0, 12], shape [31, 19]
+[SIMULATOR] New position: [3.009201, 26.000000]
+[SIMULATOR] New patch: position [0, 11], shape [31, 19]
+[SIMULATOR] New position: [3.000000, 25.000000]
+[SIMULATOR] New patch: position [0, 10], shape [31, 19]
+[SIMULATOR] New position: [2.890961, 24.000000]
+[SIMULATOR] New patch: position [0, 9], shape [31, 19]
+[SIMULATOR] New position: [2.781924, 23.000000][PLANNER]   New patch: position [0, 8], shape [31, 19]
+27 nodes updated
+1 nodes expanded
+Found path. Cost: 13.0514 Distance: 13.0514
+Update time     = 0.590816 ms
+Planning time   = 0.041345 ms
+Extraction time = 0.110176 ms
+[PLANNER]   New position: [2.66612, 22]
+[PLANNER]   New patch: position [0, 7], shape [31, 19]
+27 nodes updated
+0 nodes expanded
+Found path. Cost: 12.0447 Distance: 12.0447
+Update time     = 0.567836 ms
+Planning time   = 0.005525 ms
+Extraction time = 0.095756 ms
+[PLANNER]   New position: [2.54262, 21]
+[PLANNER]   New patch: position [0, 6], shape [31, 19]
+30 nodes updated
+0 nodes expanded
+Found path. Cost: 11.0371 Distance: 11.0371
+Update time     = 0.604966 ms
+Planning time   = 0.006195 ms
+Extraction time = 0.088764 ms
+[PLANNER]   New position: [2.41025, 20]
+[PLANNER]   New patch: position [0, 5], shape [31, 18]
+28 nodes updated
+0 nodes expanded
+Found path. Cost: 10.0284 Distance: 10.0284
+Update time     = 0.529137 ms
+Planning time   = 0.00577 ms
+Extraction time = 0.081028 ms
+[PLANNER]   New position: [2.26757, 19]
+[PLANNER]   New patch: position [0, 4], shape [31, 18]
+30 nodes updated
+0 nodes expanded
+Found path. Cost: 9.01825 Distance: 9.01825
+Update time     = 0.733841 ms
+Planning time   = 0.005817 ms
+Extraction time = 0.074089 ms
+[PLANNER]   New position: [2.11273, 18]
+[PLANNER]   New patch: position [0, 3], shape [31, 18]
+30 nodes updated
+1 nodes expanded
+Found path. Cost: 8.00633 Distance: 8.00633
+Update time     = 0.619785 ms
+Planning time   = 0.018105 ms
+Extraction time = 0.046392 ms
+[PLANNER]   New position: [2, 17]
+[PLANNER]   New patch: position [0, 2], shape [31, 18]
+33 nodes updated
+1 nodes expanded
+Found path. Cost: 7 Distance: 7
+Update time     = 0.719495 ms
+Planning time   = 0.015835 ms
+Extraction time = 0.044024 ms
+[PLANNER]   New position: [2, 16]
+[PLANNER]   New patch: position [0, 1], shape [31, 18]
+33 nodes updated
+0 nodes expanded
+Found path. Cost: 6 Distance: 6
+Update time     = 0.638967 ms
+Planning time   = 0.004123 ms
+Extraction time = 0.042706 ms
+[PLANNER]   New position: [2, 15]
+[PLANNER]   New patch: position [0, 0], shape [31, 18]
+33 nodes updated
+0 nodes expanded
+Found path. Cost: 5 Distance: 5
+Update time     = 0.612809 ms
+Planning time   = 0.003974 ms
+Extraction time = 0.039316 ms
+[PLANNER]   New position: [2, 14]
+[PLANNER]   New patch: position [0, 0], shape [30, 18]
+34 nodes updated
+0 nodes expanded
+Found path. Cost: 4 Distance: 4
+Update time     = 0.667196 ms
+Planning time   = 0.005294 ms
+Extraction time = 0.036655 ms
+[PLANNER]   New position: [2, 13]
+[PLANNER]   New patch: position [0, 0], shape [29, 18]
+17 nodes updated
+0 nodes expanded
+Found path. Cost: 3 Distance: 3
+Update time     = 0.626387 ms
+Planning time   = 0.004142 ms
+Extraction time = 0.033106 ms
+[PLANNER]   New position: [2, 12]
+[PLANNER]   New patch: position [0, 0], shape [28, 18]
+12 nodes updated
+0 nodes expanded
+Found path. Cost: 2 Distance: 2
+Update time     = 0.574945 ms
+Planning time   = 0.004118 ms
+Extraction time = 0.030336 ms
+[PLANNER]   New position: [2, 11]
+[PLANNER]   New patch: position [0, 0], shape [27, 18]
+10 nodes updated
+0 nodes expanded
+Found path. Cost: 1 Distance: 1
+Update time     = 0.625648 ms
+Planning time   = 0.004365 ms
+Extraction time = 0.028645 ms
+Cumulative planning time = 381.158
+
+[SIMULATOR] New patch: position [0, 8], shape [31, 19]
+[SIMULATOR] New position: [2.666122, 22.000000]
+[SIMULATOR] New patch: position [0, 7], shape [31, 19]
+[SIMULATOR] New position: [2.542617, 21.000000]
+[SIMULATOR] New patch: position [0, 6], shape [31, 19]
+[SIMULATOR] New position: [2.410252, 20.000000]
+[SIMULATOR] New patch: position [0, 5], shape [31, 18]
+[SIMULATOR] New position: [2.267574, 19.000000]
+[SIMULATOR] New patch: position [0, 4], shape [31, 18]
+[SIMULATOR] New position: [2.112726, 18.000000]
+[SIMULATOR] New patch: position [0, 3], shape [31, 18]
+[SIMULATOR] New position: [2.000000, 17.000000]
+[SIMULATOR] New patch: position [0, 2], shape [31, 18]
+[SIMULATOR] New position: [2.000000, 16.000000]
+[SIMULATOR] New patch: position [0, 1], shape [31, 18]
+[SIMULATOR] New position: [2.000000, 15.000000]
+[SIMULATOR] New patch: position [0, 0], shape [31, 18]
+[SIMULATOR] New position: [2.000000, 14.000000]
+[SIMULATOR] New patch: position [0, 0], shape [30, 18]
+[SIMULATOR] New position: [2.000000, 13.000000]
+[SIMULATOR] New patch: position [0, 0], shape [29, 18]
+[SIMULATOR] New position: [2.000000, 12.000000]
+[SIMULATOR] New patch: position [0, 0], shape [28, 18]
+[SIMULATOR] New position: [2.000000, 11.000000]
+[SIMULATOR] New patch: position [0, 0], shape [27, 18]
