@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 add_subdirectory(src)
 add_subdirectory(python)
-add_dependencies(field_d_planner simulator)
+add_dependencies(field_d_planner fd_simulator)
 message("${CMAKE_BINARY_DIR}/pipe_1")
 execute_process(COMMAND rm -rf "${CMAKE_BINARY_DIR}/pipe_1" "${CMAKE_BINARY_DIR}/pipe_2")
 execute_process(COMMAND mkfifo "${CMAKE_BINARY_DIR}/pipe_1" "${CMAKE_BINARY_DIR}/pipe_2")

@@ -13,7 +13,7 @@ if (PYTHON3)
                        COMMAND ${CMAKE_COMMAND} -E touch ${OUTPUT}
                        DEPENDS ${DEPS})
 
-    add_custom_target(simulator ALL DEPENDS ${OUTPUT})
+    add_custom_target(fd_simulator ALL DEPENDS ${OUTPUT})
 
     install(CODE "execute_process(COMMAND ${PYTHON3} ${SETUP_PY} install)")
 endif()

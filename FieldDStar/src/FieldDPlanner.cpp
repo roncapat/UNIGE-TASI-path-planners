@@ -1,4 +1,5 @@
 #include "FieldDPlanner.h"
+#include "../../DynamicFastMarching/src/include/Graph.h"
 #include <cmath>
 #include <array>
 #include <numeric>
@@ -67,11 +68,7 @@ void FieldDPlanner::set_map(const MapPtr &msg) {
 }
 
 void FieldDPlanner::set_goal(const Position &point) {
-    int goal_x, goal_y;
-    goal_x = static_cast<int>(point.first);
-    goal_y = static_cast<int>(point.second);
-
-    Node new_goal(goal_x, goal_y);
+    Node new_goal(point);
 
     if (grid.goal_ != new_goal)
         new_goal_ = true;
@@ -81,7 +78,7 @@ void FieldDPlanner::set_goal(const Position &point) {
 
 bool FieldDPlanner::isVertex(const Position &p) {
     bool is_vertex = (ceilf(p.x) == p.x) && (ceilf(p.y) == p.y);
-    bool satisfies_bounds = grid.isValidPosition(p);
+    bool satisfies_bounds = grid.isValid(p);
     return is_vertex && satisfies_bounds;
 }
 

@@ -17,7 +17,7 @@ class PriorityQueue {
    public:
     Node node;
     Key key;
-    ElemType(const Node &node, const Key &key) : node(node), key(key){};
+    ElemType(const Node &cell, const Key &key) : node(cell), key(key){};
   };
 
  private:

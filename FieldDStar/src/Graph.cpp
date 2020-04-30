@@ -45,15 +45,15 @@ void Graph::updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, i
 */
 }
 
-bool Graph::isValidNode(const Node &s) {
+bool Graph::isValid(const Node &s) {
     return (s.x <= length_) && (s.y <= width_) && (s.x >= 0) && (s.y >= 0);
 }
 
-bool Graph::isValidPosition(const Position &p) {
+bool Graph::isValid(const Position &p) {
     return (p.x >= 0.0f) && (p.x <= flength_) && (p.y >= 0.0f) && (p.y <= fwidth_);
 }
 
-bool Graph::isValidCell(const Cell &c) {
+bool Graph::isValid(const Cell &c) {
     return (c.x >= 0) && (c.x < length_) && (c.y >= 0) && (c.y < width_);
 }
 
@@ -69,44 +69,47 @@ std::vector<Node> Graph::neighbors(const Node &s, bool include_invalid) {
     std::vector<Node> neighbors;
     neighbors.reserve(8);
 
+    //TODO reason: if top left is invalid, bottom right is valid (as an example)
+    // maybe optimizable then?
+
     // right
     Node r(s.x + 1, s.y);
-    if (include_invalid || isValidNode(r))
+    if (include_invalid || isValid(r))
         neighbors.push_back(std::move(r));
 
     // top right
     Node tr(s.x + 1, s.y + 1);
-    if (include_invalid || isValidNode(tr))
+    if (include_invalid || isValid(tr))
         neighbors.push_back(std::move(tr));
 
     // above
     Node t(s.x, s.y + 1);
-    if (include_invalid || isValidNode(t))
+    if (include_invalid || isValid(t))
         neighbors.push_back(std::move(t));
 
     // top left
     Node tl(s.x - 1, s.y + 1);
-    if (include_invalid || isValidNode(tl))
+    if (include_invalid || isValid(tl))
         neighbors.push_back(std::move(tl));
 
     // left
     Node l(s.x - 1, s.y);
-    if (include_invalid || isValidNode(l))
+    if (include_invalid || isValid(l))
         neighbors.push_back(std::move(l));
 
     // bottom left
     Node bl(s.x - 1, s.y - 1);
-    if (include_invalid || isValidNode(bl))
+    if (include_invalid || isValid(bl))
         neighbors.push_back(std::move(bl));
 
     // bottom
     Node b(s.x, s.y - 1);
-    if (include_invalid || isValidNode(b))
+    if (include_invalid || isValid(b))
         neighbors.push_back(std::move(b));
 
     // bottom right
     Node br(s.x + 1, s.y - 1);
-    if (include_invalid || isValidNode(br))
+    if (include_invalid || isValid(br))
         neighbors.push_back(std::move(br));
 
     return neighbors;
@@ -151,8 +154,8 @@ std::vector<Edge> Graph::consecutiveNeighbors(const Position &p) {
     }
 
     for (size_t i = 0; i < neighbors.size(); ++i) {
-        if (isValidNode(neighbors[i])) {
-            if (isValidNode(neighbors[(i + 1) % neighbors.size()])) {
+        if (isValid(neighbors[i])) {
+            if (isValid(neighbors[(i + 1) % neighbors.size()])) {
                 consecutive_neighbors.emplace_back(neighbors[i], neighbors[(i + 1) % neighbors.size()]);
             } else {
                 ++i; //next edge is also invalid, skip
@@ -182,8 +185,8 @@ std::vector<Edge> Graph::consecutiveNeighbors(const Node &s) {
     neighbors.emplace_back(intpartx + 1, intparty - 1);  // bottom right
 
     for (size_t i = 0; i < neighbors.size(); ++i) {
-        if (isValidNode(neighbors[i])) {
-            if (isValidNode(neighbors[(i + 1) % neighbors.size()])) {
+        if (isValid(neighbors[i])) {
+            if (isValid(neighbors[(i + 1) % neighbors.size()])) {
                 consecutive_neighbors.emplace_back(neighbors[i], neighbors[(i + 1) % neighbors.size()]);
             } else {
                 ++i; //next edge is also invalid, skip
@@ -205,7 +208,7 @@ Node Graph::counterClockwiseNeighbor(const Node &s, const Node &sp) {
     int new_y = s.y + lut_y_ccw[delta_x][delta_y];
 
     Node cc_neighbor(new_x, new_y);
-    return isValidNode(cc_neighbor) ? cc_neighbor : Node{false};
+    return isValid(cc_neighbor) ? cc_neighbor : Node{false};
 }
 
 Node Graph::clockwiseNeighbor(const Node &s, const Node &sp) {
@@ -219,11 +222,11 @@ Node Graph::clockwiseNeighbor(const Node &s, const Node &sp) {
     int new_y = s.y + lut_y_cw[delta_x][delta_y];
 
     Node c_neighbor(new_x, new_y);
-    return isValidNode(c_neighbor) ? c_neighbor : Node{false};
+    return isValid(c_neighbor) ? c_neighbor : Node{false};
 }
 
 float Graph::getTraversalCost(const Cell &c) {
-    if (!isValidCell(c))
+    if (!isValid(c))
         return INFINITY;
     auto cost = map_[c.x * width_ + c.y];
     return (cost >= occupancy_threshold_uchar_) ? INFINITY : (float)cost;

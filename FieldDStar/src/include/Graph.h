@@ -64,7 +64,7 @@ struct hash<Node> {
 };
 }
 
-class Cell : std::pair<int, int> {
+class Cell : public std::pair<int, int> {
  public:
   int &x = std::get<0>(*this);
   int &y = std::get<1>(*this);
@@ -100,15 +100,15 @@ class Graph {
 
   void setOccupancyThreshold(float occupancy_threshold);
 
-  void setGoal(const Node& goal);
+  void setGoal(const Node &goal);
 
   void initializeGraph(const MapPtr &msg);
 
-  bool isValidNode(const Node &s);
+  bool isValid(const Node &s);
 
-  bool isValidPosition(const Position &p);
+  bool isValid(const Position &p);
 
-  bool isValidCell(const Cell &ind);
+  bool isValid(const Cell &c);
 
   static bool unaligned(const Node &s, const Node &sp);
 
