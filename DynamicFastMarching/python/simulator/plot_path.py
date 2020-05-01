@@ -38,15 +38,23 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
                           (c, c, c),
                           cv2.FILLED)
 
+    max_g = 0
+    for p in expanded:
+        if p[3] != float('inf'):
+            max_g = max(max_g, p[3])
+
+    period = max_g/8
     for p in expanded:
         x = p[1]
         y = p[0]
         if p[3] >= 0 and p[3] != float("inf"):
-            (r, g, b) = colorsys.hsv_to_rgb(0.5+0.5*math.cos(p[3]/400), 1.0, 1.0)
-            color = (int(255 * r), int(255 * g), int(255 * b))
-            cv2.circle(out_map, (mult * x + floor(mult/2), mult * y + floor(mult/2)), ceil(mult / 4), color, cv2.FILLED)
+            (r, g, b) = colorsys.hsv_to_rgb(math.fabs((p[3] / period) % 2 - 1), 1.0, 1.0)
+            color = (int(200 * r), int(200 * g), int(200 * b))
+            cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), ceil(mult / 4), color,
+                       cv2.FILLED)
         else:
-            cv2.circle(out_map, (mult * x+ floor(mult/2), mult * y+floor(mult/2)), floor(mult / 5), (30, 30, 255), cv2.FILLED)
+            cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), floor(mult / 5),
+                       (30, 30, 255), cv2.FILLED)
 
     for a, b in zip(prevpath, prevpath[1:]):
         a_scaled = (
@@ -55,7 +63,7 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
         b_scaled = (
             mult * int(b[1]) + int(round(modf(b[1])[0] * (mult - 1))),
             mult * int(b[0]) + int(round(modf(b[0])[0] * (mult - 1))))
-        cv2.line(out_map, a_scaled, b_scaled, (150, 120, 50), floor(mult / 3))
+        cv2.line(out_map, a_scaled, b_scaled, (150, 120, 50), floor(mult / 4))
 
     for a, b in zip(nextpath, nextpath[1:]):
         a_scaled = (
@@ -64,9 +72,8 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
         b_scaled = (
             mult * int(b[1]) + int(round(modf(b[1])[0] * (mult - 1))),
             mult * int(b[0]) + int(round(modf(b[0])[0] * (mult - 1))))
-        cv2.line(out_map, a_scaled, b_scaled, (255, 100, 0), floor(mult / 5))
+        cv2.line(out_map, a_scaled, b_scaled, (255, 100, 0), floor(mult / 6))
 
-    print(nextpath)
     x = int(nextpath[-1][1])
     y = int(nextpath[-1][0])
     cv2.circle(out_map, (mult * x, mult * y), floor(mult / 2), (255, 0, 0), cv2.FILLED)  # BLUE - GOAL
@@ -97,17 +104,17 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
         draw = ImageDraw.Draw(img_pil)
         tw = font.getsize(caption3)[0]
         cw = font.getsize(caption1)[0]
-        base_t = width - cw - tw - char_width*5
+        base_t = width - cw - tw - char_width * 5
         base_c = width - cw - lmargin
         draw.text((lmargin, vmargin), "Dynamic FM", font=font, fill=(100, 100, 100))
         draw.text((base_c, vmargin), captionc, font=font, fill=(100, 100, 100))
         draw.text((base_c, vmargin + line_height), caption1, font=font, fill=(100, 100, 100))
-        draw.text((base_c, vmargin + line_height*2), caption2, font=font, fill=(100, 100, 100))
+        draw.text((base_c, vmargin + line_height * 2), caption2, font=font, fill=(100, 100, 100))
         draw.text((base_t, vmargin), captiont, font=font, fill=(100, 100, 100))
         draw.text((base_t, vmargin + line_height), caption3, font=font, fill=(100, 100, 100))
-        draw.text((base_t, vmargin + line_height*2), caption4, font=font, fill=(100, 100, 100))
-        draw.text((base_t, vmargin + line_height*3), caption5, font=font, fill=(100, 100, 100))
-        draw.text((base_t, vmargin + line_height*4), caption6, font=font, fill=(100, 100, 100))
+        draw.text((base_t, vmargin + line_height * 2), caption4, font=font, fill=(100, 100, 100))
+        draw.text((base_t, vmargin + line_height * 3), caption5, font=font, fill=(100, 100, 100))
+        draw.text((base_t, vmargin + line_height * 4), caption6, font=font, fill=(100, 100, 100))
         out_map = numpy.array(img_pil)
     return out_map
 

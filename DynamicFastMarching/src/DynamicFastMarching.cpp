@@ -90,7 +90,7 @@ PriorityQueue::Key DFMPlanner::calculateKey(const Cell &s, float g, float rhs) {
 PriorityQueue::Key DFMPlanner::calculateKey(const Cell &s, float cost_so_far) {
     //auto dist = std::hypot(grid.goal_pos_.x - s.x, grid.goal_pos_.y - s.y);
     //return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
-    //return {cost_so_far, cost_so_far}; //FIXME no need pair key in FMM without heuristic
+    return {cost_so_far, cost_so_far}; //FIXME no need pair key in FMM without heuristic
 }
 
 void DFMPlanner::initializeSearch() {
@@ -295,26 +295,18 @@ void DFMPlanner::constructOptimalPath() {
     total_cost = 0;
     total_dist = 0;
 
-    auto[dx, dy] = gradientAtCell(Cell(grid.goal_pos_));
-/*
-    std::cout << "gx: " << dx << " gy: " << dy << std::endl;
-    path_.push_back(grid.start_pos_);
-    path_.push_back(grid.goal_pos_);
-    cost_.push_back(0);
-    return;
-*/
     auto[gh,gv] = costMapGradient();
     path_.push_back(grid.goal_pos_);
 
     float min_cost = 0;
     int curr_step = 0;
     // TODO do something better than this sh*t
-    int max_steps = 2000;
+    int max_steps = 3000;
 
     float alpha = 0.1;
     auto s = grid.goal_pos_;
     char buf[30];
-    while (std::hypot(grid.start_pos_.x - s.x, grid.start_pos_.y - s.y)) {
+    while (std::hypot(grid.start_pos_.x - s.x, grid.start_pos_.y - s.y)>0.2) {
         if (curr_step>max_steps) break;
         std::sprintf(buf, "s = [ %5.2f %5.2f]", s.x, s.y);
         std::cout << "Step " << curr_step << " " << buf << std::flush;
