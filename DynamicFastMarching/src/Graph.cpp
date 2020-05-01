@@ -66,48 +66,29 @@ bool Graph::unaligned(const Position &p, const Position &sp) {
 
 std::vector<Cell> Graph::neighbors(const Cell &s, bool include_invalid) {
     std::vector<Cell> neighbors;
-    neighbors.reserve(8);
+    neighbors.reserve(4);
 
     // right
     Cell r(s.x + 1, s.y);
     if (include_invalid || isValid(r))
         neighbors.push_back(std::move(r));
 
-    // top right
-    Cell tr(s.x + 1, s.y + 1);
-    if (include_invalid || isValid(tr))
-        neighbors.push_back(std::move(tr));
-
     // above
     Cell t(s.x, s.y + 1);
     if (include_invalid || isValid(t))
         neighbors.push_back(std::move(t));
-
-    // top left
-    Cell tl(s.x - 1, s.y + 1);
-    if (include_invalid || isValid(tl))
-        neighbors.push_back(std::move(tl));
 
     // left
     Cell l(s.x - 1, s.y);
     if (include_invalid || isValid(l))
         neighbors.push_back(std::move(l));
 
-    // bottom left
-    Cell bl(s.x - 1, s.y - 1);
-    if (include_invalid || isValid(bl))
-        neighbors.push_back(std::move(bl));
-
     // bottom
     Cell b(s.x, s.y - 1);
     if (include_invalid || isValid(b))
         neighbors.push_back(std::move(b));
 
-    // bottom right
-    Cell br(s.x + 1, s.y - 1);
-    if (include_invalid || isValid(br))
-        neighbors.push_back(std::move(br));
-
+    assert(neighbors.size()>=2);
     return neighbors;
 }
 
@@ -244,6 +225,9 @@ std::vector<Node> Graph::getNodesAroundCell(const Cell &cell) {
     right = std::min(right, width_ - 1);
 
     return {{top, left}, {top, right}, {bottom, left}, {bottom, right}};
+}
+Graph::Graph() {
+
 }
 Position::Position(float x, float y) {
     this->x = x;

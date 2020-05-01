@@ -63,10 +63,6 @@ class Cell : public std::pair<int, int> {
   explicit Cell(const std::pair<int, int> &other);
   explicit Cell(const Position &n);
   Cell &operator=(const Cell &other);
-  Cell neighborCell(const Node &p, bool bottom_TOP, bool left_RIGHT);
-  Cell cellTopRight(const Node &p);
-  Cell cellTopLeft(const Node &p);
-  Cell cellBottomLeft(const Node &p);
 };
 
 namespace std {
@@ -95,6 +91,7 @@ typedef std::pair<Node, Node> Edge;
 
 class Graph {
  public:
+  Graph();
   std::shared_ptr<uint8_t[]> map_;  // Occupancy grid
 
   Cell start_;

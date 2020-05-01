@@ -199,14 +199,14 @@ def main():
         [w, h, _] = dbgview.shape
         if out is None:
             if gui:
-                cv2.namedWindow('Field D* planner', cv2.WINDOW_NORMAL)
-                cv2.resizeWindow('Field D* planner', 900, 900)  # TODO keep image aspect ratio
-                cv2.moveWindow('Field D* planner', 100, 100)
+                cv2.namedWindow('DFM planner', cv2.WINDOW_NORMAL)
+                cv2.resizeWindow('DFM planner', 900, 900)  # TODO keep image aspect ratio
+                cv2.moveWindow('DFM planner', 100, 100)
             video_path = os.path.join(os.path.abspath(outpath), mapname.split('.')[0] + '.avi')
             out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'DIVX'), 5, (h, w))
         out.write(dbgview)
         if gui:
-            cv2.imshow('Field D* planner', dbgview)
+            cv2.imshow('DFM planner', dbgview)
             cv2.waitKey(1)
 
     cost_from_beginning += cost_to_goal
@@ -214,8 +214,8 @@ def main():
     step_cost = cost_to_goal
     pos_x = next_path[-1][0]
     pos_y = next_path[-1][1]
-    prev_path.extend(next_path)
-    next_path = next_path[-1:]
+    #prev_path.extend(next_path)
+    #next_path = next_path[-1:]
     info = {"cost_from_start": cost_from_beginning,
             "cost_to_goal": cost_to_goal,
             "update_tot": utt,
@@ -228,7 +228,7 @@ def main():
             "cum_tot": utt + ptt + ett}
     if gui:
         dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
-        cv2.imshow('Field D* planner', dbgview)
+        cv2.imshow('DFM planner', dbgview)
     out.write(dbgview)
     out.release()
     cv2.waitKey()

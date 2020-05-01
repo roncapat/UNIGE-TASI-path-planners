@@ -8,6 +8,7 @@
 
 #include "Graph.h"
 #include <boost/heap/fibonacci_heap.hpp>
+#include <iostream>
 
 class PriorityQueue {
  public:
@@ -39,10 +40,10 @@ class PriorityQueue {
   typedef QueueType::handle_type HandleType;
   typedef QueueType::iterator IteratorType;
 
-  IteratorType begin() {
+  IteratorType begin() const {
       return __queue.begin();
   };
-  IteratorType end() {
+  IteratorType end() const {
       return __queue.end();
   };
 
@@ -57,6 +58,12 @@ class PriorityQueue {
   int size();
   bool empty();
   bool contains(const Cell&c);
+  void print(){
+      for (auto c = __queue.begin(); c != __queue.end(); c++) {
+          std::cout << "[" << c->cell.x << "," << c->cell.y << "] ";
+      }
+      std::cout << std::endl;
+  }
 };
 
 #endif

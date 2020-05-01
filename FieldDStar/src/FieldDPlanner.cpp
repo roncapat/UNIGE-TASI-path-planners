@@ -739,6 +739,7 @@ FieldDPlanner::ExpandedMap::insert_or_assign(const Node &s, float g, float rhs) 
     }
 }
 
+//FIXME semantic: THIS IS NOT A KEY!!!!!
 PriorityQueue::Key FieldDPlanner::ExpandedMap::getKey(const Node &s) {
     ExpandedMap::iterator it;
     if ((it = find(s)) != end())
