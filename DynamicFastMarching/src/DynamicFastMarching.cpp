@@ -88,9 +88,9 @@ PriorityQueue::Key DFMPlanner::calculateKey(const Cell &s, float g, float rhs) {
 }
 
 PriorityQueue::Key DFMPlanner::calculateKey(const Cell &s, float cost_so_far) {
-    //auto dist = std::hypot(grid.goal_pos_.x - s.x, grid.goal_pos_.y - s.y);
-    //return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
-    return {cost_so_far, cost_so_far}; //FIXME no need pair key in FMM without heuristic
+    auto dist = std::hypot(grid.goal_pos_.x - s.x, grid.goal_pos_.y - s.y);
+    return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
+    //return {cost_so_far, cost_so_far}; //FIXME no need pair key in FMM without heuristic
 }
 
 void DFMPlanner::initializeSearch() {
@@ -203,9 +203,9 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
 }
 
 std::tuple<float, float> DFMPlanner::gradientAtCell(const Cell &__c) {
-    std::cout << __c.x << " " << __c.y;
+    //std::cout << __c.x << " " << __c.y;
     float g = map.getRHS(__c);
-    if (g==INFINITY) return {INFINITY,INFINITY};
+    if (g==INFINITY) return {0, 0};
     float h_span = 2;
     float v_span = 2;
     Cell t = grid.topCell(__c), b = grid.bottomCell(__c), l = grid.leftCell(__c), r = grid.rightCell(__c);
@@ -236,10 +236,10 @@ std::tuple<float, float> DFMPlanner::gradientAtCell(const Cell &__c) {
     float abs = std::sqrt(dx*dx + dy*dy);
     if (abs>0){
     //Central gradient
-        std::cout << "   " << dx/abs << " " << dy/abs << std::endl;
+        //std::cout << "   " << dx/abs << " " << dy/abs << std::endl;
         return {dx/abs, dy/abs};
     } else{
-        std::cout << "   "<< dx << " " << dy << std::endl;
+        //std::cout << "   "<< dx << " " << dy << std::endl;
         return {dx,dy};
     }
 }
@@ -303,16 +303,16 @@ void DFMPlanner::constructOptimalPath() {
     // TODO do something better than this sh*t
     int max_steps = 3000;
 
-    float alpha = 0.1;
+    float alpha = 0.5;
     auto s = grid.goal_pos_;
     char buf[30];
-    while (std::hypot(grid.start_pos_.x - s.x, grid.start_pos_.y - s.y)>0.2) {
+    while (std::hypot(grid.start_pos_.x - s.x, grid.start_pos_.y - s.y)>1) {
         if (curr_step>max_steps) break;
-        std::sprintf(buf, "s = [ %5.2f %5.2f]", s.x, s.y);
-        std::cout << "Step " << curr_step << " " << buf << std::flush;
+        //std::sprintf(buf, "s = [ %5.2f %5.2f]", s.x, s.y);
+        //std::cout << "Step " << curr_step << " " << buf << std::flush;
         auto[sgx, sgy] = interpolateGradient(s, gv, gh);
-        std::sprintf(buf, " g = [ %5.2f %5.2f]", sgx, sgy);
-        std::cout << buf << std::endl;
+        //std::sprintf(buf, " g = [ %5.2f %5.2f]", sgx, sgy);
+        //std::cout << buf << std::endl;
         if (std::abs(sgx)<0.0001 && std::abs(sgy)<0.0001) break;
         s = Position(s.x - alpha * sgx, s.y - alpha * sgy);
         path_.push_back(s);

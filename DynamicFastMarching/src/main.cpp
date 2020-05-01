@@ -65,8 +65,7 @@ int main(int _argc, char **_argv) {
     planner.set_optimization_lvl(std::stoi(_argv[8]));
     planner.set_first_run_trick(false);
     planner.set_occupancy_threshold(1);
-    // FIXME handle remplanning, for now i put the lowest possible value for consistency
-    //planner.set_heuristic_multiplier(min);
+    planner.set_heuristic_multiplier(min);
     planner.set_map(map_info);
     planner.set_start(next_point);
     planner.set_goal(goal);
@@ -96,7 +95,7 @@ int main(int _argc, char **_argv) {
         in__fifo.read((char *) patch.get(), size); //Receive image
         planner.patch_map(patch, top, left, width, height);
         in__fifo.read((char *) &min, 4); //Receive heuristic hint
-        //planner.set_heuristic_multiplier(min);
+        planner.set_heuristic_multiplier(min);
 
         auto begin = std::chrono::steady_clock::now();
         planner.step();
@@ -138,7 +137,6 @@ int main(int _argc, char **_argv) {
             out_fifo.write((char *) &(rhs), 4);
         }
         out_fifo.flush();
-        break;
         next_point = {planner.path_[1].x, planner.path_[1].y};
         next_step_cost = planner.cost_.front();
         if (next_point == goal)

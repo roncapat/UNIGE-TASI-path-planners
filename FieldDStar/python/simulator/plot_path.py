@@ -37,15 +37,23 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
             cv2.rectangle(out_map, (mult * x + 1, mult * y + 1), (mult * x + (mult - 1), mult * y + (mult - 1)),
                           (c, c, c),
                           cv2.FILLED)
+    max_g = 0
+    for p in expanded:
+        if p[3] != float('inf'):
+            max_g = max(max_g, p[3])
+
+    period = max_g/8
     for p in expanded:
         x = p[1]
         y = p[0]
         if p[3] >= 0 and p[3] != float("inf"):
-            (r, g, b) = colorsys.hsv_to_rgb(0.5+0.5*math.cos(p[3]/400), 1.0, 1.0)
-            color = (int(255 * r), int(255 * g), int(255 * b))
-            cv2.square(out_map, (mult * x, mult * y), ceil(mult / 4), color, cv2.FILLED)
+            (r, g, b) = colorsys.hsv_to_rgb(math.fabs((p[3] / period) % 2 - 1), 1.0, 1.0)
+            color = (int(200 * r), int(200 * g), int(200 * b))
+            cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), ceil(mult / 4), color,
+                       cv2.FILLED)
         else:
-            cv2.square(out_map, (mult * x, mult * y), floor(mult / 5), (30, 30, 255), cv2.FILLED)
+            cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), floor(mult / 5),
+                       (30, 30, 255), cv2.FILLED)
 
     for a, b in zip(prevpath, prevpath[1:]):
         a_scaled = (

@@ -214,8 +214,8 @@ def main():
     step_cost = cost_to_goal
     pos_x = next_path[-1][0]
     pos_y = next_path[-1][1]
-    #prev_path.extend(next_path)
-    #next_path = next_path[-1:]
+    prev_path.extend(next_path)
+    next_path = next_path[-1:]
     info = {"cost_from_start": cost_from_beginning,
             "cost_to_goal": cost_to_goal,
             "update_tot": utt,
