@@ -99,16 +99,16 @@ void DFMPlanner::initializeSearch() {
     map.clear();
     priority_queue.clear();
     grid.updated_cells_.clear();
-    map.insert_or_assign(grid.start_, INFINITY, 0);
-    map.insert_or_assign(grid.goal_, INFINITY, INFINITY);
-    priority_queue.insert(grid.start_, calculateKey(grid.start_, 0));
+    map.insert_or_assign(grid.start_, INFINITY, INFINITY);
+    map.insert_or_assign(grid.goal_, INFINITY, 0);
+    priority_queue.insert(grid.goal_, calculateKey(grid.goal_, 0));
     num_cells_updated = 1;
 }
 
 bool DFMPlanner::end_condition() {
     auto top_key = priority_queue.topKey();
-    auto[g, rhs] = map.getKey(grid.goal_);
-    return ((top_key >= calculateKey(grid.goal_, rhs)) and std::abs(rhs - g) > 1e-2);
+    auto[g, rhs] = map.getKey(grid.start_);
+    return ((top_key >= calculateKey(grid.start_, rhs)) and std::abs(rhs - g) > 1e-2);
 }
 
 unsigned long DFMPlanner::computeShortestPath() {
@@ -183,11 +183,6 @@ BilinearInterpolation(float q11,
     );
 }
 
-std::tuple<float, float> DFMPlanner::interpolateCost(const Position &c) {
-    int x1 = std::floor(c.x), x2 = x1 + 1;
-    int y1 = std::floor(c.y), y2 = y1 + 1;
-}
-
 std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
                                                          std::shared_ptr<float[]> _gh,
                                                          std::shared_ptr<float[]> _gv) {
@@ -203,6 +198,7 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
     auto blv = gv(x1, y1), tlv = gv(x1, y2), brv = gv(x2, y1), trv = gv(x2, y2);
     assert(c.x >= (x1 + 0.5f) && c.x <= (x2 + 0.5f));
     assert(c.y >= (y1 + 0.5f) && c.y <= (y2 + 0.5f));
+    #ifdef VERBOSE_EXTRACTION
     std::cout << "Interpolating gradient for (" << c.x << ", " << c.y << ")" << std::endl;
     std::cout << "Corners (x,y):\n"
               << "\t(" << x1 << ", " << y2 << ")" << "\t\t(" << x2 << ", " << y2 << ")\n\n"
@@ -210,6 +206,7 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
     std::cout << "Values (h,v):\n"
               << "\t(" << tlh << ", " << tlv << ")" << "\t\t(" << trh << ", " << trv << ")\n\n"
               << "\t(" << blh << ", " << blv << ")" << "\t\t(" << brh << ", " << brv << ")\n";
+    #endif
     //FIXME handle borders
     return {    //Interpolate WRT centers of the 4 nearest cells (thus, shift 0.5f)
         BilinearInterpolation(blh, tlh, brh, trh,
@@ -222,15 +219,10 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
 }
 
 std::tuple<float, float> DFMPlanner::gradientAtCell(const Cell __c) {
-    //std::cout << __c.x << " " << __c.y << std::flush;
     float g = map.getRHS(__c);
     if (g == INFINITY) {
-        //std::cout << "   " << 0 << " " << 0 << std::endl;
-        //std::cout << std::endl;
         return {0, 0};
     }
-    float h_span = 2;
-    float v_span = 2;
     Cell t = grid.topCell(__c), b = grid.bottomCell(__c), l = grid.leftCell(__c), r = grid.rightCell(__c);
     float v_pre = map.getRHS(t);
     float v_post = map.getRHS(b);
@@ -270,15 +262,13 @@ std::tuple<float, float> DFMPlanner::gradientAtCell(const Cell __c) {
         dx = dx / abs;
         dy = dy / abs;
     }
-    //    assert(not(__c.x==27 && __c.y==40));
-    //std::cout << "   " << dx << " " << dy << std::endl;
     return {dx, dy};
 }
 
 void DFMPlanner::updateCell(const Cell &cell) {
     auto s_it = map.find_or_init(cell);
 
-    if (cell != grid.start_)
+    if (cell != grid.goal_)
         RHS(s_it) = computeOptimalCost(cell);
 
     enqueueIfInconsistent(s_it);
@@ -327,12 +317,9 @@ void DFMPlanner::constructOptimalPath() {
     total_dist = 0;
 
     auto[gh, gv] = costMapGradient();
-    path_.push_back(grid.goal_pos_);
+    path_.push_back(grid.start_pos_);
 
     char buf[30];
-    auto[a, b] = interpolateGradient(grid.goal_pos_, gv, gh);
-    std::sprintf(buf, " g = [ %5.2f %5.2f]", a, b);
-    std::cout << buf << std::endl;
 
     float min_cost = 0;
     int curr_step = 0;
@@ -340,25 +327,27 @@ void DFMPlanner::constructOptimalPath() {
     int max_steps = 3000;
 
     float alpha = 0.2;
-    auto s = grid.goal_pos_;
-    while (std::hypot(grid.start_pos_.x - s.x, grid.start_pos_.y - s.y) > 0.8) {
+    auto s = grid.start_pos_;
+    while (std::hypot(grid.goal_pos_.x - s.x, grid.goal_pos_.y - s.y) > 0.8) {
         if (curr_step > max_steps) break;
         auto[sgx, sgy] = interpolateGradient(s, gv, gh);
+        #ifdef VERBOSE_EXTRACTION
         std::sprintf(buf, "s = [ %7.4f %7.4f]", s.x, s.y);
         std::cout << "Step " << curr_step << " " << buf << std::flush;
         std::sprintf(buf, " g = [ %7.4f %7.4f]", sgx, sgy);
         std::cout << buf << std::endl;
+        #endif
         if (std::abs(sgx) < 0.0001 && std::abs(sgy) < 0.0001) break;
         s = Position(s.x - alpha * sgx, s.y - alpha * sgy);
         path_.push_back(s);
-        cost_.push_back(0);
+        cost_.push_back(0); // TODO manage cost computation
         ++curr_step;
 //        if (curr_step == 180) break;
     }
 
-    path_.push_back(grid.start_pos_);
+    path_.push_back(grid.goal_pos_);
     cost_.push_back(0);
-    std::reverse(path_.begin(), path_.end());
+    //std::reverse(path_.begin(), path_.end());
 
     if (min_cost == INFINITY) {
         std::cerr << "[Extraction] No valid path exists" << std::endl;
