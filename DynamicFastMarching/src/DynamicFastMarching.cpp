@@ -90,7 +90,6 @@ PriorityQueue::Key DFMPlanner::calculateKey(const Cell &s, float g, float rhs) {
 PriorityQueue::Key DFMPlanner::calculateKey(const Cell &s, float cost_so_far) {
     auto dist = std::hypot(grid.goal_pos_.x - s.x, grid.goal_pos_.y - s.y);
     return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
-    //return {cost_so_far, cost_so_far}; //FIXME no need pair key in FMM without heuristic
 }
 
 void DFMPlanner::initializeSearch() {
@@ -191,13 +190,26 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
     int y2 = (int) std::lround(c.y);
     int x1 = x2 - 1;
     int y1 = y2 - 1;
-    auto gh = [&](int x, int y) -> float & { return _gh.get()[x * grid.width_ + y]; };
-    auto gv = [&](int x, int y) -> float & { return _gv.get()[x * grid.width_ + y]; };
-    //return {gh(x1, y1), gv(x1, y1)};
-    auto blh = gh(x1, y1), tlh = gh(x1, y2), brh = gh(x2, y1), trh = gh(x2, y2);
-    auto blv = gv(x1, y1), tlv = gv(x1, y2), brv = gv(x2, y1), trv = gv(x2, y2);
     assert(c.x >= (x1 + 0.5f) && c.x <= (x2 + 0.5f));
     assert(c.y >= (y1 + 0.5f) && c.y <= (y2 + 0.5f));
+
+    auto gh = [&](int x, int y) -> float & { return _gh.get()[x * grid.width_ + y]; };
+    auto gv = [&](int x, int y) -> float & { return _gv.get()[x * grid.width_ + y]; };
+
+    if (x2==grid.length_){
+        --x1, --x2;
+    } else if (x1==0){
+        ++x1, ++x2;
+    }
+
+    if (y2==grid.width_){
+        --y1, --y2;
+    } else if (y2==0){
+        ++y1, ++y2;
+    }
+
+    auto blh = gh(x1, y1), tlh = gh(x1, y2), brh = gh(x2, y1), trh = gh(x2, y2);
+    auto blv = gv(x1, y1), tlv = gv(x1, y2), brv = gv(x2, y1), trv = gv(x2, y2);
     #ifdef VERBOSE_EXTRACTION
     std::cout << "Interpolating gradient for (" << c.x << ", " << c.y << ")" << std::endl;
     std::cout << "Corners (x,y):\n"
@@ -207,7 +219,6 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
               << "\t(" << tlh << ", " << tlv << ")" << "\t\t(" << trh << ", " << trv << ")\n\n"
               << "\t(" << blh << ", " << blv << ")" << "\t\t(" << brh << ", " << brv << ")\n";
     #endif
-    //FIXME handle borders
     return {    //Interpolate WRT centers of the 4 nearest cells (thus, shift 0.5f)
         BilinearInterpolation(blh, tlh, brh, trh,
                               x1 + 0.5f, x2 + 0.5f, y1 + 0.5f, y2 + 0.5f,
@@ -223,7 +234,7 @@ std::tuple<float, float> DFMPlanner::gradientAtCell(const Cell __c) {
     if (g == INFINITY) {
         return {0, 0};
     }
-    Cell t = grid.topCell(__c), b = grid.bottomCell(__c), l = grid.leftCell(__c), r = grid.rightCell(__c);
+    Cell t = __c.topCell(), b = __c.bottomCell(), l = __c.leftCell(), r = __c.rightCell();
     float v_pre = map.getRHS(t);
     float v_post = map.getRHS(b);
     float h_pre = map.getRHS(l);
@@ -276,8 +287,8 @@ void DFMPlanner::updateCell(const Cell &cell) {
 }
 
 float DFMPlanner::computeOptimalCost(const Cell &c) {
-    float g_a_1 = minCost(grid.topCell(c), grid.bottomCell(c));
-    float g_b_1 = minCost(grid.leftCell(c), grid.rightCell(c));
+    float g_a_1 = minCost(c.topCell(), c.bottomCell());
+    float g_b_1 = minCost(c.leftCell(), c.rightCell());
     if (g_a_1 > g_b_1) std::swap(g_a_1, g_b_1);
     if (g_a_1 == INFINITY and g_b_1 == INFINITY) return INFINITY;
     if (grid.getTraversalCost(c) == INFINITY) return INFINITY;

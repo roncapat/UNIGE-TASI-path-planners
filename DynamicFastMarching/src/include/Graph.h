@@ -63,6 +63,10 @@ class Cell : public std::pair<int, int> {
   explicit Cell(const std::pair<int, int> &other);
   explicit Cell(const Position &n);
   Cell &operator=(const Cell &other);
+  [[nodiscard]] Cell topCell() const {return Cell(x-1, y);}
+  [[nodiscard]] Cell bottomCell()const {return Cell(x+1, y);}
+  [[nodiscard]] Cell leftCell()const {return Cell(x, y-1);}
+  [[nodiscard]] Cell rightCell()const {return Cell(x, y+1);}
 };
 
 namespace std {
@@ -140,12 +144,6 @@ class Graph {
   void updateGraph(const std::shared_ptr<uint8_t[]>& patch, int x, int y, int w, int h);
 
   int occupancy_threshold_uchar_ = 254;
-
-  //TODO move in Cell class
-  static Cell topCell(const Cell &c){return Cell(c.x-1, c.y);}
-  static Cell bottomCell(const Cell &c){return Cell(c.x+1, c.y);}
-  static Cell leftCell(const Cell &c){return Cell(c.x, c.y-1);}
-  static Cell rightCell(const Cell &c){return Cell(c.x, c.y+1);}
 };
 
 #endif  // GRAPHSEARCH_H
