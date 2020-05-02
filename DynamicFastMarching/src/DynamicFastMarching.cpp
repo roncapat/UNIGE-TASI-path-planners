@@ -108,7 +108,7 @@ void DFMPlanner::initializeSearch() {
 bool DFMPlanner::end_condition() {
     auto top_key = priority_queue.topKey();
     auto[g, rhs] = map.getKey(grid.goal_);
-    return ((top_key >= calculateKey(grid.goal_, rhs)) and std::abs(rhs - g)>1e-2);
+    return ((top_key >= calculateKey(grid.goal_, rhs)) and std::abs(rhs - g) > 1e-2);
 }
 
 unsigned long DFMPlanner::computeShortestPath() {
@@ -149,7 +149,7 @@ std::pair<std::shared_ptr<float[]>, std::shared_ptr<float[]>> DFMPlanner::costMa
     auto gv = [&](int x, int y) -> float & { return _gv.get()[x * grid.width_ + y]; };
     for (int i = 0; i < grid.length_; ++i) {
         for (int j = 0; j < grid.width_; ++j) {
-            Cell c(i,j);
+            Cell c(i, j);
             std::tie(gh(i, j), gv(i, j)) = gradientAtCell(c);
         }
     }
@@ -191,57 +191,88 @@ std::tuple<float, float> DFMPlanner::interpolateCost(const Position &c) {
 std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
                                                          std::shared_ptr<float[]> _gh,
                                                          std::shared_ptr<float[]> _gv) {
-    int x1 = std::floor(c.x), x2 = x1 + 1;
-    int y1 = std::floor(c.y), y2 = y1 + 1;
+    // Coords of nearest node
+    int x2 = (int) std::lround(c.x);
+    int y2 = (int) std::lround(c.y);
+    int x1 = x2 - 1;
+    int y1 = y2 - 1;
     auto gh = [&](int x, int y) -> float & { return _gh.get()[x * grid.width_ + y]; };
     auto gv = [&](int x, int y) -> float & { return _gv.get()[x * grid.width_ + y]; };
-    return {gh(x1, y1), gv(x1, y1)};
-    return {
-        BilinearInterpolation(gh(x1, y1), gh(x1, y2), gh(x2, y1), gh(x2, y2), x1, x2, y1, y2, c.x, c.y),
-        BilinearInterpolation(gv(x1, y1), gv(x1, y2), gv(x2, y1), gv(x2, y2), x1, x2, y1, y2, c.x, c.y)
+    //return {gh(x1, y1), gv(x1, y1)};
+    auto blh = gh(x1, y1), tlh = gh(x1, y2), brh = gh(x2, y1), trh = gh(x2, y2);
+    auto blv = gv(x1, y1), tlv = gv(x1, y2), brv = gv(x2, y1), trv = gv(x2, y2);
+    assert(c.x >= (x1 + 0.5f) && c.x <= (x2 + 0.5f));
+    assert(c.y >= (y1 + 0.5f) && c.y <= (y2 + 0.5f));
+    std::cout << "Interpolating gradient for (" << c.x << ", " << c.y << ")" << std::endl;
+    std::cout << "Corners (x,y):\n"
+              << "\t(" << x1 << ", " << y2 << ")" << "\t\t(" << x2 << ", " << y2 << ")\n\n"
+              << "\t(" << x1 << ", " << y1 << ")" << "\t\t(" << x2 << ", " << y1 << ")\n";
+    std::cout << "Values (h,v):\n"
+              << "\t(" << tlh << ", " << tlv << ")" << "\t\t(" << trh << ", " << trv << ")\n\n"
+              << "\t(" << blh << ", " << blv << ")" << "\t\t(" << brh << ", " << brv << ")\n";
+    //FIXME handle borders
+    return {    //Interpolate WRT centers of the 4 nearest cells (thus, shift 0.5f)
+        BilinearInterpolation(blh, tlh, brh, trh,
+                              x1 + 0.5f, x2 + 0.5f, y1 + 0.5f, y2 + 0.5f,
+                              c.x, c.y),
+        BilinearInterpolation(blv, tlv, brv, trv,
+                              x1 + 0.5f, x2 + 0.5f, y1 + 0.5f, y2 + 0.5f,
+                              c.x, c.y)
     };
 }
 
-std::tuple<float, float> DFMPlanner::gradientAtCell(const Cell &__c) {
-    //std::cout << __c.x << " " << __c.y;
+std::tuple<float, float> DFMPlanner::gradientAtCell(const Cell __c) {
+    //std::cout << __c.x << " " << __c.y << std::flush;
     float g = map.getRHS(__c);
-    if (g==INFINITY) return {0, 0};
+    if (g == INFINITY) {
+        //std::cout << "   " << 0 << " " << 0 << std::endl;
+        //std::cout << std::endl;
+        return {0, 0};
+    }
     float h_span = 2;
     float v_span = 2;
     Cell t = grid.topCell(__c), b = grid.bottomCell(__c), l = grid.leftCell(__c), r = grid.rightCell(__c);
-    float v_pre = grid.isValid(t) ? map.getRHS(t) : g;
-    float v_post = grid.isValid(b) ? map.getRHS(b) : g;
-    float h_pre = grid.isValid(l) ? map.getRHS(l) : g;
-    float h_post = grid.isValid(r) ? map.getRHS(r) : g;
+    float v_pre = map.getRHS(t);
+    float v_post = map.getRHS(b);
+    float h_pre = map.getRHS(l);
+    float h_post = map.getRHS(r);
 
-    /*
-    v_pre = std::min(v_pre, std::numeric_limits<float>::max());
-    v_post = std::min(v_post, std::numeric_limits<float>::max());
-    h_pre = std::min(h_pre, std::numeric_limits<float>::max());
-    h_post = std::min(h_post, std::numeric_limits<float>::max());
-    */
+    float dx, dy;
+    if (grid.isValid(t) and v_pre < INFINITY) {
+        if (grid.isValid(b) and v_post < INFINITY) {
+            dy = (-0.5f) * v_pre + (0.5f) * v_post; // df/dy (second order of accuracy, centered)
+        } else {
+            dy = std::max(-v_pre + g, 0.f); // df/dy (first order of accuracy, backward)
+        }
+    } else if (grid.isValid(b) and v_post < INFINITY) {
+        dy = std::min(-g + v_post, 0.f); // df/dy (first order of accuracy, forward)
+    } else {
+        dy = 0;
+    }
 
-    v_span = (v_pre == INFINITY or v_post == INFINITY) ? 1 : 2;
-    h_span = (h_pre == INFINITY or h_post == INFINITY) ? 1 : 2;
-    v_pre = (v_pre == INFINITY) ? g: v_pre;
-    v_post = (v_post == INFINITY) ? g: v_post;
-    h_pre = (h_pre == INFINITY) ? g: h_pre;
-    h_post = (h_post == INFINITY) ? g: h_post;
+    if (grid.isValid(l) and h_pre < INFINITY) {
+        if (grid.isValid(r) and h_post < INFINITY) {
+            dx = (-0.5f) * h_pre + (0.5f) * h_post; // df/dx (second order of accuracy, centered)
+        } else {
+            dx = std::max(-h_pre + g, 0.f); // df/dx (first order of accuracy, backward)
+        }
+    } else if (grid.isValid(r) and h_post < INFINITY) {
+        dx = std::min(-g + h_post, 0.f); // df/dx (first order of accuracy, forward)
+    } else {
+        dx = 0;
+    }
 
-    auto dx = (h_post - h_pre) /h_span;
-    auto dy = (v_post - v_pre) /v_span;
     assert(!std::isnan(dx));
     assert(!std::isnan(dy));
+    float abs = std::hypot(dx, dy);
 
-    float abs = std::sqrt(dx*dx + dy*dy);
-    if (abs>0){
-    //Central gradient
-        //std::cout << "   " << dx/abs << " " << dy/abs << std::endl;
-        return {dx/abs, dy/abs};
-    } else{
-        //std::cout << "   "<< dx << " " << dy << std::endl;
-        return {dx,dy};
+    if (abs > 0) {
+        dx = dx / abs;
+        dy = dy / abs;
     }
+    //    assert(not(__c.x==27 && __c.y==40));
+    //std::cout << "   " << dx << " " << dy << std::endl;
+    return {dx, dy};
 }
 
 void DFMPlanner::updateCell(const Cell &cell) {
@@ -259,7 +290,7 @@ float DFMPlanner::computeOptimalCost(const Cell &c) {
     float g_b_1 = minCost(grid.leftCell(c), grid.rightCell(c));
     if (g_a_1 > g_b_1) std::swap(g_a_1, g_b_1);
     if (g_a_1 == INFINITY and g_b_1 == INFINITY) return INFINITY;
-    if (grid.getTraversalCost(c) ==INFINITY) return INFINITY;
+    if (grid.getTraversalCost(c) == INFINITY) return INFINITY;
     auto tau = grid.getTraversalCost(c);
     if (tau > (g_b_1 - g_a_1)) {
         return (g_a_1 + g_b_1 + std::sqrt(2 * SQUARE(tau) - SQUARE(g_b_1 - g_a_1))) / 2.0f;
@@ -295,25 +326,29 @@ void DFMPlanner::constructOptimalPath() {
     total_cost = 0;
     total_dist = 0;
 
-    auto[gh,gv] = costMapGradient();
+    auto[gh, gv] = costMapGradient();
     path_.push_back(grid.goal_pos_);
+
+    char buf[30];
+    auto[a, b] = interpolateGradient(grid.goal_pos_, gv, gh);
+    std::sprintf(buf, " g = [ %5.2f %5.2f]", a, b);
+    std::cout << buf << std::endl;
 
     float min_cost = 0;
     int curr_step = 0;
     // TODO do something better than this sh*t
     int max_steps = 3000;
 
-    float alpha = 0.5;
+    float alpha = 0.2;
     auto s = grid.goal_pos_;
-    char buf[30];
-    while (std::hypot(grid.start_pos_.x - s.x, grid.start_pos_.y - s.y)>1) {
-        if (curr_step>max_steps) break;
-        //std::sprintf(buf, "s = [ %5.2f %5.2f]", s.x, s.y);
-        //std::cout << "Step " << curr_step << " " << buf << std::flush;
+    while (std::hypot(grid.start_pos_.x - s.x, grid.start_pos_.y - s.y) > 0.8) {
+        if (curr_step > max_steps) break;
         auto[sgx, sgy] = interpolateGradient(s, gv, gh);
-        //std::sprintf(buf, " g = [ %5.2f %5.2f]", sgx, sgy);
-        //std::cout << buf << std::endl;
-        if (std::abs(sgx)<0.0001 && std::abs(sgy)<0.0001) break;
+        std::sprintf(buf, "s = [ %7.4f %7.4f]", s.x, s.y);
+        std::cout << "Step " << curr_step << " " << buf << std::flush;
+        std::sprintf(buf, " g = [ %7.4f %7.4f]", sgx, sgy);
+        std::cout << buf << std::endl;
+        if (std::abs(sgx) < 0.0001 && std::abs(sgy) < 0.0001) break;
         s = Position(s.x - alpha * sgx, s.y - alpha * sgy);
         path_.push_back(s);
         cost_.push_back(0);
@@ -323,7 +358,7 @@ void DFMPlanner::constructOptimalPath() {
 
     path_.push_back(grid.start_pos_);
     cost_.push_back(0);
-    std::reverse(path_.begin(),path_.end());
+    std::reverse(path_.begin(), path_.end());
 
     if (min_cost == INFINITY) {
         std::cerr << "[Extraction] No valid path exists" << std::endl;
@@ -332,7 +367,7 @@ void DFMPlanner::constructOptimalPath() {
     }
 
     std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
- }
+}
 
 bool DFMPlanner::goalReached(const Position &p) {
     return grid.goal_.x == p.x && grid.goal_.y == p.y;

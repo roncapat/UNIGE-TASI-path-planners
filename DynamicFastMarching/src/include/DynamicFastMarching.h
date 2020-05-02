@@ -100,7 +100,7 @@ class DFMPlanner {
   void constructOptimalPath();
   bool new_start;
   float minCost(const Cell &a, const Cell &b);
-  std::tuple<float, float> gradientAtCell(const Cell &__c);
+  std::tuple<float, float> gradientAtCell(const Cell __c);
   std::pair<std::shared_ptr<float[]>, std::shared_ptr<float[]>> costMapGradient();
   std::tuple<float, float> interpolateGradient(const Position &c,
                                                std::shared_ptr<float[]> _gh,
