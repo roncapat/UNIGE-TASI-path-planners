@@ -196,15 +196,15 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
     auto gh = [&](int x, int y) -> float & { return _gh.get()[x * grid.width_ + y]; };
     auto gv = [&](int x, int y) -> float & { return _gv.get()[x * grid.width_ + y]; };
 
-    if (x2==grid.length_){
+    if (x2 == grid.length_) {
         --x1, --x2;
-    } else if (x1==0){
+    } else if (x1 == 0) {
         ++x1, ++x2;
     }
 
-    if (y2==grid.width_){
+    if (y2 == grid.width_) {
         --y1, --y2;
-    } else if (y2==0){
+    } else if (y2 == 0) {
         ++y1, ++y2;
     }
 
@@ -350,12 +350,13 @@ void DFMPlanner::constructOptimalPath() {
         #endif
         if (std::abs(sgx) < 0.0001 && std::abs(sgy) < 0.0001) break;
         s = Position(s.x - alpha * sgx, s.y - alpha * sgy);
+        total_dist += std::hypot(path_.back().x - s.x, path_.back().y - s.y);
         path_.push_back(s);
         cost_.push_back(0); // TODO manage cost computation
         ++curr_step;
 //        if (curr_step == 180) break;
     }
-
+    total_dist += std::hypot(s.x - grid.goal_pos_.x, s.y - grid.goal_pos_.y);
     path_.push_back(grid.goal_pos_);
     cost_.push_back(0);
     //std::reverse(path_.begin(), path_.end());
@@ -367,6 +368,29 @@ void DFMPlanner::constructOptimalPath() {
     }
 
     std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
+}
+
+std::vector<Position> getGridBoundariesTraversals(const Position &a, const Position &b) {
+    float m = (b.y - a.y) / (b.x - a.x);
+
+    std::vector<Position> xsplit;
+    float x_min = std::min(a.x, b.x);
+    float x_max = std::max(a.x, b.x);
+    float x_cur = std::floor(++x_min);
+    xsplit.emplace_back(x_min, x_min * m);
+    while (x_cur < x_max) xsplit.emplace_back(x_cur, x_cur * m), ++x_cur;
+    xsplit.emplace_back(x_max, x_max * m);
+
+    std::vector<Position> ysplit;
+    for (auto xp = xsplit.begin(); xp < xsplit.end() - 1; ++xp) {
+        float y_min = std::min(xp->y, (xp + 1)->y);
+        float y_max = std::max(xp->y, (xp + 1)->y);
+        float y_cur = std::floor(++y_min);
+        ysplit.emplace_back(y_min / m, y_min);
+        while (y_cur < y_max) ysplit.emplace_back(y_cur / m, y_cur), ++y_cur;
+    }
+    ysplit.emplace_back(x_max, x_max * m);
+    return ysplit;
 }
 
 bool DFMPlanner::goalReached(const Position &p) {
