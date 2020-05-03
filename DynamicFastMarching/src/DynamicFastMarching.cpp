@@ -334,6 +334,7 @@ void DFMPlanner::constructOptimalPath() {
 
     float min_cost = 0;
     int curr_step = 0;
+    float step_cost;
     // TODO do something better than this sh*t
     int max_steps = 3000;
 
@@ -351,14 +352,20 @@ void DFMPlanner::constructOptimalPath() {
         if (std::abs(sgx) < 0.0001 && std::abs(sgy) < 0.0001) break;
         s = Position(s.x - alpha * sgx, s.y - alpha * sgy);
         total_dist += std::hypot(path_.back().x - s.x, path_.back().y - s.y);
+        auto pp = getGridBoundariesTraversals(path_.back(), s);
+        step_cost = computePathAdditionsCost(pp);
+        total_cost += step_cost;
         path_.push_back(s);
-        cost_.push_back(0); // TODO manage cost computation
+        cost_.push_back(step_cost);
         ++curr_step;
 //        if (curr_step == 180) break;
     }
+    auto pp = getGridBoundariesTraversals(s, grid.goal_pos_);
+    step_cost = computePathAdditionsCost(pp);
+    total_cost += step_cost;
     total_dist += std::hypot(s.x - grid.goal_pos_.x, s.y - grid.goal_pos_.y);
     path_.push_back(grid.goal_pos_);
-    cost_.push_back(0);
+    cost_.push_back(step_cost);
     //std::reverse(path_.begin(), path_.end());
 
     if (min_cost == INFINITY) {
@@ -370,7 +377,30 @@ void DFMPlanner::constructOptimalPath() {
     std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
 }
 
-std::vector<Position> getGridBoundariesTraversals(const Position &a, const Position &b) {
+float DFMPlanner::computePathAdditionsCost(const std::vector<Position> &p) {
+    float cost = 0;
+    for (auto a = p.begin(); a < p.end() - 1; ++a) {
+        auto b = ++a;
+        Position m = {(a->x + b->x) / 2, (a->y + b->y) / 2};
+        // It is possible to have segments along edges (midpoint on edge)
+        float weight;
+        if (floorf(m.x) == m.x) {
+            weight = std::min(
+                grid.getTraversalCost(Node((int) m.x, (int) ceilf(m.y)).neighborCell(false, false)),
+                grid.getTraversalCost(Node((int) m.x, (int) ceilf(m.y)).neighborCell(true, false)));
+        } else if (floorf(m.y) == m.y) {
+            weight = std::min(
+                grid.getTraversalCost(Node((int) ceilf(m.x), (int) m.y).neighborCell(false, false)),
+                grid.getTraversalCost(Node((int) ceilf(m.x), (int) m.y).neighborCell(false, true)));
+        } else {
+            weight = grid.getTraversalCost(Cell(m.x, m.y));
+        }
+        cost += weight * std::hypot(a->x - b->x, a->y - b->y);
+    }
+    return cost;
+}
+
+std::vector<Position> DFMPlanner::getGridBoundariesTraversals(const Position &a, const Position &b) {
     float m = (b.y - a.y) / (b.x - a.x);
 
     std::vector<Position> xsplit;

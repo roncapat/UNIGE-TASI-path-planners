@@ -106,6 +106,8 @@ class DFMPlanner {
                                                std::shared_ptr<float[]> _gh,
                                                std::shared_ptr<float[]> _gv);
   std::tuple<float, float> interpolateCost(const Position &c);
+  float computePathAdditionsCost(const std::vector<Position> &p);
+  std::vector<Position> getGridBoundariesTraversals(const Position &a, const Position &b);
 };
 
 #endif
