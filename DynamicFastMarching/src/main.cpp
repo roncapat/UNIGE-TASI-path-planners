@@ -137,8 +137,15 @@ int main(int _argc, char **_argv) {
             out_fifo.write((char *) &(rhs), 4);
         }
         out_fifo.flush();
-        next_point = {planner.path_[1].x, planner.path_[1].y};
-        next_step_cost = planner.cost_.front();
+        next_point = planner.path_[1];
+        float next_idx = 1;
+        next_step_cost = planner.cost_[0];
+        while(std::hypot(planner.path_[0].x - next_point.x, planner.path_[0].y - next_point.y)<0.5){
+            if (next_point == goal)
+                break; //Goal reached
+            next_step_cost += planner.cost_[next_idx];
+            next_point = planner.path_[++next_idx];
+        }
         if (next_point == goal)
             break; //Goal reached
         planner.set_start(next_point);

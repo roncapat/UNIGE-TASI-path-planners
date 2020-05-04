@@ -198,7 +198,7 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
 
     if (x2 == grid.length_) {
         --x1, --x2;
-    } else if (x1 == 0) {
+    } else if (x2 == 0) {
         ++x1, ++x2;
     }
 
@@ -219,14 +219,16 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
               << "\t(" << tlh << ", " << tlv << ")" << "\t\t(" << trh << ", " << trv << ")\n\n"
               << "\t(" << blh << ", " << blv << ")" << "\t\t(" << brh << ", " << brv << ")\n";
     #endif
-    return {    //Interpolate WRT centers of the 4 nearest cells (thus, shift 0.5f)
-        BilinearInterpolation(blh, tlh, brh, trh,
-                              x1 + 0.5f, x2 + 0.5f, y1 + 0.5f, y2 + 0.5f,
-                              c.x, c.y),
-        BilinearInterpolation(blv, tlv, brv, trv,
-                              x1 + 0.5f, x2 + 0.5f, y1 + 0.5f, y2 + 0.5f,
-                              c.x, c.y)
-    };
+    //Interpolate WRT centers of the 4 nearest cells (thus, shift 0.5f)
+    auto sgx = BilinearInterpolation(blh, tlh, brh, trh,
+                                     x1 + 0.5f, x2 + 0.5f, y1 + 0.5f, y2 + 0.5f,
+                                     c.x, c.y);
+    auto sgy = BilinearInterpolation(blv, tlv, brv, trv,
+                                     x1 + 0.5f, x2 + 0.5f, y1 + 0.5f, y2 + 0.5f,
+                                     c.x, c.y);
+    assert(not std::isnan(sgx));
+    assert(not std::isnan(sgy));
+    return {sgx, sgy};
 }
 
 std::tuple<float, float> DFMPlanner::gradientAtCell(const Cell __c) {
@@ -338,7 +340,7 @@ void DFMPlanner::constructOptimalPath() {
     // TODO do something better than this sh*t
     int max_steps = 3000;
 
-    float alpha = 0.2;
+    float alpha = 0.1;
     auto s = grid.start_pos_;
     while (std::hypot(grid.goal_pos_.x - s.x, grid.goal_pos_.y - s.y) > 0.8) {
         if (curr_step > max_steps) break;
@@ -354,7 +356,6 @@ void DFMPlanner::constructOptimalPath() {
         total_dist += std::hypot(path_.back().x - s.x, path_.back().y - s.y);
         auto pp = getGridBoundariesTraversals(path_.back(), s);
         step_cost = computePathAdditionsCost(pp);
-        std::cout << step_cost << std::endl;
         total_cost += step_cost;
         path_.push_back(s);
         cost_.push_back(step_cost);
@@ -398,6 +399,9 @@ float DFMPlanner::computePathAdditionsCost(const std::vector<Position> &p) {
         }
         cost += weight * std::hypot(a->x - b->x, a->y - b->y);
         //assert(cost != INFINITY);
+        assert(!std::isnan(cost));
+        assert(cost > 0);
+
     }
     return cost;
 }
@@ -410,31 +414,47 @@ std::vector<Position> DFMPlanner::getGridBoundariesTraversals(const Position &a,
     float x_max = high_x.x;
     float x_cur = std::floor(x_min + 1);
     xsplit.push_back(low_x);
+    assert(!std::isnan(xsplit.back().x) and !std::isnan(xsplit.back().y));
 
     if ((b.x - a.x) != 0) {
         //y=mx+q
         float m = (b.y - a.y) / (b.x - a.x);
         float q = a.y - m * a.x;
-        while (x_cur < x_max) xsplit.emplace_back(x_cur, x_cur * m + q), ++x_cur;
+        while (x_cur < x_max) {
+            xsplit.emplace_back(x_cur, x_cur * m + q);
+            assert(!std::isnan(xsplit.back().x) and !std::isnan(xsplit.back().y));
+            ++x_cur;
+        }
     }
     xsplit.push_back(high_x);
+    assert(!std::isnan(xsplit.back().x) and !std::isnan(xsplit.back().y));
 
-    if (low_x.y>high_x.y) std::reverse(xsplit.begin(), xsplit.end());
+    if (low_x.y > high_x.y) std::reverse(xsplit.begin(), xsplit.end());
     std::vector<Position> ysplit;
     for (auto xp = xsplit.begin(); xp < xsplit.end() - 1; ++xp) {
         const Position &low_y = *xp;
-        const Position &high_y = *(xp+1);
+        const Position &high_y = *(xp + 1);
         float y_min = low_y.y;
         float y_max = high_y.y;
         float y_cur = std::floor(y_min + 1);
         ysplit.push_back(low_y);
-        while (y_cur < y_max) {
-            float m = (b.y - a.y) / (b.x - a.x);
-            float q = a.y - m * a.x;
-            ysplit.emplace_back((y_cur - q) / m, y_cur), ++y_cur;
+        assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
+        if ((b.x - a.x) != 0) {
+            while (y_cur < y_max) {
+                float m = (b.y - a.y) / (b.x - a.x);
+                float q = a.y - m * a.x;
+                ysplit.emplace_back((y_cur - q) / m, y_cur), ++y_cur;
+                assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
+            }
+        } else {
+            while (y_cur < y_max) {
+                ysplit.emplace_back(a.x, y_cur), ++y_cur;
+                assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
+            }
         }
     }
-    ysplit.push_back(high_x);
+    ysplit.push_back(xsplit.back());
+    assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
     return ysplit;
 }
 
