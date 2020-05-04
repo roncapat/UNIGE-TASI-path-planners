@@ -354,6 +354,7 @@ void DFMPlanner::constructOptimalPath() {
         total_dist += std::hypot(path_.back().x - s.x, path_.back().y - s.y);
         auto pp = getGridBoundariesTraversals(path_.back(), s);
         step_cost = computePathAdditionsCost(pp);
+        std::cout << step_cost << std::endl;
         total_cost += step_cost;
         path_.push_back(s);
         cost_.push_back(step_cost);
@@ -380,7 +381,7 @@ void DFMPlanner::constructOptimalPath() {
 float DFMPlanner::computePathAdditionsCost(const std::vector<Position> &p) {
     float cost = 0;
     for (auto a = p.begin(); a < p.end() - 1; ++a) {
-        auto b = ++a;
+        auto b = a + 1;
         Position m = {(a->x + b->x) / 2, (a->y + b->y) / 2};
         // It is possible to have segments along edges (midpoint on edge)
         float weight;
@@ -396,30 +397,44 @@ float DFMPlanner::computePathAdditionsCost(const std::vector<Position> &p) {
             weight = grid.getTraversalCost(Cell(m.x, m.y));
         }
         cost += weight * std::hypot(a->x - b->x, a->y - b->y);
+        //assert(cost != INFINITY);
     }
     return cost;
 }
 
 std::vector<Position> DFMPlanner::getGridBoundariesTraversals(const Position &a, const Position &b) {
-    float m = (b.y - a.y) / (b.x - a.x);
-
     std::vector<Position> xsplit;
-    float x_min = std::min(a.x, b.x);
-    float x_max = std::max(a.x, b.x);
-    float x_cur = std::floor(++x_min);
-    xsplit.emplace_back(x_min, x_min * m);
-    while (x_cur < x_max) xsplit.emplace_back(x_cur, x_cur * m), ++x_cur;
-    xsplit.emplace_back(x_max, x_max * m);
+    const Position &low_x = a.x < b.x ? a : b;
+    const Position &high_x = a.x < b.x ? b : a;
+    float x_min = low_x.x;
+    float x_max = high_x.x;
+    float x_cur = std::floor(x_min + 1);
+    xsplit.push_back(low_x);
 
+    if ((b.x - a.x) != 0) {
+        //y=mx+q
+        float m = (b.y - a.y) / (b.x - a.x);
+        float q = a.y - m * a.x;
+        while (x_cur < x_max) xsplit.emplace_back(x_cur, x_cur * m + q), ++x_cur;
+    }
+    xsplit.push_back(high_x);
+
+    if (low_x.y>high_x.y) std::reverse(xsplit.begin(), xsplit.end());
     std::vector<Position> ysplit;
     for (auto xp = xsplit.begin(); xp < xsplit.end() - 1; ++xp) {
-        float y_min = std::min(xp->y, (xp + 1)->y);
-        float y_max = std::max(xp->y, (xp + 1)->y);
-        float y_cur = std::floor(++y_min);
-        ysplit.emplace_back(y_min / m, y_min);
-        while (y_cur < y_max) ysplit.emplace_back(y_cur / m, y_cur), ++y_cur;
+        const Position &low_y = *xp;
+        const Position &high_y = *(xp+1);
+        float y_min = low_y.y;
+        float y_max = high_y.y;
+        float y_cur = std::floor(y_min + 1);
+        ysplit.push_back(low_y);
+        while (y_cur < y_max) {
+            float m = (b.y - a.y) / (b.x - a.x);
+            float q = a.y - m * a.x;
+            ysplit.emplace_back((y_cur - q) / m, y_cur), ++y_cur;
+        }
     }
-    ysplit.emplace_back(x_max, x_max * m);
+    ysplit.push_back(high_x);
     return ysplit;
 }
 
