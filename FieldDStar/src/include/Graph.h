@@ -39,30 +39,22 @@ class Node : public std::pair<int, int> {
   explicit Node(const std::pair<int, int> &other);
   explicit Node(const Position &n);
   Node &operator=(const Node &other);
-  bool isValid();
+  bool isValid() const;
   void setValidity(bool is_valid);
-  Cell cellBottomLeft();
-  Cell cellBottomRight();
-  Cell cellTopLeft();
-  Cell cellTopRight();
-  Cell neighborCell(bool bottom_TOP, bool left_RIGHT);
+  [[nodiscard]] Node topNode() const {return Node(x-1, y);}
+  [[nodiscard]] Node bottomNode()const {return Node(x+1, y);}
+  [[nodiscard]] Node leftNode()const {return Node(x, y-1);}
+  [[nodiscard]] Node rightNode()const {return Node(x, y+1);}
+  [[nodiscard]] Cell cellBottomLeft() const;
+  [[nodiscard]] Cell cellBottomRight() const;
+  [[nodiscard]] Cell cellTopLeft() const;
+  [[nodiscard]] Cell cellTopRight() const;
+  [[nodiscard]] Cell neighborCell(bool bottom_TOP, bool left_RIGHT) const;
  private:
   bool valid = true;
 
 
 };
-
-namespace std {
-template<>
-struct hash<Node> {
-  std::size_t operator()(const Node &n) const {
-      std::size_t result = 17;
-      result = 31 * result + hash<int>()(n.x);
-      result = 31 * result + hash<int>()(n.y);
-      return result;
-  }
-};
-}
 
 class Cell : public std::pair<int, int> {
  public:
@@ -75,11 +67,37 @@ class Cell : public std::pair<int, int> {
   explicit Cell(const std::pair<int, int> &other);
   explicit Cell(const Position &n);
   Cell &operator=(const Cell &other);
-  Cell neighborCell(const Node &p, bool bottom_TOP, bool left_RIGHT);
-  Cell cellTopRight(const Node &p);
-  Cell cellTopLeft(const Node &p);
-  Cell cellBottomLeft(const Node &p);
+  [[nodiscard]] Cell topCell() const {return Cell(x-1, y);}
+  [[nodiscard]] Cell bottomCell()const {return Cell(x+1, y);}
+  [[nodiscard]] Cell leftCell()const {return Cell(x, y-1);}
+  [[nodiscard]] Cell rightCell()const {return Cell(x, y+1);}
+  [[nodiscard]] bool hasNode(const Node &n) const{
+      return (((n.x == x) or (n.x == (x + 1)))
+          and ((n.y == y) or (n.y == (y + 1))));
+  };
 };
+
+namespace std {
+template<>
+struct hash<Node> {
+  std::size_t operator()(const Node &n) const {
+      std::size_t result = 17;
+      result = 31 * result + hash<int>()(n.x);
+      result = 31 * result + hash<int>()(n.y);
+      return result;
+  }
+};
+
+template<>
+struct hash<Cell> {
+  std::size_t operator()(const Cell &n) const {
+      std::size_t result = 17;
+      result = 31 * result + hash<int>()(n.x);
+      result = 31 * result + hash<int>()(n.y);
+      return result;
+  }
+};
+}
 
 typedef std::pair<Node, Node> Edge;
 

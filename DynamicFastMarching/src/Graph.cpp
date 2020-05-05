@@ -226,9 +226,11 @@ std::vector<Node> Graph::getNodesAroundCell(const Cell &cell) {
 
     return {{top, left}, {top, right}, {bottom, left}, {bottom, right}};
 }
+
 Graph::Graph() {
 
 }
+
 Position::Position(float x, float y) {
     this->x = x;
     this->y = y;
@@ -264,7 +266,7 @@ Node &Node::operator=(const Node &other) {
     valid = other.valid;
     return *this;
 }
-bool Node::isValid() { return valid; }
+bool Node::isValid() const{ return valid; }
 void Node::setValidity(bool is_valid) { this->valid = is_valid; }
 
 Cell::Cell(int x, int y) {
@@ -284,12 +286,12 @@ Cell &Cell::operator=(const Cell &other) {
     return *this;
 }
 
-Cell Node::cellBottomLeft() { return {x, y - 1}; }
-Cell Node::cellBottomRight() { return {x, y}; }
-Cell Node::cellTopLeft() { return {x - 1, y - 1}; }
-Cell Node::cellTopRight() { return {x - 1, y}; }
+Cell Node::cellBottomLeft() const { return {x, y - 1}; }
+Cell Node::cellBottomRight() const{ return {x, y}; }
+Cell Node::cellTopLeft() const{ return {x - 1, y - 1}; }
+Cell Node::cellTopRight() const{ return {x - 1, y}; }
 
-Cell Node::neighborCell(bool bottom_TOP, bool left_RIGHT) {
+Cell Node::neighborCell(bool bottom_TOP, bool left_RIGHT) const {
     if (bottom_TOP)
         return left_RIGHT ? cellTopRight() : cellTopLeft();
     else
