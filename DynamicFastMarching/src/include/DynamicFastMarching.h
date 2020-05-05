@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <boost/mpl/pair.hpp>
+#include <utility>
 
 #include "Graph.h"
 #include "PriorityQueue.h"
@@ -99,7 +101,7 @@ class DFMPlanner {
   unsigned long updateCells();
   void constructOptimalPath();
   bool new_start;
-  float minCost(const Cell &a, const Cell &b);
+  std::pair<Cell, float> minCost(const Cell &a, const Cell &b);
   std::tuple<float, float> gradientAtCell(const Cell __c);
   std::pair<std::shared_ptr<float[]>, std::shared_ptr<float[]>> costMapGradient();
   std::tuple<float, float> interpolateGradient(const Position &c);

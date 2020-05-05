@@ -6,6 +6,8 @@
 #include <iostream>
 #include <memory>
 #include <tuple>
+#include <boost/mpl/pair.hpp>
+#include <utility>
 
 const float SQRT2 = 1.41421356237309504880168872420969807856967187537694f;
 
@@ -89,6 +91,7 @@ PriorityQueue::Key DFMPlanner::calculateKey(const Cell &s, float g, float rhs) {
 }
 
 PriorityQueue::Key DFMPlanner::calculateKey(const Cell &s, float cost_so_far) {
+    return {cost_so_far, cost_so_far};
     auto dist = std::hypot(grid.goal_pos_.x - s.x, grid.goal_pos_.y - s.y);
     return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
 }
@@ -107,8 +110,13 @@ void DFMPlanner::initializeSearch() {
 
 bool DFMPlanner::end_condition() {
     auto top_key = priority_queue.topKey();
-    auto[g, rhs] = map.getKey(grid.start_);
-    return ((top_key >= calculateKey(grid.start_, rhs)) and std::abs(rhs - g) > 1e-2);
+    for (auto &node: start_nodes) {
+        auto[g, rhs] = map.getKey(node);
+        if ((top_key < calculateKey(node, g, rhs)) or (rhs > g)) {
+            return false;
+        }
+    }
+    return true; //STOP: all 4 conditions met
 }
 
 unsigned long DFMPlanner::computeShortestPath() {
@@ -210,12 +218,22 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c) {
     auto [trv, trh] = gradientAtCell({x2, y2});
     #ifdef VERBOSE_EXTRACTION
     std::cout << "Interpolating gradient for (" << c.x << ", " << c.y << ")" << std::endl;
-    std::cout << "Corners (x,y):\n"
-              << "\t(" << x1 << ", " << y2 << ")" << "\t\t(" << x2 << ", " << y2 << ")\n\n"
-              << "\t(" << x1 << ", " << y1 << ")" << "\t\t(" << x2 << ", " << y1 << ")\n";
-    std::cout << "Values (h,v):\n"
-              << "\t(" << tlh << ", " << tlv << ")" << "\t\t(" << trh << ", " << trv << ")\n\n"
-              << "\t(" << blh << ", " << blv << ")" << "\t\t(" << brh << ", " << brv << ")\n";
+    std::cout << "Cells (x,y):\n"
+              << "\t(" << x1 << ", " << y1 << ")" << "\t\t(" << x1 << ", " << y2 << ")\n\n"
+              << "\t(" << x2 << ", " << y1 << ")" << "\t\t(" << x2 << ", " << y2 << ")\n";
+    std::cout << "Gradients (dx,dy):\n"
+              << "\t(" << blh << ", " << blv << ")" << "\t\t(" << tlh << ", " << tlv << ")\n\n"
+              << "\t(" << brh << ", " << brv << ")" << "\t\t(" << trh << ", " << trv << ")\n";
+    std::cout << "G-values (u):\n"
+              << "\t" << map.getG({x1-1, y1-1}) << "\t\t" << map.getG({x1-1, y1}) << "\t\t"  << map.getG({x1-1, y2}) << "\t\t"<< map.getG({x1-1, y2+1}) << "\n"
+              << "\t" << map.getG({x1, y1-1}) << "\t\t" << map.getG({x1, y1}) << "\t\t"  << map.getG({x1, y2}) << "\t\t"  << map.getG({x1, y2+1}) << "\n"
+              << "\t" << map.getG({x2, y1-1}) << "\t\t" << map.getG({x2, y1}) << "\t\t"  << map.getG({x2, y2}) << "\t\t"  << map.getG({x2, y2+1}) << "\n"
+              << "\t" << map.getG({x2+1, y1-1}) << "\t\t" << map.getG({x2+1, y1}) << "\t\t"  << map.getG({x2+1, y2})  << "\t\t"<< map.getG({x2+1, y2+1}) << "\n";
+    std::cout << "RHS-values (u):\n"
+        << "\t" << map.getRHS({x1-1, y1-1}) << "\t\t" << map.getRHS({x1-1, y1}) << "\t\t"  << map.getRHS({x1-1, y2})  << "\t\t"<< map.getRHS({x1-1, y2+1}) << "\n"
+        << "\t" << map.getRHS({x1, y1-1}) << "\t\t" << map.getRHS({x1, y1}) << "\t\t"  << map.getRHS({x1, y2}) << "\t\t"  << map.getRHS({x1, y2+1}) << "\n"
+        << "\t" << map.getRHS({x2, y1-1}) << "\t\t" << map.getRHS({x2, y1}) << "\t\t"  << map.getRHS({x2, y2}) << "\t\t"  << map.getRHS({x2, y2+1}) << "\n"
+        << "\t" << map.getRHS({x2+1, y1-1}) << "\t\t" << map.getRHS({x2+1, y1}) << "\t\t"  << map.getRHS({x2+1, y2}) << "\t\t" << map.getRHS({x2+1, y2+1})<< "\n";
     #endif
     //Interpolate WRT centers of the 4 nearest cells (thus, shift 0.5f)
     auto sgx = BilinearInterpolation(blh, tlh, brh, trh,
@@ -230,40 +248,52 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c) {
 }
 
 std::tuple<float, float> DFMPlanner::gradientAtCell(const Cell __c) {
-    float g = map.getRHS(__c);
+    float g = map.getG(__c);
+    Cell t = __c.topCell(), b = __c.bottomCell(), l = __c.leftCell(), r = __c.rightCell();
+    float v_pre = map.getG(t);
+    float v_post = map.getG(b);
+    float h_pre = map.getG(l);
+    float h_post = map.getG(r);
+    std::cout << g << std::endl;
+    std::cout << v_pre << " " << v_post << " " << h_pre << " " << h_post << " " << std::endl;
+
     if (g == INFINITY) {
         return {0, 0};
     }
-    Cell t = __c.topCell(), b = __c.bottomCell(), l = __c.leftCell(), r = __c.rightCell();
-    float v_pre = map.getRHS(t);
-    float v_post = map.getRHS(b);
-    float h_pre = map.getRHS(l);
-    float h_post = map.getRHS(r);
-
+    std::cout << __c.x << " " << __c.y;
     float dx, dy;
     if (grid.isValid(t) and v_pre < INFINITY) {
         if (grid.isValid(b) and v_post < INFINITY) {
             dy = (-0.5f) * v_pre + (0.5f) * v_post; // df/dy (second order of accuracy, centered)
+            std::cout << " " << dy << " A";
         } else {
             dy = std::max(-v_pre + g, 0.f); // df/dy (first order of accuracy, backward)
+            std::cout << " " << dy << " B";
         }
     } else if (grid.isValid(b) and v_post < INFINITY) {
         dy = std::min(-g + v_post, 0.f); // df/dy (first order of accuracy, forward)
+        std::cout << " " << dy << " C";
     } else {
         dy = 0;
+        std::cout << " " << dy << " D";
     }
 
     if (grid.isValid(l) and h_pre < INFINITY) {
         if (grid.isValid(r) and h_post < INFINITY) {
             dx = (-0.5f) * h_pre + (0.5f) * h_post; // df/dx (second order of accuracy, centered)
+            std::cout << " " << dx << " A";
         } else {
             dx = std::max(-h_pre + g, 0.f); // df/dx (first order of accuracy, backward)
+            std::cout << " " << dx << " B";
         }
     } else if (grid.isValid(r) and h_post < INFINITY) {
         dx = std::min(-g + h_post, 0.f); // df/dx (first order of accuracy, forward)
+        std::cout << " " << dx << " C";
     } else {
         dx = 0;
+        std::cout << " " << dx << " D";
     }
+    std::cout << std::endl;
 
     assert(!std::isnan(dx));
     assert(!std::isnan(dy));
@@ -287,8 +317,16 @@ void DFMPlanner::updateCell(const Cell &cell) {
 }
 
 float DFMPlanner::computeOptimalCost(const Cell &c) {
-    float g_a_1 = minCost(c.topCell(), c.bottomCell());
-    float g_b_1 = minCost(c.leftCell(), c.rightCell());
+    std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
+    auto[ca1, g_a_1] = minCost(c.topCell(), c.bottomCell());
+    auto[cb1, g_b_1] = minCost(c.leftCell(), c.rightCell());
+    std::cout << "X- " << c.topCell().x << " " << c.topCell().y<<  "   cost " << map.getG(c.topCell()) << std::endl;
+    std::cout << "X+ " << c.bottomCell().x << " " << c.bottomCell().y << "   cost " << map.getG(c.bottomCell()) << std::endl;
+    std::cout << "Y- " << c.leftCell().x << " " << c.leftCell().y << "   cost " << map.getG(c.leftCell()) << std::endl;
+    std::cout << "Y+ " << c.rightCell().x << " " << c.rightCell().y << "   cost " << map.getG(c.rightCell()) << std::endl;
+    std::cout << "X min " << ca1.x << " " << ca1.y << "   cost " << g_a_1 << std::endl;
+    std::cout << "Y min " << cb1.x << " " << cb1.y << "   cost " << g_b_1 << std::endl;
+
     if (g_a_1 > g_b_1) std::swap(g_a_1, g_b_1);
     if (g_a_1 == INFINITY and g_b_1 == INFINITY) return INFINITY;
     if (grid.getTraversalCost(c) == INFINITY) return INFINITY;
@@ -300,8 +338,12 @@ float DFMPlanner::computeOptimalCost(const Cell &c) {
     }
 }
 
-float DFMPlanner::minCost(const Cell &a, const Cell &b) {
-    return std::min(map.getG(a), map.getG(b));
+std::pair<Cell, float> DFMPlanner::minCost(const Cell &a, const Cell &b) {
+    auto ca = map.getG(a), cb = map.getG(b);
+    if (ca < cb)
+        return {a, ca};
+    else
+        return {b, cb};
 }
 
 unsigned long DFMPlanner::updateCells() {
@@ -359,7 +401,7 @@ void DFMPlanner::constructOptimalPath() {
         path_.push_back(s);
         cost_.push_back(step_cost);
         ++curr_step;
-//        if (curr_step == 180) break;
+        if (curr_step == 347) return;
     }
     auto pp = getGridBoundariesTraversals(s, grid.goal_pos_);
     step_cost = computePathAdditionsCost(pp);
@@ -520,6 +562,7 @@ bool DFMPlanner::consistent(const ExpandedMap::iterator &it) {
 void DFMPlanner::set_start(const Position &pos) {
     grid.start_pos_ = pos; //TODO move start_pos in grid also for FD* ??? major refactor needed
     grid.start_ = Cell(pos);
+    start_nodes = {Node(pos).cellTopRight(), Node(pos).cellTopLeft(), Node(pos).cellBottomRight(), Node(pos).cellBottomLeft()};
     new_start = true;
 }
 

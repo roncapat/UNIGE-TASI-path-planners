@@ -47,14 +47,16 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
     for p in expanded:
         x = p[1]
         y = p[0]
-        if p[3] != float("inf"):
-            (r, g, b) = colorsys.hsv_to_rgb(p[3] / period, 1.0, 1.0)
+        if p[2] != float("inf"):
+            (r, g, b) = colorsys.hsv_to_rgb(p[2] / period, 1.0, 1.0)
             color = (int(200 * r), int(200 * g), int(200 * b))
-            cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), ceil(mult / 4), color,
+            cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), ceil(mult / 5), color,
                        cv2.FILLED)
         else:
             cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), floor(mult / 5),
                        (0, 0, 0), cv2.FILLED)
+        if p[2] != p[3]:
+            cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), ceil(mult / 4), (0,0,0),1)
 
     for a, b in zip(prevpath, prevpath[1:]):
         a_scaled = (
@@ -74,11 +76,12 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
             mult * int(b[0]) + int(round(modf(b[0])[0] * (mult - 1))))
         cv2.line(out_map, a_scaled, b_scaled, (255, 100, 0), floor(mult / 6))
 
-    x = int(nextpath[-1][1])
-    y = int(nextpath[-1][0])
-    cv2.circle(out_map, (mult * x, mult * y), floor(mult / 2), (255, 0, 0), cv2.FILLED)  # BLUE - GOAL
-    x = int(mult * nextpath[0][1])
-    y = int(mult * nextpath[0][0])
+    x = int(mult*nextpath[-1][1])
+    y = int(mult*nextpath[-1][0])
+    cv2.circle(out_map, (x, y), floor(mult / 4), (255, 100, 0), cv2.FILLED)  # BLUE - GOAL
+    print(nextpath[-1][1], nextpath[-1][0])
+    x = int(mult * nextpath[0][0])
+    y = int(mult * nextpath[0][1])
     cv2.circle(out_map, (x, y), floor(mult / 2), (100, 255, 100), cv2.FILLED)  # GREEN - START
 
     # Choosen font is monospaced: width is 0.6*height

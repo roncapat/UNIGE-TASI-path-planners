@@ -195,7 +195,7 @@ def main():
                 "cum": times['update'] + times['planning'] + times['extraction'],
                 "cum_tot": utt + ptt + ett}
         info.update(times)
-        dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
+        dbgview = plot_path_on_map(~data_l_cspace, prev_path, next_path, expanded, info)
         [w, h, _] = dbgview.shape
         if out is None:
             if gui:
