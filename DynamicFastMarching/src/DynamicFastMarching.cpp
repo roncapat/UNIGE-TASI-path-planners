@@ -5,6 +5,7 @@
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <tuple>
 
 const float SQRT2 = 1.41421356237309504880168872420969807856967187537694f;
 
@@ -182,9 +183,7 @@ BilinearInterpolation(float q11,
     );
 }
 
-std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
-                                                         std::shared_ptr<float[]> _gh,
-                                                         std::shared_ptr<float[]> _gv) {
+std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c) {
     // Coords of nearest node
     int x2 = (int) std::lround(c.x);
     int y2 = (int) std::lround(c.y);
@@ -192,9 +191,6 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
     int y1 = y2 - 1;
     assert(c.x >= (x1 + 0.5f) && c.x <= (x2 + 0.5f));
     assert(c.y >= (y1 + 0.5f) && c.y <= (y2 + 0.5f));
-
-    auto gh = [&](int x, int y) -> float & { return _gh.get()[x * grid.width_ + y]; };
-    auto gv = [&](int x, int y) -> float & { return _gv.get()[x * grid.width_ + y]; };
 
     if (x2 == grid.length_) {
         --x1, --x2;
@@ -208,8 +204,10 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c,
         ++y1, ++y2;
     }
 
-    auto blh = gh(x1, y1), tlh = gh(x1, y2), brh = gh(x2, y1), trh = gh(x2, y2);
-    auto blv = gv(x1, y1), tlv = gv(x1, y2), brv = gv(x2, y1), trv = gv(x2, y2);
+    auto [blv, blh] = gradientAtCell({x1, y1});
+    auto [tlv, tlh] = gradientAtCell({x1, y2});
+    auto [brv, brh] = gradientAtCell({x2, y1});
+    auto [trv, trh] = gradientAtCell({x2, y2});
     #ifdef VERBOSE_EXTRACTION
     std::cout << "Interpolating gradient for (" << c.x << ", " << c.y << ")" << std::endl;
     std::cout << "Corners (x,y):\n"
@@ -329,7 +327,7 @@ void DFMPlanner::constructOptimalPath() {
     total_cost = 0;
     total_dist = 0;
 
-    auto[gh, gv] = costMapGradient();
+    //auto[gh, gv] = costMapGradient();
     path_.push_back(grid.start_pos_);
 
     char buf[30];
@@ -344,14 +342,15 @@ void DFMPlanner::constructOptimalPath() {
     auto s = grid.start_pos_;
     while (std::hypot(grid.goal_pos_.x - s.x, grid.goal_pos_.y - s.y) > 0.8) {
         if (curr_step > max_steps) break;
-        auto[sgx, sgy] = interpolateGradient(s, gv, gh);
+        auto[sgx, sgy] = interpolateGradient(s);
         #ifdef VERBOSE_EXTRACTION
         std::sprintf(buf, "s = [ %7.4f %7.4f]", s.x, s.y);
         std::cout << "Step " << curr_step << " " << buf << std::flush;
         std::sprintf(buf, " g = [ %7.4f %7.4f]", sgx, sgy);
         std::cout << buf << std::endl;
         #endif
-        if (std::abs(sgx) < 0.0001 && std::abs(sgy) < 0.0001) break;
+        if (std::abs(sgx) < 0.0001 && std::abs(sgy) < 0.0001)
+            break;
         s = Position(s.x - alpha * sgx, s.y - alpha * sgy);
         total_dist += std::hypot(path_.back().x - s.x, path_.back().y - s.y);
         auto pp = getGridBoundariesTraversals(path_.back(), s);

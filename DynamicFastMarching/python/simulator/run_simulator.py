@@ -207,7 +207,7 @@ def main():
         out.write(dbgview)
         if gui:
             cv2.imshow('DFM planner', dbgview)
-            cv2.waitKey(1)
+            cv2.waitKey()
 
     cost_from_beginning += cost_to_goal
     cost_to_goal = 0

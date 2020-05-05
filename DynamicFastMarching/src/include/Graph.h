@@ -16,8 +16,8 @@ class Position;
 
 class Position : public std::pair<float, float> {
  public:
-  float x = std::get<0>(*this);
-  float y = std::get<1>(*this);
+  float &x = std::get<0>(*this);
+  float &y = std::get<1>(*this);
 
   Position() = default;
   Position(float x, float y);

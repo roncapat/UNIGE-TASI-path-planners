@@ -102,9 +102,7 @@ class DFMPlanner {
   float minCost(const Cell &a, const Cell &b);
   std::tuple<float, float> gradientAtCell(const Cell __c);
   std::pair<std::shared_ptr<float[]>, std::shared_ptr<float[]>> costMapGradient();
-  std::tuple<float, float> interpolateGradient(const Position &c,
-                                               std::shared_ptr<float[]> _gh,
-                                               std::shared_ptr<float[]> _gv);
+  std::tuple<float, float> interpolateGradient(const Position &c);
   std::tuple<float, float> interpolateCost(const Position &c);
   float computePathAdditionsCost(const std::vector<Position> &p);
   std::vector<Position> getGridBoundariesTraversals(const Position &a, const Position &b);
