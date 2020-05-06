@@ -20,7 +20,7 @@ IF (CMAKE_BUILD_TYPE MATCHES Debug)
 ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
 include_directories(include)
-include_directories(SYSTEM ../../ProjectToolkit/include)
+include_directories(../../ProjectToolkit/include)
 add_executable(field_d_planner
                FieldDPlanner.cpp
                main.cpp
