@@ -4,20 +4,20 @@
 #include <algorithm>
 
 void Graph::setOccupancyThreshold(float occupancy_threshold) {
-    this->occupancy_threshold_uchar_ = occupancy_threshold * 255.0f;
+    occupancy_threshold_uchar_ = occupancy_threshold * 255.0f;
 }
 
 //TODO should be parameter of type Pos (most generic)
 void Graph::setStart(const Position &start) {
-    this->start_pos_ = start;
-    this->start_cell_ = {(int)std::floor(start.x), (int)std::floor(start.y)};
-    this->start_node_ = {(int)std::round(start.x), (int)std::round(start.y)};
+    start_pos_ = start;
+    start_cell_ = {(int) std::floor(start.x), (int) std::floor(start.y)};
+    start_node_ = {(int) std::round(start.x), (int) std::round(start.y)};
 }
 
 void Graph::setGoal(const Position &goal) {
-    this->goal_pos_ = goal;
-    this->goal_cell_ = {(int)std::floor(goal.x), (int)std::floor(goal.y)};
-    this->goal_node_ = {(int)std::round(goal.x), (int)std::round(goal.y)};
+    goal_pos_ = goal;
+    goal_cell_ = {(int) std::floor(goal.x), (int) std::floor(goal.y)};
+    goal_node_ = {(int) std::round(goal.x), (int) std::round(goal.y)};
 }
 
 void Graph::initializeGraph(std::shared_ptr<uint8_t[]> image, int width, int length) {
@@ -166,8 +166,7 @@ std::vector<Edge> Graph::consecutiveNeighbors(const Node &s) {
     neighbors.reserve(8);
     consecutive_neighbors.reserve(8);
 
-    int intpartx = 0, intparty = 0;
-    std::tie(intpartx, intparty) = s;
+    int intpartx = s.x, intparty = s.y;
 
     neighbors.emplace_back(intpartx + 1, intparty);      // right
     neighbors.emplace_back(intpartx + 1, intparty + 1);  // top right
@@ -223,7 +222,7 @@ float Graph::getTraversalCost(const Cell &c) {
     if (!isValid(c))
         return INFINITY;
     auto cost = map_[c.x * width_ + c.y];
-    return (cost >= occupancy_threshold_uchar_) ? INFINITY : (float)cost;
+    return (cost >= occupancy_threshold_uchar_) ? INFINITY : (float) cost;
 }
 
 std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) {
@@ -299,78 +298,7 @@ std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) {
     return neighbors;
 }
 
-Position::Position(float x, float y) {
-    this->x = x;
-    this->y = y;
-}
-Position::Position(const Position &other) : pair(other) {}
-Position::Position(const std::pair<float, float> &other) : pair(other) {}
-Position::Position(const Node &n) {
-    this->x = static_cast<float>(n.x);
-    this->y = static_cast<float>(n.y);
-}
-Position &Position::operator=(const Position &other) {
-    if (this == &other) return *this;
-    x = other.x;
-    y = other.y;
-    return *this;
-}
-Position::Position(const Cell &n): Position(std::move(n.centerPosition())) {}
-
-Node::Node(bool valid) : valid(valid) {}
-Node::Node(int x, int y) {
-    this->x = x;
-    this->y = y;
-}
-Node::Node(const Node &other) : pair(other) {}
-Node::Node(const std::pair<int, int> &other) : pair(other) {}
-Node::Node(const Position &n) {
-    x = static_cast<int>(std::roundf(n.x));
-    y = static_cast<int>(std::roundf(n.y));
-}
-Node &Node::operator=(const Node &other) {
-    if (this == &other) return *this;
-    x = other.x;
-    y = other.y;
-    valid = other.valid;
-    return *this;
-}
-bool Node::isValid() const{ return valid; }
-void Node::setValidity(bool is_valid) { this->valid = is_valid; }
-
-Cell::Cell(int x, int y) {
-    this->x = x;
-    this->y = y;
-}
-Cell::Cell(const Cell &other) : pair(other) {}
-Cell::Cell(const std::pair<int, int> &other) : pair(other) {}
-Cell::Cell(const Position &n) {
-    x = static_cast<int>(roundf(n.x));
-    y = static_cast<int>(roundf(n.y));
-}
-Cell &Cell::operator=(const Cell &other) {
-    if (this == &other) return *this;
-    x = other.x;
-    y = other.y;
-    return *this;
-}
-
-Cell Node::cellBottomLeft() const{ return {x, y - 1}; }
-Cell Node::cellBottomRight() const{ return {x, y}; }
-Cell Node::cellTopLeft() const{ return {x - 1, y - 1}; }
-Cell Node::cellTopRight() const{ return {x - 1, y}; }
-
-Cell Node::neighborCell(bool bottom_TOP, bool left_RIGHT) const{
-    if (bottom_TOP)
-        return left_RIGHT ? cellTopRight() : cellTopLeft();
-    else
-        return left_RIGHT ? cellBottomRight() : cellBottomLeft();
-}
-std::vector<Cell> Node::cells() const {
-    return {cellTopLeft(), cellTopRight(), cellBottomLeft(), cellBottomRight()};
-}
-
-Cell Graph::getCell(const Node &a, const Node &b, const Node &c){
+Cell Graph::getCell(const Node &a, const Node &b, const Node &c) {
     //Given 3 nodes around a cell, cell coords are min(xs) min(ys)
     int x = std::min(a.x, std::min(b.x, c.x));
     int y = std::min(a.y, std::min(b.y, c.y));
@@ -389,7 +317,6 @@ std::vector<Position> Graph::getGridBoundariesTraversals(const Position &a, cons
     float x_max = high_x.x;
     float x_cur = std::floor(x_min + 1);
     xsplit.push_back(low_x);
-    assert(!std::isnan(low_x.x) and !std::isnan(low_x.y));
 
     if ((b.x - a.x) != 0) {
         //y=mx+q
@@ -397,12 +324,10 @@ std::vector<Position> Graph::getGridBoundariesTraversals(const Position &a, cons
         float q = a.y - m * a.x;
         while (x_cur < x_max) {
             xsplit.emplace_back(x_cur, x_cur * m + q);
-            assert(!std::isnan(xsplit.back().x) and !std::isnan(xsplit.back().y));
             ++x_cur;
         }
     }
     xsplit.push_back(high_x);
-    assert(!std::isnan(xsplit.back().x) and !std::isnan(xsplit.back().y));
 
     if (low_x.y > high_x.y) std::reverse(xsplit.begin(), xsplit.end());
     std::vector<Position> ysplit;
@@ -413,22 +338,18 @@ std::vector<Position> Graph::getGridBoundariesTraversals(const Position &a, cons
         float y_max = high_y.y;
         float y_cur = std::floor(y_min + 1);
         ysplit.push_back(low_y);
-        assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
         if ((b.x - a.x) != 0) {
             while (y_cur < y_max) {
                 float m = (b.y - a.y) / (b.x - a.x);
                 float q = a.y - m * a.x;
                 ysplit.emplace_back((y_cur - q) / m, y_cur), ++y_cur;
-                assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
             }
         } else {
             while (y_cur < y_max) {
                 ysplit.emplace_back(a.x, y_cur), ++y_cur;
-                assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
             }
         }
     }
     ysplit.push_back(xsplit.back());
-    assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
     return ysplit;
 }

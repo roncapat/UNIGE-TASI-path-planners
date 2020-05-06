@@ -5,4 +5,7 @@ add_library(ProjectToolkit STATIC
             Graph.cpp
             Macros.cpp
             LinearTraversalCostInterpolation.cpp
-            Interpolation.cpp)
+            Interpolation.cpp
+            Node.cpp
+            Position.cpp
+            Cell.cpp)
