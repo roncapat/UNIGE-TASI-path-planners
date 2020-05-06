@@ -50,7 +50,8 @@ int DFMPlanner::step() {
     p_time = std::chrono::duration<float, std::milli>(end - begin).count();
 
     begin = std::chrono::steady_clock::now();
-    constructOptimalPath();
+    //constructOptimalPath();
+    computeRoughtPath();
     end = std::chrono::steady_clock::now();
     e_time = std::chrono::duration<float, std::milli>(end - begin).count();
     std::cout << "Update time     = " << u_time << " ms" << std::endl;
@@ -315,16 +316,17 @@ void DFMPlanner::updateCell(const Cell &cell) {
 }
 
 float DFMPlanner::computeOptimalCost(const Cell &c) {
-    std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
     auto[ca1, g_a_1] = minCost(c.topCell(), c.bottomCell());
     auto[cb1, g_b_1] = minCost(c.leftCell(), c.rightCell());
+/*
+    std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
     std::cout << "X- " << c.topCell().x << " " << c.topCell().y<<  "   cost " << map.getG(c.topCell()) << std::endl;
     std::cout << "X+ " << c.bottomCell().x << " " << c.bottomCell().y << "   cost " << map.getG(c.bottomCell()) << std::endl;
     std::cout << "Y- " << c.leftCell().x << " " << c.leftCell().y << "   cost " << map.getG(c.leftCell()) << std::endl;
     std::cout << "Y+ " << c.rightCell().x << " " << c.rightCell().y << "   cost " << map.getG(c.rightCell()) << std::endl;
     std::cout << "X min " << ca1.x << " " << ca1.y << "   cost " << g_a_1 << std::endl;
     std::cout << "Y min " << cb1.x << " " << cb1.y << "   cost " << g_b_1 << std::endl;
-
+*/
     if (g_a_1 > g_b_1) std::swap(g_a_1, g_b_1);
     if (g_a_1 == INFINITY and g_b_1 == INFINITY) return INFINITY;
     if (grid.getTraversalCost(c) == INFINITY) return INFINITY;
@@ -359,6 +361,33 @@ void DFMPlanner::enqueueIfInconsistent(ExpandedMap::iterator it) {
         priority_queue.insert_or_update(CELL(it), calculateKey(CELL(it), G(it), RHS(it)));
     else
         priority_queue.remove_if_present(CELL(it));
+}
+
+void DFMPlanner::computeRoughtPath(){
+    path_.clear();
+    cost_.clear();
+    total_cost = 0;
+    total_dist = 0;
+    std::vector<Cell> path_cells_;
+    cost_.push_back(0);
+    path_cells_.push_back(grid.start_cell_);
+    while (path_cells_.back() != grid.goal_cell_){
+        float min_cost = 0;
+        Cell min_cell;
+        for (auto &c: grid.neighbors_4(path_cells_.back())){
+            float cost = map.getG(path_cells_.back()) - map.getG(c);
+            if (cost > min_cost) min_cost = cost, min_cell = c;
+        }
+        total_cost += min_cost;
+        total_dist += 1;
+        path_cells_.push_back(min_cell);
+        cost_.push_back(min_cost);
+    }
+    path_.push_back(grid.start_pos_);
+    std::transform(path_cells_.begin(),path_cells_.end(), std::back_inserter(path_),
+        [](const Cell &c){return Position(c.x+0.5f, c.y+0.5f);});
+    path_.push_back(grid.goal_pos_);
+    cost_.push_back(0);
 }
 
 void DFMPlanner::constructOptimalPath() {

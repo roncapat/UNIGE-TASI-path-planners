@@ -79,9 +79,8 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
     x = int(mult*nextpath[-1][1])
     y = int(mult*nextpath[-1][0])
     cv2.circle(out_map, (x, y), floor(mult / 4), (255, 100, 0), cv2.FILLED)  # BLUE - GOAL
-    print(nextpath[-1][1], nextpath[-1][0])
-    x = int(mult * nextpath[0][0])
-    y = int(mult * nextpath[0][1])
+    x = int(mult * nextpath[0][1])
+    y = int(mult * nextpath[0][0])
     cv2.circle(out_map, (x, y), floor(mult / 2), (100, 255, 100), cv2.FILLED)  # GREEN - START
 
     # Choosen font is monospaced: width is 0.6*height

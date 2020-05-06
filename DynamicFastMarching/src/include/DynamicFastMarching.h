@@ -101,6 +101,7 @@ class DFMPlanner {
   std::pair<std::shared_ptr<float[]>, std::shared_ptr<float[]>> costMapGradient();
   std::tuple<float, float> interpolateGradient(const Position &c);
   float computePathAdditionsCost(const std::vector<Position> &p);
+  void computeRoughtPath();
 };
 
 #endif

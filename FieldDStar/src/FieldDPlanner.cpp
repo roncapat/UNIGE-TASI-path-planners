@@ -90,7 +90,7 @@ FieldDPlanner::Queue::Key FieldDPlanner::calculateKey(const Node &s, const float
 }
 
 FieldDPlanner::Queue::Key FieldDPlanner::calculateKey(const Node &s, const float cost_so_far) {
-    auto dist = std::hypot(grid.start_pos_.x - s.x, grid.start_pos_.y - s.y);
+    auto dist = grid.start_pos_.distance(s);
     return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
 }
 
@@ -158,8 +158,7 @@ unsigned long FieldDPlanner::computeShortestPath_1() {
         }
     }
     num_nodes_expanded = expanded;
-    std::cout << num_nodes_expanded << " nodes expanded" <<
-              std::endl;
+    std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
     return num_nodes_expanded;
 }
 
@@ -299,7 +298,7 @@ void FieldDPlanner::constructOptimalPath() {
         min_cost = pa.cost_to_goal;
         step_dist = 0;
         for (auto p = it - 1; p < (path_.end() - 1); ++p) {
-            step_dist += std::hypot(p->x - (p + 1)->x, p->y - (p + 1)->y);
+            step_dist += p->distance(*(p+1));
         }
         total_cost += step_cost;
         total_dist += step_dist;
@@ -491,8 +490,9 @@ path_additions FieldDPlanner::getPathAdditions(const Position &p,
     path_additions temp_pa;
     float lookahead_cost;
     #ifdef VERBOSE_EXTRACTION
-    if (lookahead and not do_lookahead) std::cout << "\t";
-    std::cout << "p     " << std::to_string(p.x) << ", " << std::to_string(p.y)
+    if (lookahead and not do_lookahead)
+        std::cout << "\t";
+        std::cout << "p     " << std::to_string(p.x) << ", " << std::to_string(p.y)
               << (isVertex(p) ? " (Corner)" : " (Edge)") << std::endl << std::endl;
     #endif
 
@@ -613,14 +613,17 @@ bool FieldDPlanner::consistent(const Node &s) {
 bool FieldDPlanner::consistent(const ExpandedMap::iterator &it) {
     return G(it) == RHS(it);
 }
+
 void FieldDPlanner::set_start(const Position &pos) {
     grid.setStart(pos);
     start_nodes = grid.start_cell_.corners();
     new_start = true;
 }
+
 void FieldDPlanner::patch_map(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h) {
     grid.updateGraph(patch, x, y, w, h);
 }
+
 void FieldDPlanner::set_occupancy_threshold(float threshold) { grid.setOccupancyThreshold(threshold); }
 void FieldDPlanner::set_heuristic_multiplier(float mult) { heuristic_multiplier = mult; }
 void FieldDPlanner::set_lookahead(bool use_lookahead) { lookahead = use_lookahead; }
