@@ -45,8 +45,8 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
     for p in expanded:
         x = p[1]
         y = p[0]
-        if p[2] != float("inf"):
-            (r, g, b) = colorsys.hsv_to_rgb(p[2] / period, 1.0, 1.0)
+        if p[3] != float("inf"):
+            (r, g, b) = colorsys.hsv_to_rgb(p[3] / period, 1.0, 1.0)
             color = (int(200 * r), int(200 * g), int(200 * b))
             cv2.circle(out_map, (mult * x, mult * y), ceil(mult / 5), color,
                        cv2.FILLED)

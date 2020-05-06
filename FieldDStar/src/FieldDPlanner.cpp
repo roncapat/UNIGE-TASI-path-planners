@@ -389,13 +389,8 @@ path_additions FieldDPlanner::traversalFromCorner(const Position &p,
     assert(cell.p0.aligned(cell.p1));
     assert(not cell.p0.aligned(cell.p2));
 
-    if (first_run_trick and initialize_search) {
-        cell.g1 = map.getRHS(cell.p1);
-        cell.g2 = map.getRHS(cell.p2);
-    } else {
-        cell.g1 = map.getG(cell.p1);
-        cell.g2 = map.getG(cell.p2);
-    }
+    cell.g1 = map.getRHS(cell.p1);
+    cell.g2 = map.getRHS(cell.p2);
     getBC(cell);
 
     return InterpolatedTraversal::traversalFromCorner(cell, step_cost);
@@ -414,13 +409,8 @@ path_additions FieldDPlanner::traversalFromContiguousEdge(const Position &p,
     assert(cell1.p0.aligned(cell1.p1));
     assert(not cell1.p0.aligned(cell1.p2));
 
-    if (first_run_trick and initialize_search) {
-        cell1.g1 = map.getRHS(Node(cell1.p1));
-        cell1.g2 = map.getRHS(Node(cell1.p2));
-    } else {
-        cell1.g1 = map.getG(Node(cell1.p1));
-        cell1.g2 = map.getG(Node(cell1.p2));
-    }
+    cell1.g1 = map.getRHS(Node(cell1.p1));
+    cell1.g2 = map.getRHS(Node(cell1.p2));
     getBC(cell1);
     cell1.q = 1 - std::abs(cell1.p1.y - p.y) - std::abs(cell1.p1.x - p.x);
 
@@ -450,13 +440,8 @@ path_additions FieldDPlanner::traversalFromOppositeEdge(const Position &p,
         cell2.p0.x = p_b.x;
     }
 
-    if (first_run_trick and initialize_search) {
-        cell1.g1 = cell2.g2 = map.getRHS(p_a);
-        cell1.g2 = cell2.g1 = map.getRHS(p_b);
-    } else {
-        cell1.g1 = cell2.g2 = map.getG(p_a);
-        cell1.g2 = cell2.g1 = map.getG(p_b);
-    }
+    cell1.g1 = cell2.g2 = map.getRHS(p_a);
+    cell1.g2 = cell2.g1 = map.getRHS(p_b);
     getBC(cell1);
     getBC(cell2);
     cell1.p = std::abs(p.y - cell1.p0.y) + std::abs(p.x - cell1.p0.x);

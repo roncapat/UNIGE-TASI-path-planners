@@ -383,7 +383,7 @@ void DFMPlanner::computeRoughtPath( bool eight_if_true){
         Cell min_cell;
         float dist;
         for (auto &c: (eight_if_true ? grid.neighbors_8(path_cells_.back()) : grid.neighbors_4(path_cells_.back()))){
-            float cost = map.getG(path_cells_.back()) - map.getG(c);
+            float cost = map.getRHS(path_cells_.back()) - map.getRHS(c);
             if (cost > min_cost){
                 min_cost = cost,
                 min_cell = c;
@@ -677,8 +677,8 @@ path_additions DFMPlanner::traversalFromCorner(const Position &p,
 
     assert(cell.p0.aligned(cell.p1));
     assert(not cell.p0.aligned(cell.p2));
-    cell.g1 = getInterpG(cell.p1);
-    cell.g2 = getInterpG(cell.p2);
+    cell.g1 = getInterpRHS(cell.p1);
+    cell.g2 = getInterpRHS(cell.p2);
     getBC(cell);
 
     return InterpolatedTraversal::traversalFromCorner(cell, step_cost);
@@ -697,8 +697,8 @@ path_additions DFMPlanner::traversalFromContiguousEdge(const Position &p,
     assert(cell1.p0.aligned(cell1.p1));
     assert(not cell1.p0.aligned(cell1.p2));
 
-    cell1.g1 = getInterpG(cell1.p1);
-    cell1.g2 = getInterpG(cell1.p2);
+    cell1.g1 = getInterpRHS(cell1.p1);
+    cell1.g2 = getInterpRHS(cell1.p2);
     getBC(cell1);
     cell1.q = 1 - std::abs(cell1.p1.y - p.y) - std::abs(cell1.p1.x - p.x);
 
@@ -728,8 +728,8 @@ path_additions DFMPlanner::traversalFromOppositeEdge(const Position &p,
         cell2.p0.x = p_b.x;
     }
 
-    cell1.g1 = cell2.g2 = getInterpG(cell1.p1);
-    cell1.g2 = cell2.g1 = getInterpG(cell1.p2);
+    cell1.g1 = cell2.g2 = getInterpRHS(cell1.p1);
+    cell1.g2 = cell2.g1 = getInterpRHS(cell1.p2);
 
     getBC(cell1);
     getBC(cell2);
