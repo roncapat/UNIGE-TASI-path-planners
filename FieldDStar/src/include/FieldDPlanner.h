@@ -11,7 +11,6 @@
 
 #include "Graph.h"
 #include "PriorityQueue.h"
-#include "Map.h"
 #include "Pose.h"
 #include "interpolation.h"
 
@@ -19,6 +18,7 @@
 #define LOOP_FAILURE_NO_GRAPH -1
 #define LOOP_FAILURE_NO_GOAL -2
 class FieldDPlanner {
+  typedef PriorityQueue<Node> Queue;
  public:
   FieldDPlanner();
   void init();
@@ -26,13 +26,13 @@ class FieldDPlanner {
   float e_time, u_time, p_time;
 
   void set_optimization_lvl(int lvl);
-  void set_first_run_trick(bool enable);;
+  void set_first_run_trick(bool enable);
   void set_occupancy_threshold(float threshold);
   void set_heuristic_multiplier(float mult);
   void set_lookahead(bool use_lookahead);
 
-  void set_map(const MapPtr &msg);
-  void patch_map(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h);;
+  void set_map(const std::shared_ptr<uint8_t[]> &map, int w, int h);
+  void patch_map(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h);
   void set_start(const Position &pos);
   void set_goal(const Position &pos);
 
@@ -50,7 +50,7 @@ class FieldDPlanner {
     iterator insert_or_assign(const Node &s, float g, float rhs);
     float getG(const Node &s);
     float getRHS(const Node &s);
-    PriorityQueue::Key getKey(const Node &s);
+    Queue::Key getKey(const Node &s);
   };
 
   static inline const Node &NODE(const ExpandedMap::iterator &map_it) { return (map_it)->first; }
@@ -78,18 +78,16 @@ class FieldDPlanner {
   bool initialize_graph_ = true;  // set to true if the graph must be initialized
   bool goal_set_ = false;         // true if the goal has been set
   bool new_goal_ = false;     // true if the goal changed and the graph must be re-initialized
-  Position start_pos;
-  Cell start_cell = Cell(0, 0);
   std::vector<Node> start_nodes;
-  PriorityQueue priority_queue;
+  Queue priority_queue;
   Graph grid;
   bool initialize_search = true;  // set to true if the search problem must be initialized
 
   float computeOptimalCost(const Node &p, const Node &p_a, const Node &p_b);
   bool end_condition();
-  PriorityQueue::Key calculateKey(const Node &s);
-  PriorityQueue::Key calculateKey(const Node &s, float cost_so_far);
-  PriorityQueue::Key calculateKey(const Node &s, float g, float rhs);
+  Queue::Key calculateKey(const Node &s);
+  Queue::Key calculateKey(const Node &s, float cost_so_far);
+  Queue::Key calculateKey(const Node &s, float g, float rhs);
   void enqueueIfInconsistent(ExpandedMap::iterator it);
   float minRHS_0(const Node &s);
   float minRHS_1(const Node &s, Node &bptr_idx);

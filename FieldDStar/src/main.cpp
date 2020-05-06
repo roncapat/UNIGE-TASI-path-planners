@@ -20,7 +20,6 @@ int main(int _argc, char **_argv) {
     Position next_point, goal;
     float next_step_cost = 0;
 
-    std::shared_ptr<Map> map_info = nullptr;
     auto res = std::system((std::string("python3 -m simulator.run_simulator ") +
         _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " + _argv[12] + " &").data());
     (void) res;
@@ -47,12 +46,6 @@ int main(int _argc, char **_argv) {
     in__fifo.read((char *) data.get(), size); //Receive image
     in__fifo.read((char *) &min, 4); //Receive heuristic hint
 
-    map_info = std::make_shared<Map>(Map{
-        .image = data,
-        .length = static_cast<int>(height),
-        .width = static_cast<int>(width)
-    });
-
     next_point.x = std::stof(_argv[2]);
     next_point.y = std::stof(_argv[3]);
 
@@ -67,7 +60,7 @@ int main(int _argc, char **_argv) {
     planner.set_lookahead(std::stoi(_argv[6]));
     // FIXME handle remplanning, for now i put the lowest possible value for consistency
     planner.set_heuristic_multiplier(min);
-    planner.set_map(map_info);
+    planner.set_map(data, width, height);
     planner.set_start(next_point);
     planner.set_goal(goal);
 

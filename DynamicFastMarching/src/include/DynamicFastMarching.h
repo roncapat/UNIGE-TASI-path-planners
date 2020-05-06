@@ -13,7 +13,6 @@
 
 #include "Graph.h"
 #include "PriorityQueue.h"
-#include "Map.h"
 #include "Pose.h"
 
 extern const float SQRT2;
@@ -24,8 +23,9 @@ extern const float SQRT2;
 #define LOOP_FAILURE_NO_GRAPH -1
 #define LOOP_FAILURE_NO_GOAL -2
 class DFMPlanner {
+  typedef PriorityQueue<Cell> Queue;
  public:
-  DFMPlanner();;
+  DFMPlanner();
   void init();
   int step();
   float e_time, u_time, p_time;
@@ -35,7 +35,7 @@ class DFMPlanner {
   void set_occupancy_threshold(float threshold);
   void set_heuristic_multiplier(float mult);
 
-  void set_map(const MapPtr &msg);
+  void set_map(const std::shared_ptr<uint8_t[]> &m, int w, int l);
   void patch_map(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h);;
   void set_start(const Position &pos);
   void set_goal(const Position &pos);
@@ -54,7 +54,7 @@ class DFMPlanner {
     iterator insert_or_assign(const Cell &s, float g, float rhs);
     float getG(const Cell &s);
     float getRHS(const Cell &s);
-    PriorityQueue::Key getKey(const Cell &s);
+    Queue::Key getKey(const Cell &s);
   };
 
   static inline const Cell &CELL(const ExpandedMap::iterator &map_it) { return (map_it)->first; }
@@ -82,15 +82,15 @@ class DFMPlanner {
   bool goal_set_ = false;         // true if the goal has been set
   bool new_goal_ = false;     // true if the goal changed and the graph must be re-initialized
   std::vector<Cell> start_nodes;
-  PriorityQueue priority_queue;
+  Queue priority_queue;
   Graph grid;
   bool initialize_search = true;  // set to true if the search problem must be initialized
 
   float computeOptimalCost(const Cell &p);
   bool end_condition();
-  PriorityQueue::Key calculateKey(const Cell &s);
-  PriorityQueue::Key calculateKey(const Cell &s, float cost_so_far);
-  PriorityQueue::Key calculateKey(const Cell &s, float g, float rhs);
+  Queue::Key calculateKey(const Cell &s);
+  Queue::Key calculateKey(const Cell &s, float cost_so_far);
+  Queue::Key calculateKey(const Cell &s, float g, float rhs);
   void enqueueIfInconsistent(ExpandedMap::iterator it);
   bool consistent(const Cell &s);
   static bool consistent(const ExpandedMap::iterator &it);

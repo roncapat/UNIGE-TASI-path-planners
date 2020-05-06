@@ -20,12 +20,10 @@ IF (CMAKE_BUILD_TYPE MATCHES Debug)
 ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
 include_directories(include)
-include_directories(include_boost_heap)
+include_directories(SYSTEM ../../ProjectToolkit/include)
 add_executable(field_d_planner
                FieldDPlanner.cpp
                main.cpp
-               Graph.cpp
-               PriorityQueue.cpp
                interpolation.cpp)
-
 target_link_libraries(field_d_planner gcov)
+target_link_libraries(field_d_planner ProjectToolkit)

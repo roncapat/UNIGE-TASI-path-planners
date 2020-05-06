@@ -1,7 +1,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include "Map.h"
 #include <cassert>
 #include <cmath>
 #include <limits>
@@ -9,6 +8,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <memory>
 
 class Node;
 class Cell;
@@ -41,10 +41,10 @@ class Node : public std::pair<int, int> {
   Node &operator=(const Node &other);
   bool isValid() const;
   void setValidity(bool is_valid);
-  [[nodiscard]] Node topNode() const {return Node(x-1, y);}
-  [[nodiscard]] Node bottomNode()const {return Node(x+1, y);}
-  [[nodiscard]] Node leftNode()const {return Node(x, y-1);}
-  [[nodiscard]] Node rightNode()const {return Node(x, y+1);}
+  [[nodiscard]] Node topNode() const { return Node(x - 1, y); }
+  [[nodiscard]] Node bottomNode() const { return Node(x + 1, y); }
+  [[nodiscard]] Node leftNode() const { return Node(x, y - 1); }
+  [[nodiscard]] Node rightNode() const { return Node(x, y + 1); }
   [[nodiscard]] Cell cellBottomLeft() const;
   [[nodiscard]] Cell cellBottomRight() const;
   [[nodiscard]] Cell cellTopLeft() const;
@@ -52,7 +52,6 @@ class Node : public std::pair<int, int> {
   [[nodiscard]] Cell neighborCell(bool bottom_TOP, bool left_RIGHT) const;
  private:
   bool valid = true;
-
 
 };
 
@@ -67,11 +66,11 @@ class Cell : public std::pair<int, int> {
   explicit Cell(const std::pair<int, int> &other);
   explicit Cell(const Position &n);
   Cell &operator=(const Cell &other);
-  [[nodiscard]] Cell topCell() const {return Cell(x-1, y);}
-  [[nodiscard]] Cell bottomCell()const {return Cell(x+1, y);}
-  [[nodiscard]] Cell leftCell()const {return Cell(x, y-1);}
-  [[nodiscard]] Cell rightCell()const {return Cell(x, y+1);}
-  [[nodiscard]] bool hasNode(const Node &n) const{
+  [[nodiscard]] Cell topCell() const { return Cell(x - 1, y); }
+  [[nodiscard]] Cell bottomCell() const { return Cell(x + 1, y); }
+  [[nodiscard]] Cell leftCell() const { return Cell(x, y - 1); }
+  [[nodiscard]] Cell rightCell() const { return Cell(x, y + 1); }
+  [[nodiscard]] bool hasNode(const Node &n) const {
       return (((n.x == x) or (n.x == (x + 1)))
           and ((n.y == y) or (n.y == (y + 1))));
   };
@@ -103,10 +102,14 @@ typedef std::pair<Node, Node> Edge;
 
 class Graph {
  public:
-  std::shared_ptr<uint8_t[]> map_;  // Map is the current, most up-to-date occupancy grid.
+  std::shared_ptr<uint8_t[]> map_;
 
-  Node start_;  // start node in the search problem
-  Node goal_;   // goal node in the search problem
+  Cell start_cell_;
+  Cell goal_cell_;
+  Node start_node_;
+  Node goal_node_;
+  Position start_pos_;
+  Position goal_pos_;
 
   std::vector<Cell> updated_cells_;
 
@@ -120,7 +123,7 @@ class Graph {
 
   void setGoal(const Node &goal);
 
-  void initializeGraph(const MapPtr &msg);
+  void initializeGraph(std::shared_ptr<uint8_t[]> image, int width, int length);
 
   bool isValid(const Node &s);
 
@@ -132,28 +135,27 @@ class Graph {
 
   static bool unaligned(const Position &p, const Position &sp);
 
-  std::vector<Node> neighbors(const Node &s, bool include_invalid = false);
+  std::vector<Node> neighbors_8(const Node &s, bool include_invalid = false);
+
+  std::vector<Cell> neighbors_4(const Cell &s, bool include_invalid = false);
 
   std::vector<Edge> consecutiveNeighbors(const Position &p);
   std::vector<Edge> consecutiveNeighbors(const Node &s);
 
-  Node counterClockwiseNeighbor(const Node& s, const Node& s_prime);
+  Node counterClockwiseNeighbor(const Node &s, const Node &s_prime);
 
-  Node clockwiseNeighbor(const Node& s, const Node& s_prime);
+  Node clockwiseNeighbor(const Node &s, const Node &s_prime);
 
   float getTraversalCost(const Cell &ind);
 
   float euclideanHeuristic(const Node &s);
 
   std::vector<Node> getNodesAroundCell(const Cell &cell);
-  void updateGraph(const std::shared_ptr<uint8_t[]>& patch, int x, int y, int w, int h);
+  void updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h);
 
   int occupancy_threshold_uchar_ = 254;
-  static Cell cellBottomLeft(const Node &p);
-  static Cell cellBottomRight(const Node &p);
-  static Cell cellTopLeft(const Node &p);
-  static Cell cellTopRight(const Node &p);
-  static Cell neighborCell(const Node &p, bool bottom_TOP, bool left_RIGHT);
+
+  float euclideanHeuristic(const Position &s);
 };
 
 #endif  // GRAPHSEARCH_H

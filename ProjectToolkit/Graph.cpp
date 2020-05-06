@@ -1,23 +1,25 @@
 #include "Graph.h"
 #include <cmath>
-#include <interpolation.h>
+#include <utility>
 
 void Graph::setOccupancyThreshold(float occupancy_threshold) {
     this->occupancy_threshold_uchar_ = occupancy_threshold * 255.0f;
 }
 
+//TODO should be parameter of type Pos (most generic)
 void Graph::setGoal(const Node &goal) {
-    this->goal_ = goal;
+    this->goal_node_ = goal;
+    this->goal_cell_ = {goal.x, goal.y};
+    this->goal_pos_ = {(float)goal.x, (float)goal.y};
 }
 
-void Graph::initializeGraph(const MapPtr &msg) {
-    updated_cells_.clear();
-    length_ = msg->length;
-    width_ = msg->width;
-    flength_ = static_cast<float>(msg->length);
-    fwidth_ = static_cast<float>(msg->width);
+void Graph::initializeGraph(std::shared_ptr<uint8_t[]> image, int width, int length) {
+    length_ = length;
+    width_ = width;
+    flength_ = static_cast<float>(length);
+    fwidth_ = static_cast<float>(width);
     size_ = length_ * width_;
-    map_ = msg->image;
+    map_ = std::move(image);
 }
 
 void Graph::updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h) {
@@ -35,14 +37,6 @@ void Graph::updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, i
             map_.get()[(i + x) * width_ + (y + j)] = patch.get()[i * w + j];
         }
     }
-/*
-    for (int i = 0; i < width_; ++i) {
-        for (int j = 0; j < length_; ++j) {
-            std::cout << int(map_.get()[i*width_+j]) << " ";
-        }
-        std::cout << std::endl;
-    }
-*/
 }
 
 bool Graph::isValid(const Node &s) {
@@ -65,7 +59,7 @@ bool Graph::unaligned(const Position &p, const Position &sp) {
     return ((p.x != sp.x) && (p.y != sp.y));
 }
 
-std::vector<Node> Graph::neighbors(const Node &s, bool include_invalid) {
+std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) {
     std::vector<Node> neighbors;
     neighbors.reserve(8);
 
@@ -73,10 +67,11 @@ std::vector<Node> Graph::neighbors(const Node &s, bool include_invalid) {
     // maybe optimizable then?
 
     // right
-    Node r(s.x + 1, s.y);
+    auto r = s.rightNode();
     if (include_invalid || isValid(r))
         neighbors.push_back(std::move(r));
 
+    //TODO use Node methods or create missing ones eg. .topRightNode()
     // top right
     Node tr(s.x + 1, s.y + 1);
     if (include_invalid || isValid(tr))
@@ -233,7 +228,11 @@ float Graph::getTraversalCost(const Cell &c) {
 }
 
 float Graph::euclideanHeuristic(const Node &s) {
-    return std::hypot(start_.x - s.x, start_.y - s.y);
+    return std::hypot(start_pos_.x - (float)s.x, start_pos_.y - (float)s.y);
+}
+
+float Graph::euclideanHeuristic(const Position &s) {
+    return std::hypot(start_pos_.x - s.x, start_pos_.y - s.y);
 }
 
 std::vector<Node> Graph::getNodesAroundCell(const Cell &cell) {
@@ -248,6 +247,33 @@ std::vector<Node> Graph::getNodesAroundCell(const Cell &cell) {
     right = std::min(right, width_ - 1);
 
     return {{top, left}, {top, right}, {bottom, left}, {bottom, right}};
+}
+std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) {
+    std::vector<Cell> neighbors;
+    neighbors.reserve(4);
+
+    // right
+    auto r = s.rightCell();
+    if (include_invalid || isValid(r))
+        neighbors.push_back(std::move(r));
+
+    // above
+    auto t = s.topCell();
+    if (include_invalid || isValid(t))
+        neighbors.push_back(std::move(t));
+
+    // left
+    auto l = s.leftCell();
+    if (include_invalid || isValid(l))
+        neighbors.push_back(std::move(l));
+
+    // bottom
+    auto b = s.bottomCell();
+    if (include_invalid || isValid(b))
+        neighbors.push_back(std::move(b));
+
+    assert(neighbors.size() >= 2);
+    return neighbors;
 }
 Position::Position(float x, float y) {
     this->x = x;

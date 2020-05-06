@@ -6,7 +6,6 @@
 #include <iostream>
 #include <memory>
 #include <tuple>
-#include <boost/mpl/pair.hpp>
 #include <utility>
 
 const float SQRT2 = 1.41421356237309504880168872420969807856967187537694f;
@@ -29,10 +28,10 @@ int DFMPlanner::step() {
         initializeSearch();
     } else if (new_start) {
         new_start = false;
-        PriorityQueue new_queue;
+        Queue new_queue;
         for (const auto &elem: priority_queue)
             // Only heuristic changes, so either G or RHS is kept the same
-            new_queue.insert(elem.cell, calculateKey(elem.cell, elem.key.second));
+            new_queue.insert(elem.elem, calculateKey(elem.elem, elem.key.second));
         priority_queue.swap(new_queue);
         // gather cells with updated edge costs and update affected nodes
         updateCells();
@@ -61,17 +60,16 @@ int DFMPlanner::step() {
     return LOOP_OK;
 }
 
-void DFMPlanner::set_map(const MapPtr &msg) {
-    grid.initializeGraph(msg);
+void DFMPlanner::set_map(const std::shared_ptr<uint8_t[]> &m, int w, int l) {
+    grid.initializeGraph(m, w, l);
     initialize_graph_ = false;
 }
 
 void DFMPlanner::set_goal(const Position &point) {
-    Cell new_goal(point);
-    if (grid.goal_ != new_goal)
+    Node new_goal(point);
+    if (grid.goal_node_ != new_goal)
         new_goal_ = true;
     grid.setGoal(new_goal);
-    grid.goal_pos_ = point;
     goal_set_ = true;
 }
 
@@ -81,16 +79,16 @@ bool DFMPlanner::isVertex(const Position &p) {
     return is_vertex && satisfies_bounds;
 }
 
-PriorityQueue::Key DFMPlanner::calculateKey(const Cell &s) {
+DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s) {
     auto[g, rhs] = map.getKey(s);
     return calculateKey(s, g, rhs);
 }
 
-PriorityQueue::Key DFMPlanner::calculateKey(const Cell &s, float g, float rhs) {
+DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float g, float rhs) {
     return calculateKey(s, std::min(g, rhs));
 }
 
-PriorityQueue::Key DFMPlanner::calculateKey(const Cell &s, float cost_so_far) {
+DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float cost_so_far) {
     return {cost_so_far, cost_so_far};
     auto dist = std::hypot(grid.goal_pos_.x - s.x, grid.goal_pos_.y - s.y);
     return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
@@ -102,9 +100,9 @@ void DFMPlanner::initializeSearch() {
     map.clear();
     priority_queue.clear();
     grid.updated_cells_.clear();
-    map.insert_or_assign(grid.start_, INFINITY, INFINITY);
-    map.insert_or_assign(grid.goal_, INFINITY, 0);
-    priority_queue.insert(grid.goal_, calculateKey(grid.goal_, 0));
+    map.insert_or_assign(grid.start_cell_, INFINITY, INFINITY);
+    map.insert_or_assign(grid.goal_cell_, INFINITY, 0);
+    priority_queue.insert(grid.goal_cell_, calculateKey(grid.goal_cell_, 0));
     num_cells_updated = 1;
 }
 
@@ -126,7 +124,7 @@ unsigned long DFMPlanner::computeShortestPath() {
     int expanded = 0;
     while ((not priority_queue.empty()) and not end_condition()) {
         // Pop head of queue
-        Cell s = priority_queue.topCell();
+        Cell s = priority_queue.topValue();
         priority_queue.pop();
         ++expanded;
         //std::cout << "POP    " << s.x << " " << s.y << std::endl;
@@ -136,11 +134,11 @@ unsigned long DFMPlanner::computeShortestPath() {
 
         if (G(s_it) > RHS(s_it)) { // Overconsistent
             G(s_it) = RHS(s_it);
-            for (const Cell &nbr : grid.neighbors(s))
+            for (const Cell &nbr : grid.neighbors_4(s))
                 updateCell(nbr);
         } else { // Underconsistent
             G(s_it) = INFINITY;
-            for (const Cell &nbr : grid.neighbors(s))
+            for (const Cell &nbr : grid.neighbors_4(s))
                 updateCell(nbr);
             updateCell(s);
         }
@@ -309,7 +307,7 @@ std::tuple<float, float> DFMPlanner::gradientAtCell(const Cell __c) {
 void DFMPlanner::updateCell(const Cell &cell) {
     auto s_it = map.find_or_init(cell);
 
-    if (cell != grid.goal_)
+    if (cell != grid.goal_cell_)
         RHS(s_it) = computeOptimalCost(cell);
 
     enqueueIfInconsistent(s_it);
@@ -500,7 +498,7 @@ std::vector<Position> DFMPlanner::getGridBoundariesTraversals(const Position &a,
 }
 
 bool DFMPlanner::goalReached(const Position &p) {
-    return grid.goal_.x == p.x && grid.goal_.y == p.y;
+    return grid.goal_cell_.x == p.x && grid.goal_cell_.y == p.y;
 }
 
 DFMPlanner::ExpandedMap::iterator
@@ -527,7 +525,7 @@ DFMPlanner::ExpandedMap::insert_or_assign(const Cell &s, float g, float rhs) {
     }
 }
 
-PriorityQueue::Key DFMPlanner::ExpandedMap::getKey(const Cell &s) {
+DFMPlanner::Queue::Key DFMPlanner::ExpandedMap::getKey(const Cell &s) {
     ExpandedMap::iterator it;
     if ((it = find(s)) != end())
         return {G(it), RHS(it)};
@@ -561,7 +559,7 @@ bool DFMPlanner::consistent(const ExpandedMap::iterator &it) {
 }
 void DFMPlanner::set_start(const Position &pos) {
     grid.start_pos_ = pos; //TODO move start_pos in grid also for FD* ??? major refactor needed
-    grid.start_ = Cell(pos);
+    grid.start_cell_ = Cell(pos);
     start_nodes = {Node(pos).cellTopRight(), Node(pos).cellTopLeft(), Node(pos).cellBottomRight(), Node(pos).cellBottomLeft()};
     new_start = true;
 }
