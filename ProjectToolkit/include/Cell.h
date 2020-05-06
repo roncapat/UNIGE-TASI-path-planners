@@ -12,16 +12,15 @@ class Position;
 
 class Cell{
  public:
-  int x,y;
-
+  int x{},y{};
   Cell() = default;
   Cell(int x, int y);
   Cell(const Cell &other);
   explicit Cell(const std::pair<int, int> &other);
   explicit Cell(const Position &n); // Cell containing Position
   Cell &operator=(const Cell &other);
-  bool operator==(const Cell &other) const;
-  bool operator!=(const Cell &other) const{return not (*this == other);}
+  [[nodiscard]] bool operator==(const Cell &other) const;
+  [[nodiscard]] bool operator!=(const Cell &other) const;
   [[nodiscard]] Cell topCell() const;
   [[nodiscard]] Cell topLeftCell() const;
   [[nodiscard]] Cell topRightCell() const;
@@ -35,7 +34,7 @@ class Cell{
   [[nodiscard]] Node bottomLeftNode() const;
   [[nodiscard]] Node bottomRightNode() const;
   [[nodiscard]] Position centerPosition() const;
-  [[nodiscard]] std::vector<Node> corners() const;
+  [[nodiscard]] std::vector<Node> cornerNodes() const;
   [[nodiscard]] bool hasNode(const Node &n) const;;
   [[nodiscard]] float distance(const Cell &n) const;
 };

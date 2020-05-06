@@ -12,9 +12,9 @@
 class Cell;
 class Position;
 
-class Node{
+class Node {
  public:
-  int x,y;
+  int x{}, y{};
   Node() = default;
   explicit Node(bool valid);
   Node(int x, int y);
@@ -22,9 +22,9 @@ class Node{
   explicit Node(const std::pair<int, int> &other);
   explicit Node(const Position &n);  //Round to nearest node
   Node &operator=(const Node &other);
-  bool operator==(const Node &other) const;
-  bool operator!=(const Node &other) const{return not (*this == other);}
   void setValidity(bool is_valid);
+  [[nodiscard]] bool operator==(const Node &other) const;
+  [[nodiscard]] bool operator!=(const Node &other) const;
   [[nodiscard]] bool isValid() const;
   [[nodiscard]] Node topNode() const;
   [[nodiscard]] Node bottomNode() const;

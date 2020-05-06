@@ -240,7 +240,7 @@ unsigned long FieldDPlanner::updateNodesAroundUpdatedCells() {
     std::vector<Node> updates;
     // construct a set of all updated nodes
     for (const Cell &cell : grid.updated_cells_) {
-        updates = cell.corners();
+        updates = cell.cornerNodes();
         to_update.insert(updates.begin(), updates.end());
     }
 
@@ -601,7 +601,7 @@ bool FieldDPlanner::consistent(const ExpandedMap::iterator &it) {
 
 void FieldDPlanner::set_start(const Position &pos) {
     grid.setStart(pos);
-    start_nodes = grid.start_cell_.corners();
+    start_nodes = grid.start_cell_.cornerNodes();
     new_start = true;
 }
 

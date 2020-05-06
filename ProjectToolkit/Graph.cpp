@@ -3,10 +3,6 @@
 #include <utility>
 #include <algorithm>
 
-void Graph::setOccupancyThreshold(float occupancy_threshold) {
-    occupancy_threshold_uchar_ = occupancy_threshold * 255.0f;
-}
-
 //TODO should be parameter of type Pos (most generic)
 void Graph::setStart(const Position &start) {
     start_pos_ = start;
@@ -18,6 +14,10 @@ void Graph::setGoal(const Position &goal) {
     goal_pos_ = goal;
     goal_cell_ = {(int) std::floor(goal.x), (int) std::floor(goal.y)};
     goal_node_ = {(int) std::round(goal.x), (int) std::round(goal.y)};
+}
+
+void Graph::setOccupancyThreshold(float occupancy_threshold) {
+    occupancy_threshold_uchar_ = occupancy_threshold * 255.0f;
 }
 
 void Graph::initializeGraph(std::shared_ptr<uint8_t[]> image, int width, int length) {
@@ -106,6 +106,79 @@ std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) {
     if (include_invalid || isValid(br))
         neighbors.push_back(std::move(br));
 
+    return neighbors;
+}
+
+std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) {
+    std::vector<Cell> neighbors;
+    neighbors.reserve(8);
+
+    // right
+    auto r = s.rightCell();
+    if (include_invalid || isValid(r))
+        neighbors.push_back(std::move(r));
+
+    auto tr = s.topRightCell();
+    if (include_invalid || isValid(tr))
+        neighbors.push_back(std::move(tr));
+
+    // above
+    auto t = s.topCell();
+    if (include_invalid || isValid(t))
+        neighbors.push_back(std::move(t));
+
+    // above
+    auto tl = s.topLeftCell();
+    if (include_invalid || isValid(tl))
+        neighbors.push_back(std::move(tl));
+
+    // left
+    auto l = s.leftCell();
+    if (include_invalid || isValid(l))
+        neighbors.push_back(std::move(l));
+
+    auto bl = s.bottomLeftCell();
+    if (include_invalid || isValid(bl))
+        neighbors.push_back(std::move(bl));
+
+    // bottom
+    auto b = s.bottomCell();
+    if (include_invalid || isValid(b))
+        neighbors.push_back(std::move(b));
+
+    auto br = s.bottomRightCell();
+    if (include_invalid || isValid(br))
+        neighbors.push_back(std::move(br));
+
+    assert(neighbors.size() >= 2);
+    return neighbors;
+}
+
+std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) {
+    std::vector<Cell> neighbors;
+    neighbors.reserve(4);
+
+    // right
+    auto r = s.rightCell();
+    if (include_invalid || isValid(r))
+        neighbors.push_back(std::move(r));
+
+    // above
+    auto t = s.topCell();
+    if (include_invalid || isValid(t))
+        neighbors.push_back(std::move(t));
+
+    // left
+    auto l = s.leftCell();
+    if (include_invalid || isValid(l))
+        neighbors.push_back(std::move(l));
+
+    // bottom
+    auto b = s.bottomCell();
+    if (include_invalid || isValid(b))
+        neighbors.push_back(std::move(b));
+
+    assert(neighbors.size() >= 2);
     return neighbors;
 }
 
@@ -223,79 +296,6 @@ float Graph::getTraversalCost(const Cell &c) {
         return INFINITY;
     auto cost = map_[c.x * width_ + c.y];
     return (cost >= occupancy_threshold_uchar_) ? INFINITY : (float) cost;
-}
-
-std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) {
-    std::vector<Cell> neighbors;
-    neighbors.reserve(4);
-
-    // right
-    auto r = s.rightCell();
-    if (include_invalid || isValid(r))
-        neighbors.push_back(std::move(r));
-
-    // above
-    auto t = s.topCell();
-    if (include_invalid || isValid(t))
-        neighbors.push_back(std::move(t));
-
-    // left
-    auto l = s.leftCell();
-    if (include_invalid || isValid(l))
-        neighbors.push_back(std::move(l));
-
-    // bottom
-    auto b = s.bottomCell();
-    if (include_invalid || isValid(b))
-        neighbors.push_back(std::move(b));
-
-    assert(neighbors.size() >= 2);
-    return neighbors;
-}
-
-std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) {
-    std::vector<Cell> neighbors;
-    neighbors.reserve(8);
-
-    // right
-    auto r = s.rightCell();
-    if (include_invalid || isValid(r))
-        neighbors.push_back(std::move(r));
-
-    auto tr = s.topRightCell();
-    if (include_invalid || isValid(tr))
-        neighbors.push_back(std::move(tr));
-
-    // above
-    auto t = s.topCell();
-    if (include_invalid || isValid(t))
-        neighbors.push_back(std::move(t));
-
-    // above
-    auto tl = s.topLeftCell();
-    if (include_invalid || isValid(tl))
-        neighbors.push_back(std::move(tl));
-
-    // left
-    auto l = s.leftCell();
-    if (include_invalid || isValid(l))
-        neighbors.push_back(std::move(l));
-
-    auto bl = s.bottomLeftCell();
-    if (include_invalid || isValid(bl))
-        neighbors.push_back(std::move(bl));
-
-    // bottom
-    auto b = s.bottomCell();
-    if (include_invalid || isValid(b))
-        neighbors.push_back(std::move(b));
-
-    auto br = s.bottomRightCell();
-    if (include_invalid || isValid(br))
-        neighbors.push_back(std::move(br));
-
-    assert(neighbors.size() >= 2);
-    return neighbors;
 }
 
 Cell Graph::getCell(const Node &a, const Node &b, const Node &c) {

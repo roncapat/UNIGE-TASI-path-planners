@@ -24,13 +24,21 @@ Node &Node::operator=(const Node &other) {
     valid = other.valid;
     return *this;
 }
+
+void Node::setValidity(bool is_valid) { this->valid = is_valid; }
+
 bool Node::operator==(const Node &other) const {
     if (this == &other) return true;
     return (x == other.x) and (y == other.y);
 }
+bool Node::operator!=(const Node &other) const { return not(*this == other); }
 
 bool Node::isValid() const { return valid; }
-void Node::setValidity(bool is_valid) { this->valid = is_valid; }
+
+Node Node::topNode() const { return Node(x - 1, y); }
+Node Node::bottomNode() const { return Node(x + 1, y); }
+Node Node::leftNode() const { return Node(x, y - 1); }
+Node Node::rightNode() const { return Node(x, y + 1); }
 
 Cell Node::cellBottomLeft() const { return {x, y - 1}; }
 Cell Node::cellBottomRight() const { return {x, y}; }
@@ -46,10 +54,7 @@ Cell Node::neighborCell(bool bottom_TOP, bool left_RIGHT) const {
 std::vector<Cell> Node::cells() const {
     return {cellTopLeft(), cellTopRight(), cellBottomLeft(), cellBottomRight()};
 }
-Node Node::topNode() const { return Node(x - 1, y); }
-Node Node::bottomNode() const { return Node(x + 1, y); }
-Node Node::leftNode() const { return Node(x, y - 1); }
-Node Node::rightNode() const { return Node(x, y + 1); }
+
 float Node::distance(const Node &n) const {
     return std::hypot(x - n.x, y - n.y);
 }
