@@ -1,6 +1,5 @@
 import colorsys
 import json
-import math
 import os
 import sys
 from math import modf, ceil, floor
@@ -43,7 +42,7 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
         if p[3] != float('inf'):
             max_g = max(max_g, p[3])
 
-    period = max_g/8
+    period = max_g / 8
     for p in expanded:
         x = p[1]
         y = p[0]
@@ -56,7 +55,8 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
             cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), floor(mult / 5),
                        (0, 0, 0), cv2.FILLED)
         if p[2] != p[3]:
-            cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), ceil(mult / 4), (0,0,0),1)
+            cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), ceil(mult / 3),
+                       (100, 100, 100), 1)
 
     for a, b in zip(prevpath, prevpath[1:]):
         a_scaled = (
@@ -76,8 +76,8 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
             mult * int(b[0]) + int(round(modf(b[0])[0] * (mult - 1))))
         cv2.line(out_map, a_scaled, b_scaled, (255, 100, 0), floor(mult / 6))
 
-    x = int(mult*nextpath[-1][1])
-    y = int(mult*nextpath[-1][0])
+    x = int(mult * nextpath[-1][1])
+    y = int(mult * nextpath[-1][0])
     cv2.circle(out_map, (x, y), floor(mult / 4), (255, 100, 0), cv2.FILLED)  # BLUE - GOAL
     x = int(mult * nextpath[0][1])
     y = int(mult * nextpath[0][0])

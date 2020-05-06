@@ -51,9 +51,15 @@ int DFMPlanner::step() {
     p_time = std::chrono::duration<float, std::milli>(end - begin).count();
 
     begin = std::chrono::steady_clock::now();
-    //constructOptimalPath();
+
+
+
     //computeRoughtPath();
-    computeInterpolatedPath();
+    computeRoughtPath(true);
+    //computeInterpolatedPath();
+    //constructOptimalPath();
+
+
     end = std::chrono::steady_clock::now();
     e_time = std::chrono::duration<float, std::milli>(end - begin).count();
     std::cout << "Update time     = " << u_time << " ms" << std::endl;
@@ -92,8 +98,8 @@ DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float g, float rh
 }
 
 DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float cost_so_far) {
-    return {cost_so_far, cost_so_far};
-    auto dist = std::hypot(grid.goal_pos_.x - s.x, grid.goal_pos_.y - s.y);
+    //return {cost_so_far, cost_so_far};
+    auto dist = grid.start_cell_.distance(s);
     return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
 }
 
@@ -111,12 +117,10 @@ void DFMPlanner::initializeSearch() {
 
 bool DFMPlanner::end_condition() {
     auto top_key = priority_queue.topKey();
-    for (auto &node: start_nodes) {
-        auto[g, rhs] = map.getGandRHS(node);
-        if ((top_key < calculateKey(node, g, rhs)) or (rhs > g)) {
+    auto[g, rhs] = map.getGandRHS(grid.start_cell_);
+    if ((top_key < calculateKey(grid.start_cell_, g, rhs)) or (rhs > g)) {
             return false;
         }
-    }
     return true; //STOP: all 4 conditions met
 }
 
@@ -365,7 +369,8 @@ void DFMPlanner::enqueueIfInconsistent(ExpandedMap::iterator it) {
         priority_queue.remove_if_present(CELL(it));
 }
 
-void DFMPlanner::computeRoughtPath(){
+void DFMPlanner::computeRoughtPath( bool eight_if_true){
+    path_.clear();
     path_.clear();
     cost_.clear();
     total_cost = 0;
@@ -376,12 +381,18 @@ void DFMPlanner::computeRoughtPath(){
     while (path_cells_.back() != grid.goal_cell_){
         float min_cost = 0;
         Cell min_cell;
-        for (auto &c: grid.neighbors_4(path_cells_.back())){
+        float dist;
+        for (auto &c: (eight_if_true ? grid.neighbors_8(path_cells_.back()) : grid.neighbors_4(path_cells_.back()))){
             float cost = map.getG(path_cells_.back()) - map.getG(c);
-            if (cost > min_cost) min_cost = cost, min_cell = c;
+            if (cost > min_cost){
+                min_cost = cost,
+                min_cell = c;
+                dist = c.distance(path_cells_.back());
+                assert(dist<=SQRT2);
+            }
         }
         total_cost += min_cost;
-        total_dist += 1;
+        total_dist += dist;
         path_cells_.push_back(min_cell);
         cost_.push_back(min_cost);
     }

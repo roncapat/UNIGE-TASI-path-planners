@@ -253,6 +253,52 @@ std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) {
     assert(neighbors.size() >= 2);
     return neighbors;
 }
+
+std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) {
+    std::vector<Cell> neighbors;
+    neighbors.reserve(8);
+
+    // right
+    auto r = s.rightCell();
+    if (include_invalid || isValid(r))
+        neighbors.push_back(std::move(r));
+
+    auto tr = s.topRightCell();
+    if (include_invalid || isValid(tr))
+        neighbors.push_back(std::move(tr));
+
+    // above
+    auto t = s.topCell();
+    if (include_invalid || isValid(t))
+        neighbors.push_back(std::move(t));
+
+    // above
+    auto tl = s.topLeftCell();
+    if (include_invalid || isValid(tl))
+        neighbors.push_back(std::move(tl));
+
+    // left
+    auto l = s.leftCell();
+    if (include_invalid || isValid(l))
+        neighbors.push_back(std::move(l));
+
+    auto bl = s.bottomLeftCell();
+    if (include_invalid || isValid(bl))
+        neighbors.push_back(std::move(bl));
+
+    // bottom
+    auto b = s.bottomCell();
+    if (include_invalid || isValid(b))
+        neighbors.push_back(std::move(b));
+
+    auto br = s.bottomRightCell();
+    if (include_invalid || isValid(br))
+        neighbors.push_back(std::move(br));
+
+    assert(neighbors.size() >= 2);
+    return neighbors;
+}
+
 Position::Position(float x, float y) {
     this->x = x;
     this->y = y;

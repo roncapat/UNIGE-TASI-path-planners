@@ -95,7 +95,7 @@ class DFMPlanner {
   std::pair<std::shared_ptr<float[]>, std::shared_ptr<float[]>> costMapGradient();
   std::tuple<float, float> interpolateGradient(const Position &c);
   float computePathAdditionsCost(const std::vector<Position> &p);
-  void computeRoughtPath();
+  void computeRoughtPath( bool eight_if_true = false);
   float getInterpRHS(const Node &node);
   float getInterpG(const Node &node);
   void computeInterpolatedPath();
@@ -106,7 +106,7 @@ class DFMPlanner {
                                                  float &step_cost);
   path_additions traversalFromEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
   path_additions getPathAdditions(const Position &p, const bool &do_lookahead, float &step_cost);
-  bool lookahead = true;
+  bool lookahead = false;
   path_additions traversalFromOppositeEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
   path_additions traversalFromContiguousEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
 };

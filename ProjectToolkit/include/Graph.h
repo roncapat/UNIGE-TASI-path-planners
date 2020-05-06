@@ -80,7 +80,11 @@ class Cell : public std::pair<int, int> {
   explicit Cell(const Position &n);
   Cell &operator=(const Cell &other);
   [[nodiscard]] inline Cell topCell() const { return Cell(x - 1, y); }
+  [[nodiscard]] inline Cell topLeftCell() const { return Cell(x - 1, y-1); }
+  [[nodiscard]] inline Cell topRightCell() const { return Cell(x - 1, y+1); }
   [[nodiscard]] inline Cell bottomCell() const { return Cell(x + 1, y); }
+  [[nodiscard]] inline Cell bottomLeftCell() const { return Cell(x + 1, y-1); }
+  [[nodiscard]] inline Cell bottomRightCell() const { return Cell(x + 1, y+1); }
   [[nodiscard]] inline Cell leftCell() const { return Cell(x, y - 1); }
   [[nodiscard]] inline Cell rightCell() const { return Cell(x, y + 1); }
   [[nodiscard]] inline Node topLeftNode() const { return Node(x, y); }
@@ -165,6 +169,7 @@ class Graph {
   static Cell getCell(const Node &a, const Node &b, const Node &c);
   static std::vector<Position> getGridBoundariesTraversals(const Position &a, const Position &b);
 
+  std::vector<Cell> neighbors_8(const Cell &s, bool include_invalid=false);
 };
 
 #endif  // GRAPHSEARCH_H
