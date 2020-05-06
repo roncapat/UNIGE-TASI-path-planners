@@ -1,6 +1,7 @@
 #include "Graph.h"
 #include <cmath>
 #include <utility>
+#include <algorithm>
 
 void Graph::setOccupancyThreshold(float occupancy_threshold) {
     this->occupancy_threshold_uchar_ = occupancy_threshold * 255.0f;
@@ -340,4 +341,67 @@ Cell Node::neighborCell(bool bottom_TOP, bool left_RIGHT) const{
         return left_RIGHT ? cellTopRight() : cellTopLeft();
     else
         return left_RIGHT ? cellBottomRight() : cellBottomLeft();
+}
+
+Cell Graph::getCell(const Node &a, const Node &b, const Node &c){
+    //Given 3 nodes around a cell, cell coords are min(xs) min(ys)
+    int x = std::min(a.x, std::min(b.x, c.x));
+    int y = std::min(a.y, std::min(b.y, c.y));
+    Cell cell(x, y);
+    assert(cell.hasNode(a));
+    assert(cell.hasNode(b));
+    assert(cell.hasNode(c));
+    return cell;
+}
+
+std::vector<Position> Graph::getGridBoundariesTraversals(const Position &a, const Position &b) {
+    std::vector<Position> xsplit;
+    const Position &low_x = a.x < b.x ? a : b;
+    const Position &high_x = a.x < b.x ? b : a;
+    float x_min = low_x.x;
+    float x_max = high_x.x;
+    float x_cur = std::floor(x_min + 1);
+    xsplit.push_back(low_x);
+    assert(!std::isnan(low_x.x) and !std::isnan(low_x.y));
+
+    if ((b.x - a.x) != 0) {
+        //y=mx+q
+        float m = (b.y - a.y) / (b.x - a.x);
+        float q = a.y - m * a.x;
+        while (x_cur < x_max) {
+            xsplit.emplace_back(x_cur, x_cur * m + q);
+            assert(!std::isnan(xsplit.back().x) and !std::isnan(xsplit.back().y));
+            ++x_cur;
+        }
+    }
+    xsplit.push_back(high_x);
+    assert(!std::isnan(xsplit.back().x) and !std::isnan(xsplit.back().y));
+
+    if (low_x.y > high_x.y) std::reverse(xsplit.begin(), xsplit.end());
+    std::vector<Position> ysplit;
+    for (auto xp = xsplit.begin(); xp < xsplit.end() - 1; ++xp) {
+        const Position &low_y = *xp;
+        const Position &high_y = *(xp + 1);
+        float y_min = low_y.y;
+        float y_max = high_y.y;
+        float y_cur = std::floor(y_min + 1);
+        ysplit.push_back(low_y);
+        assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
+        if ((b.x - a.x) != 0) {
+            while (y_cur < y_max) {
+                float m = (b.y - a.y) / (b.x - a.x);
+                float q = a.y - m * a.x;
+                ysplit.emplace_back((y_cur - q) / m, y_cur), ++y_cur;
+                assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
+            }
+        } else {
+            while (y_cur < y_max) {
+                ysplit.emplace_back(a.x, y_cur), ++y_cur;
+                assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
+            }
+        }
+    }
+    ysplit.push_back(xsplit.back());
+    assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
+    return ysplit;
 }

@@ -156,6 +156,8 @@ class Graph {
   int occupancy_threshold_uchar_ = 254;
 
   float euclideanHeuristic(const Position &s);
+  static Cell getCell(const Node &a, const Node &b, const Node &c);
+  static std::vector<Position> getGridBoundariesTraversals(const Position &a, const Position &b);
 };
 
 #endif  // GRAPHSEARCH_H

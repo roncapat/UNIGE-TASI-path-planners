@@ -13,7 +13,6 @@
 
 #include "Graph.h"
 #include "PriorityQueue.h"
-#include "Pose.h"
 
 extern const float SQRT2;
 #define SQUARE(x) ((x)*(x))

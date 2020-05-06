@@ -11,7 +11,6 @@
 
 #include "Graph.h"
 #include "PriorityQueue.h"
-#include "Pose.h"
 #include "interpolation.h"
 
 #define LOOP_OK 0
