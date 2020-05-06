@@ -22,9 +22,15 @@ class Position : public std::pair<float, float> {
   Position() = default;
   Position(float x, float y);
   Position(const Position &other);
+  Position(const Node &n); //Allow implicit cast to broader concept
   explicit Position(const std::pair<float, float> &other);
-  explicit Position(const Node &n);
   Position &operator=(const Position &other);
+  [[nodiscard]] float distance(const Position &n) const {
+      return std::hypot(x - n.x, y - n.y);
+  }
+  [[nodiscard]] bool aligned(const Position &p) const {
+      return ((x == p.x) || (y == p.y));
+  }
 };
 
 class Node : public std::pair<int, int> {
@@ -50,6 +56,13 @@ class Node : public std::pair<int, int> {
   [[nodiscard]] Cell cellTopLeft() const;
   [[nodiscard]] Cell cellTopRight() const;
   [[nodiscard]] Cell neighborCell(bool bottom_TOP, bool left_RIGHT) const;
+  [[nodiscard]] inline std::vector<Cell> cells() const;
+  [[nodiscard]] float distance(const Node &n) const {
+      return std::hypot(x - n.x, y - n.y);
+  }
+  [[nodiscard]] bool aligned(const Node &p) const{
+      return ((x == p.x) || (y == p.y));
+  }
  private:
   bool valid = true;
 
@@ -66,14 +79,24 @@ class Cell : public std::pair<int, int> {
   explicit Cell(const std::pair<int, int> &other);
   explicit Cell(const Position &n);
   Cell &operator=(const Cell &other);
-  [[nodiscard]] Cell topCell() const { return Cell(x - 1, y); }
-  [[nodiscard]] Cell bottomCell() const { return Cell(x + 1, y); }
-  [[nodiscard]] Cell leftCell() const { return Cell(x, y - 1); }
-  [[nodiscard]] Cell rightCell() const { return Cell(x, y + 1); }
+  [[nodiscard]] inline Cell topCell() const { return Cell(x - 1, y); }
+  [[nodiscard]] inline Cell bottomCell() const { return Cell(x + 1, y); }
+  [[nodiscard]] inline Cell leftCell() const { return Cell(x, y - 1); }
+  [[nodiscard]] inline Cell rightCell() const { return Cell(x, y + 1); }
+  [[nodiscard]] inline Node topLeftNode() const { return Node(x, y); }
+  [[nodiscard]] inline Node topRightNode() const { return Node(x + 1, y); }
+  [[nodiscard]] inline Node bottomLeftNode() const { return Node(x, y + 1); }
+  [[nodiscard]] inline Node bottomRightNode() const { return Node(x + 1, y + 1); }
+  [[nodiscard]] inline std::vector<Node> corners() const {
+      return {topLeftNode(), topRightNode(), bottomLeftNode(), bottomRightNode()};
+  }
   [[nodiscard]] bool hasNode(const Node &n) const {
       return (((n.x == x) or (n.x == (x + 1)))
           and ((n.y == y) or (n.y == (y + 1))));
   };
+  [[nodiscard]] float distance(const Cell &n) const {
+      return std::hypot(x - n.x, y - n.y);
+  }
 };
 
 namespace std {
@@ -103,6 +126,7 @@ typedef std::pair<Node, Node> Edge;
 class Graph {
  public:
   std::shared_ptr<uint8_t[]> map_;
+  std::vector<Cell> updated_cells_;
 
   Cell start_cell_;
   Cell goal_cell_;
@@ -111,8 +135,6 @@ class Graph {
   Position start_pos_;
   Position goal_pos_;
 
-  std::vector<Cell> updated_cells_;
-
   int length_;
   int width_;
   int size_;
@@ -120,44 +142,29 @@ class Graph {
   float fwidth_;
 
   void setOccupancyThreshold(float occupancy_threshold);
-
-  void setGoal(const Node &goal);
-
+  void setStart(const Position &start);
+  void setGoal(const Position &goal);
   void initializeGraph(std::shared_ptr<uint8_t[]> image, int width, int length);
-
+  void updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h);
+  float getTraversalCost(const Cell &ind);
   bool isValid(const Node &s);
-
   bool isValid(const Position &p);
-
   bool isValid(const Cell &c);
 
-  static bool unaligned(const Node &s, const Node &sp);
-
-  static bool unaligned(const Position &p, const Position &sp);
-
   std::vector<Node> neighbors_8(const Node &s, bool include_invalid = false);
-
   std::vector<Cell> neighbors_4(const Cell &s, bool include_invalid = false);
 
   std::vector<Edge> consecutiveNeighbors(const Position &p);
   std::vector<Edge> consecutiveNeighbors(const Node &s);
 
   Node counterClockwiseNeighbor(const Node &s, const Node &s_prime);
-
   Node clockwiseNeighbor(const Node &s, const Node &s_prime);
-
-  float getTraversalCost(const Cell &ind);
-
-  float euclideanHeuristic(const Node &s);
-
-  std::vector<Node> getNodesAroundCell(const Cell &cell);
-  void updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h);
 
   int occupancy_threshold_uchar_ = 254;
 
-  float euclideanHeuristic(const Position &s);
   static Cell getCell(const Node &a, const Node &b, const Node &c);
   static std::vector<Position> getGridBoundariesTraversals(const Position &a, const Position &b);
+
 };
 
 #endif  // GRAPHSEARCH_H

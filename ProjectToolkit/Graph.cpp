@@ -8,10 +8,16 @@ void Graph::setOccupancyThreshold(float occupancy_threshold) {
 }
 
 //TODO should be parameter of type Pos (most generic)
-void Graph::setGoal(const Node &goal) {
-    this->goal_node_ = goal;
-    this->goal_cell_ = {goal.x, goal.y};
-    this->goal_pos_ = {(float)goal.x, (float)goal.y};
+void Graph::setStart(const Position &start) {
+    this->start_pos_ = start;
+    this->start_cell_ = {(int)std::floor(start.x), (int)std::floor(start.y)};
+    this->start_node_ = {(int)std::round(start.x), (int)std::round(start.y)};
+}
+
+void Graph::setGoal(const Position &goal) {
+    this->goal_pos_ = goal;
+    this->goal_cell_ = {(int)std::floor(goal.x), (int)std::floor(goal.y)};
+    this->goal_node_ = {(int)std::round(goal.x), (int)std::round(goal.y)};
 }
 
 void Graph::initializeGraph(std::shared_ptr<uint8_t[]> image, int width, int length) {
@@ -52,14 +58,6 @@ bool Graph::isValid(const Cell &c) {
     return (c.x >= 0) && (c.x < length_) && (c.y >= 0) && (c.y < width_);
 }
 
-bool Graph::unaligned(const Node &s, const Node &sp) {
-    return ((s.x != sp.x) && (s.y != sp.y));
-}
-
-bool Graph::unaligned(const Position &p, const Position &sp) {
-    return ((p.x != sp.x) && (p.y != sp.y));
-}
-
 std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) {
     std::vector<Node> neighbors;
     neighbors.reserve(8);
@@ -68,7 +66,7 @@ std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) {
     // maybe optimizable then?
 
     // right
-    auto r = s.rightNode();
+    Node r(s.x + 1, s.y);
     if (include_invalid || isValid(r))
         neighbors.push_back(std::move(r));
 
@@ -228,27 +226,6 @@ float Graph::getTraversalCost(const Cell &c) {
     return (cost >= occupancy_threshold_uchar_) ? INFINITY : (float)cost;
 }
 
-float Graph::euclideanHeuristic(const Node &s) {
-    return std::hypot(start_pos_.x - (float)s.x, start_pos_.y - (float)s.y);
-}
-
-float Graph::euclideanHeuristic(const Position &s) {
-    return std::hypot(start_pos_.x - s.x, start_pos_.y - s.y);
-}
-
-std::vector<Node> Graph::getNodesAroundCell(const Cell &cell) {
-    auto top = cell.x;
-    auto left = cell.y;
-    auto bottom = top + 1;
-    auto right = left + 1;
-
-    top = std::max(top, 0);
-    left = std::max(left, 0);
-    bottom = std::min(bottom, length_ - 1);
-    right = std::min(right, width_ - 1);
-
-    return {{top, left}, {top, right}, {bottom, left}, {bottom, right}};
-}
 std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) {
     std::vector<Cell> neighbors;
     neighbors.reserve(4);
@@ -341,6 +318,9 @@ Cell Node::neighborCell(bool bottom_TOP, bool left_RIGHT) const{
         return left_RIGHT ? cellTopRight() : cellTopLeft();
     else
         return left_RIGHT ? cellBottomRight() : cellBottomLeft();
+}
+std::vector<Cell> Node::cells() const {
+    return {cellTopLeft(), cellTopRight(), cellBottomLeft(), cellBottomRight()};
 }
 
 Cell Graph::getCell(const Node &a, const Node &b, const Node &c){

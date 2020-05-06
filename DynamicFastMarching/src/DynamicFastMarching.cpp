@@ -80,7 +80,7 @@ bool DFMPlanner::isVertex(const Position &p) {
 }
 
 DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s) {
-    auto[g, rhs] = map.getKey(s);
+    auto[g, rhs] = map.getGandRHS(s);
     return calculateKey(s, g, rhs);
 }
 
@@ -109,7 +109,7 @@ void DFMPlanner::initializeSearch() {
 bool DFMPlanner::end_condition() {
     auto top_key = priority_queue.topKey();
     for (auto &node: start_nodes) {
-        auto[g, rhs] = map.getKey(node);
+        auto[g, rhs] = map.getGandRHS(node);
         if ((top_key < calculateKey(node, g, rhs)) or (rhs > g)) {
             return false;
         }
@@ -393,7 +393,7 @@ void DFMPlanner::constructOptimalPath() {
             break;
         s = Position(s.x - alpha * sgx, s.y - alpha * sgy);
         total_dist += std::hypot(path_.back().x - s.x, path_.back().y - s.y);
-        auto pp = getGridBoundariesTraversals(path_.back(), s);
+        auto pp = grid.getGridBoundariesTraversals(path_.back(), s);
         step_cost = computePathAdditionsCost(pp);
         total_cost += step_cost;
         path_.push_back(s);
@@ -401,7 +401,7 @@ void DFMPlanner::constructOptimalPath() {
         ++curr_step;
         if (curr_step == 347) return;
     }
-    auto pp = getGridBoundariesTraversals(s, grid.goal_pos_);
+    auto pp = grid.getGridBoundariesTraversals(s, grid.goal_pos_);
     step_cost = computePathAdditionsCost(pp);
     total_cost += step_cost;
     total_dist += std::hypot(s.x - grid.goal_pos_.x, s.y - grid.goal_pos_.y);
@@ -445,58 +445,6 @@ float DFMPlanner::computePathAdditionsCost(const std::vector<Position> &p) {
     return cost;
 }
 
-std::vector<Position> DFMPlanner::getGridBoundariesTraversals(const Position &a, const Position &b) {
-    std::vector<Position> xsplit;
-    const Position &low_x = a.x < b.x ? a : b;
-    const Position &high_x = a.x < b.x ? b : a;
-    float x_min = low_x.x;
-    float x_max = high_x.x;
-    float x_cur = std::floor(x_min + 1);
-    xsplit.push_back(low_x);
-    assert(!std::isnan(xsplit.back().x) and !std::isnan(xsplit.back().y));
-
-    if ((b.x - a.x) != 0) {
-        //y=mx+q
-        float m = (b.y - a.y) / (b.x - a.x);
-        float q = a.y - m * a.x;
-        while (x_cur < x_max) {
-            xsplit.emplace_back(x_cur, x_cur * m + q);
-            assert(!std::isnan(xsplit.back().x) and !std::isnan(xsplit.back().y));
-            ++x_cur;
-        }
-    }
-    xsplit.push_back(high_x);
-    assert(!std::isnan(xsplit.back().x) and !std::isnan(xsplit.back().y));
-
-    if (low_x.y > high_x.y) std::reverse(xsplit.begin(), xsplit.end());
-    std::vector<Position> ysplit;
-    for (auto xp = xsplit.begin(); xp < xsplit.end() - 1; ++xp) {
-        const Position &low_y = *xp;
-        const Position &high_y = *(xp + 1);
-        float y_min = low_y.y;
-        float y_max = high_y.y;
-        float y_cur = std::floor(y_min + 1);
-        ysplit.push_back(low_y);
-        assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
-        if ((b.x - a.x) != 0) {
-            while (y_cur < y_max) {
-                float m = (b.y - a.y) / (b.x - a.x);
-                float q = a.y - m * a.x;
-                ysplit.emplace_back((y_cur - q) / m, y_cur), ++y_cur;
-                assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
-            }
-        } else {
-            while (y_cur < y_max) {
-                ysplit.emplace_back(a.x, y_cur), ++y_cur;
-                assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
-            }
-        }
-    }
-    ysplit.push_back(xsplit.back());
-    assert(!std::isnan(ysplit.back().x) and !std::isnan(ysplit.back().y));
-    return ysplit;
-}
-
 bool DFMPlanner::goalReached(const Position &p) {
     return grid.goal_cell_.x == p.x && grid.goal_cell_.y == p.y;
 }
@@ -525,7 +473,7 @@ DFMPlanner::ExpandedMap::insert_or_assign(const Cell &s, float g, float rhs) {
     }
 }
 
-DFMPlanner::Queue::Key DFMPlanner::ExpandedMap::getKey(const Cell &s) {
+std::pair<float, float> DFMPlanner::ExpandedMap::getGandRHS(const Cell &s) {
     ExpandedMap::iterator it;
     if ((it = find(s)) != end())
         return {G(it), RHS(it)};
@@ -550,7 +498,7 @@ float DFMPlanner::ExpandedMap::getRHS(const Cell &s) {
 }
 
 bool DFMPlanner::consistent(const Cell &s) {
-    auto[g, rhs] = map.getKey(s);
+    auto[g, rhs] = map.getGandRHS(s);
     return g == rhs;
 }
 
@@ -558,8 +506,7 @@ bool DFMPlanner::consistent(const ExpandedMap::iterator &it) {
     return G(it) == RHS(it);
 }
 void DFMPlanner::set_start(const Position &pos) {
-    grid.start_pos_ = pos; //TODO move start_pos in grid also for FD* ??? major refactor needed
-    grid.start_cell_ = Cell(pos);
+    grid.setStart(pos);
     start_nodes = {Node(pos).cellTopRight(), Node(pos).cellTopLeft(), Node(pos).cellBottomRight(), Node(pos).cellBottomLeft()};
     new_start = true;
 }

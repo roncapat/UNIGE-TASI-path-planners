@@ -49,7 +49,7 @@ class FieldDPlanner {
     iterator insert_or_assign(const Node &s, float g, float rhs);
     float getG(const Node &s);
     float getRHS(const Node &s);
-    Queue::Key getKey(const Node &s);
+    std::pair<float, float> getGandRHS(const Node &s);
   };
 
   static inline const Node &NODE(const ExpandedMap::iterator &map_it) { return (map_it)->first; }
@@ -60,13 +60,6 @@ class FieldDPlanner {
   ExpandedMap map;
 
  private:
-  class path_additions {
-   public:
-    std::vector<Position> steps;
-    std::vector<float> stepcosts;
-    float cost_to_goal;
-  };
-
   unsigned long num_nodes_updated = 0;
   unsigned long num_nodes_expanded = 0;
 

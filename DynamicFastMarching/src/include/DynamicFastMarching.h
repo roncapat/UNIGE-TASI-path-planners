@@ -8,15 +8,11 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <boost/mpl/pair.hpp>
 #include <utility>
 
 #include "Graph.h"
 #include "PriorityQueue.h"
-
-extern const float SQRT2;
-#define SQUARE(x) ((x)*(x))
-#define CATH(x, y) std::sqrt(SQUARE((x))- SQUARE((y)))
+#include "Macros.h"
 
 #define LOOP_OK 0
 #define LOOP_FAILURE_NO_GRAPH -1
@@ -53,7 +49,7 @@ class DFMPlanner {
     iterator insert_or_assign(const Cell &s, float g, float rhs);
     float getG(const Cell &s);
     float getRHS(const Cell &s);
-    Queue::Key getKey(const Cell &s);
+    std::pair<float, float> getGandRHS(const Cell &s);
   };
 
   static inline const Cell &CELL(const ExpandedMap::iterator &map_it) { return (map_it)->first; }
@@ -104,9 +100,7 @@ class DFMPlanner {
   std::tuple<float, float> gradientAtCell(const Cell __c);
   std::pair<std::shared_ptr<float[]>, std::shared_ptr<float[]>> costMapGradient();
   std::tuple<float, float> interpolateGradient(const Position &c);
-  std::tuple<float, float> interpolateCost(const Position &c);
   float computePathAdditionsCost(const std::vector<Position> &p);
-  std::vector<Position> getGridBoundariesTraversals(const Position &a, const Position &b);
 };
 
 #endif
