@@ -23,6 +23,7 @@ class Position : public std::pair<float, float> {
   Position(float x, float y);
   Position(const Position &other);
   Position(const Node &n); //Allow implicit cast to broader concept
+  explicit Position(const Cell &n); //Center of cell
   explicit Position(const std::pair<float, float> &other);
   Position &operator=(const Position &other);
   [[nodiscard]] float distance(const Position &n) const {
@@ -43,7 +44,7 @@ class Node : public std::pair<int, int> {
   Node(int x, int y);
   Node(const Node &other);
   explicit Node(const std::pair<int, int> &other);
-  explicit Node(const Position &n);
+  explicit Node(const Position &n);  //Round to nearest node
   Node &operator=(const Node &other);
   bool isValid() const;
   void setValidity(bool is_valid);
@@ -91,6 +92,7 @@ class Cell : public std::pair<int, int> {
   [[nodiscard]] inline Node topRightNode() const { return Node(x + 1, y); }
   [[nodiscard]] inline Node bottomLeftNode() const { return Node(x, y + 1); }
   [[nodiscard]] inline Node bottomRightNode() const { return Node(x + 1, y + 1); }
+  [[nodiscard]] inline Position centerPosition() const {return Position(x+0.5f, y+0.5f);}
   [[nodiscard]] inline std::vector<Node> corners() const {
       return {topLeftNode(), topRightNode(), bottomLeftNode(), bottomRightNode()};
   }

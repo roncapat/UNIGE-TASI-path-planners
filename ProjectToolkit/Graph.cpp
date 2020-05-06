@@ -315,6 +315,7 @@ Position &Position::operator=(const Position &other) {
     y = other.y;
     return *this;
 }
+Position::Position(const Cell &n): Position(std::move(n.centerPosition())) {}
 
 Node::Node(bool valid) : valid(valid) {}
 Node::Node(int x, int y) {
@@ -324,8 +325,8 @@ Node::Node(int x, int y) {
 Node::Node(const Node &other) : pair(other) {}
 Node::Node(const std::pair<int, int> &other) : pair(other) {}
 Node::Node(const Position &n) {
-    x = static_cast<int>(roundf(n.x));
-    y = static_cast<int>(roundf(n.y));
+    x = static_cast<int>(std::roundf(n.x));
+    y = static_cast<int>(std::roundf(n.y));
 }
 Node &Node::operator=(const Node &other) {
     if (this == &other) return *this;

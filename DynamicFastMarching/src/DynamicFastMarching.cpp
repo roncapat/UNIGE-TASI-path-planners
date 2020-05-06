@@ -7,7 +7,8 @@
 #include <memory>
 #include <tuple>
 #include <utility>
-#include <interpolation.h>
+#include <LinearTraversalCostInterpolation.h>
+#include <Interpolation.h>
 
 const float SQRT2 = 1.41421356237309504880168872420969807856967187537694f;
 
@@ -55,8 +56,8 @@ int DFMPlanner::step() {
 
 
     //computeRoughtPath();
-    computeRoughtPath(true);
-    //computeInterpolatedPath();
+    //computeRoughtPath(true);
+    computeInterpolatedPath();
     //constructOptimalPath();
 
 
@@ -167,33 +168,6 @@ std::pair<std::shared_ptr<float[]>, std::shared_ptr<float[]>> DFMPlanner::costMa
         }
     }
     return {_gh, _gv};
-}
-
-//https://helloacm.com/cc-function-to-compute-the-bilinear-interpolation/
-float
-BilinearInterpolation(float q11,
-                      float q12,
-                      float q21,
-                      float q22,
-                      float x1,
-                      float x2,
-                      float y1,
-                      float y2,
-                      float x,
-                      float y) {
-    float x2x1, y2y1, x2x, y2y, yy1, xx1;
-    x2x1 = x2 - x1;
-    y2y1 = y2 - y1;
-    x2x = x2 - x;
-    y2y = y2 - y;
-    yy1 = y - y1;
-    xx1 = x - x1;
-    return 1.0 / (x2x1 * y2y1) * (
-        q11 * x2x * y2y +
-            q21 * xx1 * y2y +
-            q12 * x2x * yy1 +
-            q22 * xx1 * yy1
-    );
 }
 
 std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c) {
@@ -648,6 +622,10 @@ void DFMPlanner::computeInterpolatedPath() {
     std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
 }
 
+//TODO consider p0, p1 p2 center of cells. Interpolate traversabilities
+// for obstacles, it is possible to still use a traversable average, since
+// at least one of s1 and s2 will have g=inf (thus interpolation degenerates towards
+// the other one, which should be limited).
 void DFMPlanner::getBC(TraversalParams &t) {
     Cell cell_ind_b, cell_ind_c;
 
@@ -677,8 +655,8 @@ path_additions DFMPlanner::traversalFromCorner(const Position &p,
 
     assert(cell.p0.aligned(cell.p1));
     assert(not cell.p0.aligned(cell.p2));
-    cell.g1 = getInterpRHS(cell.p1);
-    cell.g2 = getInterpRHS(cell.p2);
+    cell.g1 = map.getRHS(Cell(cell.p1));
+    cell.g2 = map.getRHS(Cell(cell.p2));
     getBC(cell);
 
     return InterpolatedTraversal::traversalFromCorner(cell, step_cost);
@@ -697,8 +675,8 @@ path_additions DFMPlanner::traversalFromContiguousEdge(const Position &p,
     assert(cell1.p0.aligned(cell1.p1));
     assert(not cell1.p0.aligned(cell1.p2));
 
-    cell1.g1 = getInterpRHS(cell1.p1);
-    cell1.g2 = getInterpRHS(cell1.p2);
+    cell1.g1 = map.getRHS(Cell(cell1.p1));
+    cell1.g2 = map.getRHS(Cell(cell1.p2));
     getBC(cell1);
     cell1.q = 1 - std::abs(cell1.p1.y - p.y) - std::abs(cell1.p1.x - p.x);
 
@@ -728,8 +706,8 @@ path_additions DFMPlanner::traversalFromOppositeEdge(const Position &p,
         cell2.p0.x = p_b.x;
     }
 
-    cell1.g1 = cell2.g2 = getInterpRHS(cell1.p1);
-    cell1.g2 = cell2.g1 = getInterpRHS(cell1.p2);
+    cell1.g1 = cell2.g2 = map.getRHS(Cell(cell1.p1));
+    cell1.g2 = cell2.g1 = map.getRHS(Cell(cell1.p2));
 
     getBC(cell1);
     getBC(cell2);
@@ -826,3 +804,4 @@ path_additions DFMPlanner::getPathAdditions(const Position &p,
     #endif
     return min_pa;
 }
+

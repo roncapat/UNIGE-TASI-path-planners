@@ -5,7 +5,7 @@
 #include <numeric>
 #include <algorithm>
 #include "Graph.h"
-#include "interpolation.h"
+#include "LinearTraversalCostInterpolation.h"
 
 namespace TraversalTypeI {
 namespace Corner {

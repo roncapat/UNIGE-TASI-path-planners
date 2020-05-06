@@ -9,7 +9,7 @@
 #include <unordered_set>
 #include <vector>
 #include <utility>
-#include <interpolation.h>
+#include <LinearTraversalCostInterpolation.h>
 
 #include "Graph.h"
 #include "PriorityQueue.h"

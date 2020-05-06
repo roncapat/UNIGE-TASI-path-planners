@@ -4,4 +4,5 @@ include_directories(include)
 add_library(ProjectToolkit STATIC
             Graph.cpp
             Macros.cpp
-            interpolation.cpp)
+            LinearTraversalCostInterpolation.cpp
+            Interpolation.cpp)

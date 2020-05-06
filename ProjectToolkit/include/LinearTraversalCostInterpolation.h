@@ -4,8 +4,8 @@
 
 #include "Graph.h"
 #include "Macros.h"
-#ifndef RONCAPAT_GLOBAL_PLANNERS_INTERPOLATION_H
-#define RONCAPAT_GLOBAL_PLANNERS_INTERPOLATION_H
+#ifndef RONCAPAT_GLOBAL_PLANNERS_TRAVERSAL_INTERPOLATION_H
+#define RONCAPAT_GLOBAL_PLANNERS_TRAVERSAL_INTERPOLATION_H
 
 struct TraversalParams {
   Position p0;
@@ -171,4 +171,4 @@ path_additions traversalFromOppositeEdge(TraversalParams &cell1,
                                          float &step_cost);
 }
 
-#endif //RONCAPAT_GLOBAL_PLANNERS_INTERPOLATION_H
+#endif //RONCAPAT_GLOBAL_PLANNERS_TRAVERSAL_INTERPOLATION_H

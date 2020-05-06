@@ -11,7 +11,7 @@
 
 #include "Graph.h"
 #include "PriorityQueue.h"
-#include "interpolation.h"
+#include "LinearTraversalCostInterpolation.h"
 
 #define LOOP_OK 0
 #define LOOP_FAILURE_NO_GRAPH -1
