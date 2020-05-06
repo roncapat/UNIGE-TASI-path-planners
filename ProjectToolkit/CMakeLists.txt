@@ -3,4 +3,5 @@ include_directories(SYSTEM ../BoostHeap)
 include_directories(include)
 add_library(ProjectToolkit STATIC
             Graph.cpp
-            Macros.cpp)
+            Macros.cpp
+            interpolation.cpp)

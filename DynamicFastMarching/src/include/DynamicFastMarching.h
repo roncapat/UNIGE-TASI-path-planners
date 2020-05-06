@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <vector>
 #include <utility>
+#include <interpolation.h>
 
 #include "Graph.h"
 #include "PriorityQueue.h"
@@ -60,13 +61,6 @@ class DFMPlanner {
   ExpandedMap map;
 
  private:
-  class path_additions {
-   public:
-    std::vector<Position> steps;
-    std::vector<float> stepcosts;
-    float cost_to_goal;
-  };
-
   unsigned long num_cells_updated = 0;
   unsigned long num_nodes_expanded = 0;
 
@@ -102,6 +96,19 @@ class DFMPlanner {
   std::tuple<float, float> interpolateGradient(const Position &c);
   float computePathAdditionsCost(const std::vector<Position> &p);
   void computeRoughtPath();
+  float getInterpRHS(const Node &node);
+  float getInterpG(const Node &node);
+  void computeInterpolatedPath();
+  void getBC(TraversalParams &t);
+  path_additions traversalFromCorner(const Position &p,
+                                                 const Node &p_a,
+                                                 const Node &p_b,
+                                                 float &step_cost);
+  path_additions traversalFromEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
+  path_additions getPathAdditions(const Position &p, const bool &do_lookahead, float &step_cost);
+  bool lookahead = true;
+  path_additions traversalFromOppositeEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
+  path_additions traversalFromContiguousEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
 };
 
 #endif
