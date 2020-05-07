@@ -724,8 +724,8 @@ path_additions DFMPlanner::traversalFromEdge(const Position &p,
 
     assert(!isVertex(p));
 
-    bool cond_1 = (p.x == p_a.x || p.y == p_a.y);
-    bool cond_2 = (p.x == p_b.x || p.y == p_b.y);
+    bool cond_1 = p.aligned(p_a);
+    bool cond_2 = p.aligned(p_b);
     if (cond_1 || cond_2) {
         assert(cond_1 xor cond_2);
         return traversalFromContiguousEdge(p, p_a, p_b, step_cost);
@@ -763,7 +763,7 @@ path_additions DFMPlanner::getPathAdditions(const Position &p,
                   << "X:" << p_b.x << ", Y:" << p_b.y
                   << ", G:" << getInterpG(p_b) << ", RHS:" << getInterpRHS(p_b)
                   << " || cost: " << temp_pa.cost_to_goal << std::endl;
-        for (auto addition: temp_pa.steps) {
+        for (const auto& addition: temp_pa.steps) {
             if (lookahead and not do_lookahead) std::cout << "\t";
             std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl;
         }
@@ -796,7 +796,7 @@ path_additions DFMPlanner::getPathAdditions(const Position &p,
     if (lookahead and not do_lookahead) std::cout << "\t";
     std::cout << "Final choice for X:" << std::to_string(p.x) << ", Y:" << std::to_string(p.y)
               << " || cost: " << std::to_string(min_pa.cost_to_goal) << std::endl;
-    for (auto addition: min_pa.steps) {
+    for (const auto& addition: min_pa.steps) {
         if (lookahead and not do_lookahead) std::cout << "\t";
         std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl
                   << std::endl;
