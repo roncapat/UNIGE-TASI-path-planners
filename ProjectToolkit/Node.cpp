@@ -11,7 +11,7 @@ Node::Node(int x, int y) {
     this->x = x;
     this->y = y;
 }
-Node::Node(const Node &other) : x(other.x), y(other.y) {}
+Node::Node(const Node &other) : x(other.x), y(other.y), valid(other.valid) {}
 Node::Node(const std::pair<int, int> &other) : x(other.first), y(other.second) {}
 Node::Node(const Position &n) {
     x = static_cast<int>(std::roundf(n.x));

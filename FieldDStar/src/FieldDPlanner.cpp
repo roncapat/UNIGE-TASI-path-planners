@@ -30,6 +30,7 @@ int FieldDPlanner::step() {
             // Only heuristic changes, so either G or RHS is kept the same
             new_queue.insert(elem.elem, calculateKey(elem.elem, elem.key.second));
         priority_queue.swap(new_queue);
+        //priority_queue.clear();
         // gather cells with updated edge costs and update affected nodes
         updateNodesAroundUpdatedCells();
     }
@@ -179,13 +180,17 @@ bool FieldDPlanner::end_condition() {
     // We need to check expansion until all 4 corners of start cell
     // used early stop from D* LITE
     auto top_key = priority_queue.topKey();
+    Queue::Key max_start_key = {0, 0};
     for (auto &node: start_nodes) {
         auto[g, rhs] = map.getGandRHS(node);
-        if ((top_key < calculateKey(node, g, rhs)) or (rhs > g)) {
-            return false;
-        }
+        auto key = calculateKey(node, g, rhs);
+        if (key.first != INFINITY)
+            max_start_key = std::max(max_start_key, key);
+        if (rhs > g)
+            return false; //Start node underconsistent
     }
-    return true; //STOP: all 4 conditions met
+    if (max_start_key.first == 0) return false; //Start node not reached
+    return max_start_key <= top_key; //Start node surpassed
 }
 
 unsigned long FieldDPlanner::computeShortestPath_0() {
@@ -298,7 +303,7 @@ void FieldDPlanner::constructOptimalPath() {
         min_cost = pa.cost_to_goal;
         step_dist = 0;
         for (auto p = it - 1; p < (path_.end() - 1); ++p) {
-            step_dist += p->distance(*(p+1));
+            step_dist += p->distance(*(p + 1));
         }
         total_cost += step_cost;
         total_dist += step_dist;
