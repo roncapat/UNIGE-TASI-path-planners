@@ -396,7 +396,7 @@ void DFMPlanner::constructOptimalPath() {
 
     float alpha = 0.1;
     auto s = grid.start_pos_;
-    while (std::hypot(grid.goal_pos_.x - s.x, grid.goal_pos_.y - s.y) > 0.8) {
+    while (grid.goal_pos_.distance(s) > 0.8) {
         if (curr_step > max_steps) break;
         auto[sgx, sgy] = interpolateGradient(s);
         #ifdef VERBOSE_EXTRACTION
@@ -408,7 +408,7 @@ void DFMPlanner::constructOptimalPath() {
         if (std::abs(sgx) < 0.0001 && std::abs(sgy) < 0.0001)
             break;
         s = Position(s.x - alpha * sgx, s.y - alpha * sgy);
-        total_dist += std::hypot(path_.back().x - s.x, path_.back().y - s.y);
+        total_dist += path_.back().distance(s);
         auto pp = grid.getGridBoundariesTraversals(path_.back(), s);
         step_cost = computePathAdditionsCost(pp);
         total_cost += step_cost;
@@ -420,7 +420,7 @@ void DFMPlanner::constructOptimalPath() {
     auto pp = grid.getGridBoundariesTraversals(s, grid.goal_pos_);
     step_cost = computePathAdditionsCost(pp);
     total_cost += step_cost;
-    total_dist += std::hypot(s.x - grid.goal_pos_.x, s.y - grid.goal_pos_.y);
+    total_dist += s.distance(grid.goal_pos_);
     path_.push_back(grid.goal_pos_);
     cost_.push_back(step_cost);
     //std::reverse(path_.begin(), path_.end());
@@ -452,7 +452,7 @@ float DFMPlanner::computePathAdditionsCost(const std::vector<Position> &p) {
         } else {
             weight = grid.getTraversalCost(Cell(m.x, m.y));
         }
-        cost += weight * std::hypot(a->x - b->x, a->y - b->y);
+        cost += weight * a->distance(*b);
         //assert(cost != INFINITY);
         assert(!std::isnan(cost));
         assert(cost > 0);
@@ -603,7 +603,7 @@ void DFMPlanner::computeInterpolatedPath() {
         min_cost = pa.cost_to_goal;
         step_dist = 0;
         for (auto p = it - 1; p < (path_.end() - 1); ++p) {
-            step_dist += std::hypot(p->x - (p + 1)->x, p->y - (p + 1)->y);
+            step_dist += p->distance(*(p+1));
         }
         total_cost += step_cost;
         total_dist += step_dist;

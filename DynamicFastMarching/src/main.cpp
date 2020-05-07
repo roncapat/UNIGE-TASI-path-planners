@@ -133,7 +133,7 @@ int main(int _argc, char **_argv) {
         next_point = planner.path_[1];
         float next_idx = 1;
         next_step_cost = planner.cost_[0];
-        while(std::hypot(planner.path_[0].x - next_point.x, planner.path_[0].y - next_point.y)<0.5){
+        while(planner.path_[0].distance(next_point)<0.5){
             if (next_point == goal)
                 break; //Goal reached
             next_step_cost += planner.cost_[next_idx];
