@@ -36,7 +36,11 @@ bool Node::operator!=(const Node &other) const { return not(*this == other); }
 bool Node::isValid() const { return valid; }
 
 Node Node::topNode() const { return Node(x - 1, y); }
+Node Node::topLeftNode() const { return Node(x - 1, y-1); }
+Node Node::topRightNode() const { return Node(x - 1, y+1); }
 Node Node::bottomNode() const { return Node(x + 1, y); }
+Node Node::bottomLeftNode() const { return Node(x + 1, y-1); }
+Node Node::bottomRightNode() const { return Node(x + 1, y+1); }
 Node Node::leftNode() const { return Node(x, y - 1); }
 Node Node::rightNode() const { return Node(x, y + 1); }
 

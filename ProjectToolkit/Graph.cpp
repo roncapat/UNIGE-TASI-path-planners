@@ -6,14 +6,14 @@
 //TODO should be parameter of type Pos (most generic)
 void Graph::setStart(const Position &start) {
     start_pos_ = start;
-    start_cell_ = {(int) std::floor(start.x), (int) std::floor(start.y)};
-    start_node_ = {(int) std::round(start.x), (int) std::round(start.y)};
+    start_cell_ = Cell(start);
+    start_node_ = Node(start);
 }
 
 void Graph::setGoal(const Position &goal) {
     goal_pos_ = goal;
-    goal_cell_ = {(int) std::floor(goal.x), (int) std::floor(goal.y)};
-    goal_node_ = {(int) std::round(goal.x), (int) std::round(goal.y)};
+    goal_cell_ = Cell(goal);;
+    goal_node_ = Node(goal);
 }
 
 void Graph::setOccupancyThreshold(float occupancy_threshold) {
@@ -29,8 +29,12 @@ void Graph::initializeGraph(std::shared_ptr<uint8_t[]> image, int width, int len
     map_ = std::move(image);
 }
 
+uint8_t &Graph::get(int x, int y) {
+    return map_.get()[x * width_ + y];
+}
+
 void Graph::updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h) {
-    updated_cells_.clear();  // clear the vector of cells that need updating
+    updated_cells_.clear();
     assert(x >= 0);
     assert(y >= 0);
     assert((x + h - 1) < length_);
@@ -38,10 +42,10 @@ void Graph::updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, i
 
     for (int i = 0; i < h; ++i) {
         for (int j = 0; j < w; ++j) {
-            if (map_.get()[(i + x) * width_ + (y + j)] != patch.get()[i * w + j]) {
-                updated_cells_.emplace_back(x + i, y + j);
-            }
-            map_.get()[(i + x) * width_ + (y + j)] = patch.get()[i * w + j];
+            auto &mv = get(i + x, j + y);
+            auto pv = patch.get()[i * w + j];
+            if (mv != pv) updated_cells_.emplace_back(x + i, y + j);
+            mv = pv;
         }
     }
 }
@@ -59,126 +63,50 @@ bool Graph::isValid(const Cell &c) {
 }
 
 std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) {
-    std::vector<Node> neighbors;
-    neighbors.reserve(8);
+    std::vector<Node> neighbors{
+        s.topNode(), s.topLeftNode(), s.leftNode(), s.bottomLeftNode(),
+        s.bottomNode(), s.bottomRightNode(), s.rightNode(), s.topRightNode()
+    };
 
-    //TODO reason: if top left is invalid, bottom right is valid (as an example)
-    // maybe optimizable then?
-
-    // right
-    Node r(s.x + 1, s.y);
-    if (include_invalid || isValid(r))
-        neighbors.push_back(std::move(r));
-
-    //TODO use Node methods or create missing ones eg. .topRightNode()
-    // top right
-    Node tr(s.x + 1, s.y + 1);
-    if (include_invalid || isValid(tr))
-        neighbors.push_back(std::move(tr));
-
-    // above
-    Node t(s.x, s.y + 1);
-    if (include_invalid || isValid(t))
-        neighbors.push_back(std::move(t));
-
-    // top left
-    Node tl(s.x - 1, s.y + 1);
-    if (include_invalid || isValid(tl))
-        neighbors.push_back(std::move(tl));
-
-    // left
-    Node l(s.x - 1, s.y);
-    if (include_invalid || isValid(l))
-        neighbors.push_back(std::move(l));
-
-    // bottom left
-    Node bl(s.x - 1, s.y - 1);
-    if (include_invalid || isValid(bl))
-        neighbors.push_back(std::move(bl));
-
-    // bottom
-    Node b(s.x, s.y - 1);
-    if (include_invalid || isValid(b))
-        neighbors.push_back(std::move(b));
-
-    // bottom right
-    Node br(s.x + 1, s.y - 1);
-    if (include_invalid || isValid(br))
-        neighbors.push_back(std::move(br));
+    if (not include_invalid)
+        neighbors.erase(
+            std::remove_if(neighbors.begin(), neighbors.end(),
+                           [&](Node const &p) { return not isValid(p); }),
+            neighbors.end()
+        );
 
     return neighbors;
 }
 
 std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) {
-    std::vector<Cell> neighbors;
-    neighbors.reserve(8);
+    std::vector<Cell> neighbors{
+        s.topCell(), s.topLeftCell(), s.leftCell(), s.bottomLeftCell(),
+        s.bottomCell(), s.bottomRightCell(), s.rightCell(), s.topRightCell()
+    };
 
-    // right
-    auto r = s.rightCell();
-    if (include_invalid || isValid(r))
-        neighbors.push_back(std::move(r));
+    if (not include_invalid)
+        neighbors.erase(
+            std::remove_if(neighbors.begin(), neighbors.end(),
+                           [&](Cell const &p) { return not isValid(p); }),
+            neighbors.end()
+        );
 
-    auto tr = s.topRightCell();
-    if (include_invalid || isValid(tr))
-        neighbors.push_back(std::move(tr));
-
-    // above
-    auto t = s.topCell();
-    if (include_invalid || isValid(t))
-        neighbors.push_back(std::move(t));
-
-    // above
-    auto tl = s.topLeftCell();
-    if (include_invalid || isValid(tl))
-        neighbors.push_back(std::move(tl));
-
-    // left
-    auto l = s.leftCell();
-    if (include_invalid || isValid(l))
-        neighbors.push_back(std::move(l));
-
-    auto bl = s.bottomLeftCell();
-    if (include_invalid || isValid(bl))
-        neighbors.push_back(std::move(bl));
-
-    // bottom
-    auto b = s.bottomCell();
-    if (include_invalid || isValid(b))
-        neighbors.push_back(std::move(b));
-
-    auto br = s.bottomRightCell();
-    if (include_invalid || isValid(br))
-        neighbors.push_back(std::move(br));
-
-    assert(neighbors.size() >= 2);
     return neighbors;
 }
 
 std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) {
-    std::vector<Cell> neighbors;
-    neighbors.reserve(4);
+    std::vector<Cell> neighbors{
+        s.topCell(), s.leftCell(),
+        s.bottomCell(), s.rightCell()
+    };
 
-    // right
-    auto r = s.rightCell();
-    if (include_invalid || isValid(r))
-        neighbors.push_back(std::move(r));
+    if (not include_invalid)
+        neighbors.erase(
+            std::remove_if(neighbors.begin(), neighbors.end(),
+                           [&](Cell const &p) { return not isValid(p); }),
+            neighbors.end()
+        );
 
-    // above
-    auto t = s.topCell();
-    if (include_invalid || isValid(t))
-        neighbors.push_back(std::move(t));
-
-    // left
-    auto l = s.leftCell();
-    if (include_invalid || isValid(l))
-        neighbors.push_back(std::move(l));
-
-    // bottom
-    auto b = s.bottomCell();
-    if (include_invalid || isValid(b))
-        neighbors.push_back(std::move(b));
-
-    assert(neighbors.size() >= 2);
     return neighbors;
 }
 
@@ -309,6 +237,8 @@ Cell Graph::getCell(const Node &a, const Node &b, const Node &c) {
     return cell;
 }
 
+//TODO refactor as vsplit(); loop(hsplit());
+//TODO validate
 std::vector<Position> Graph::getGridBoundariesTraversals(const Position &a, const Position &b) {
     std::vector<Position> xsplit;
     const Position &low_x = a.x < b.x ? a : b;
@@ -317,9 +247,7 @@ std::vector<Position> Graph::getGridBoundariesTraversals(const Position &a, cons
     float x_max = high_x.x;
     float x_cur = std::floor(x_min + 1);
     xsplit.push_back(low_x);
-
     if ((b.x - a.x) != 0) {
-        //y=mx+q
         float m = (b.y - a.y) / (b.x - a.x);
         float q = a.y - m * a.x;
         while (x_cur < x_max) {

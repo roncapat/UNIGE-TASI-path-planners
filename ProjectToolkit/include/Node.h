@@ -27,7 +27,11 @@ class Node {
   [[nodiscard]] bool operator!=(const Node &other) const;
   [[nodiscard]] bool isValid() const;
   [[nodiscard]] Node topNode() const;
+  [[nodiscard]] Node topLeftNode() const;
+  [[nodiscard]] Node topRightNode() const;
   [[nodiscard]] Node bottomNode() const;
+  [[nodiscard]] Node bottomLeftNode() const;
+  [[nodiscard]] Node bottomRightNode() const;
   [[nodiscard]] Node leftNode() const;
   [[nodiscard]] Node rightNode() const;
   [[nodiscard]] Cell cellBottomLeft() const;

@@ -56,6 +56,7 @@ class Graph {
 
   static Cell getCell(const Node &a, const Node &b, const Node &c);
   static std::vector<Position> getGridBoundariesTraversals(const Position &a, const Position &b);
+  uint8_t &get(int x, int y);
 };
 
 #endif  // GRAPHSEARCH_H
