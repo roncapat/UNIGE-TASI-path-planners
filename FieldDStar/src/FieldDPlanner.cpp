@@ -25,12 +25,16 @@ int FieldDPlanner::step() {
         initializeSearch();
     } else if (new_start) {
         new_start = false;
+        priority_queue.clear();
+
+        /*
         Queue new_queue;
         for (const auto &elem: priority_queue)
             // Only heuristic changes, so either G or RHS is kept the same
             new_queue.insert(elem.elem, calculateKey(elem.elem, elem.key.second));
         priority_queue.swap(new_queue);
-        //priority_queue.clear();
+        */
+
         // gather cells with updated edge costs and update affected nodes
         updateNodesAroundUpdatedCells();
     }
