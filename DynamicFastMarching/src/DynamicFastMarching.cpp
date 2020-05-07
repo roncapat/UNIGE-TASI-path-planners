@@ -145,11 +145,11 @@ unsigned long DFMPlanner::computeShortestPath() {
 
         if (G(s_it) > RHS(s_it)) { // Overconsistent
             G(s_it) = RHS(s_it);
-            for (const Cell &nbr : grid.neighbors_4(s))
+            for (const Cell &nbr : grid.neighbors_8(s))
                 updateCell(nbr);
         } else { // Underconsistent
             G(s_it) = INFINITY;
-            for (const Cell &nbr : grid.neighbors_4(s))
+            for (const Cell &nbr : grid.neighbors_8(s))
                 updateCell(nbr);
             updateCell(s);
         }
@@ -306,9 +306,14 @@ void DFMPlanner::updateCell(const Cell &cell) {
 }
 
 float DFMPlanner::computeOptimalCost(const Cell &c) {
+    float tau = grid.getCost(c);
+    if (tau == INFINITY) return INFINITY;
+
+    float stencil_ortho_cost = INFINITY;
+    float stencil_diago_cost = INFINITY;
+
     auto[ca1, g_a_1] = minCost(c.topCell(), c.bottomCell());
     auto[cb1, g_b_1] = minCost(c.leftCell(), c.rightCell());
-
     #ifdef VERBOSE_EXTRACTION
     std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
     std::cout << "X- " << c.topCell().x << " " << c.topCell().y << "   cost " << map.getG(c.topCell()) << std::endl;
@@ -321,14 +326,37 @@ float DFMPlanner::computeOptimalCost(const Cell &c) {
     std::cout << "Y min " << cb1.x << " " << cb1.y << "   cost " << g_b_1 << std::endl;
     #endif
     if (g_a_1 > g_b_1) std::swap(g_a_1, g_b_1);
-    if (g_a_1 == INFINITY and g_b_1 == INFINITY) return INFINITY;
-    if (grid.getCost(c) == INFINITY) return INFINITY;
-    auto tau = grid.getCost(c);
-    if (tau > (g_b_1 - g_a_1)) {
-        return (g_a_1 + g_b_1 + std::sqrt(2 * SQUARE(tau) - SQUARE(g_b_1 - g_a_1))) / 2.0f;
+    if (g_a_1 == INFINITY and g_b_1 == INFINITY) {
+        stencil_ortho_cost = INFINITY;
+    } else if (tau > (g_b_1 - g_a_1)) {
+        stencil_ortho_cost = (g_a_1 + g_b_1 + std::sqrt(2 * SQUARE(tau) - SQUARE(g_b_1 - g_a_1))) / 2.0f;
     } else {
-        return g_a_1 + tau;
+        stencil_ortho_cost = g_a_1 + tau;
     }
+
+    auto[cc1, g_c_1] = minCost(c.topLeftCell(), c.bottomRightCell());
+    auto[cd1, g_d_1] = minCost(c.bottomLeftCell(), c.topRightCell());
+    #ifdef VERBOSE_EXTRACTION
+    std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
+    std::cout << "X-Y- " << c.topLeftCell().x << " " << c.topLeftCell().y << "   cost " << map.getG(c.topLeftCell()) << std::endl;
+    std::cout << "X+Y+ " << c.bottomRightCell().x << " " << c.bottomRightCell().y << "   cost " << map.getG(c.bottomRightCell())
+              << std::endl;
+    std::cout << "X+Y- " << c.bottomLeftCell().x << " " << c.bottomLeftCell().y << "   cost " << map.getG(c.bottomLeftCell()) << std::endl;
+    std::cout << "X-Y+ " << c.topRightCell().x << " " << c.topRightCell().y << "   cost " << map.getG(c.topRightCell())
+              << std::endl;
+    std::cout << "D1 min " << cc1.x << " " << cc1.y << "   cost " << g_c_1 << std::endl;
+    std::cout << "D2 min " << cd1.x << " " << cd1.y << "   cost " << g_d_1 << std::endl;
+    #endif
+    if (g_c_1 > g_d_1) std::swap(g_c_1, g_d_1);
+    if (g_c_1 == INFINITY and g_d_1 == INFINITY) {
+        stencil_diago_cost = INFINITY;
+    } else if (tau > (g_d_1 - g_c_1)) {
+        stencil_diago_cost = (g_c_1 + g_d_1 + std::sqrt(2 * SQUARE(tau * SQRT2) - SQUARE(g_d_1 - g_c_1))) / 2.0f;
+    } else {
+        stencil_diago_cost = g_c_1 + tau * SQRT2;
+    }
+
+    return std::min(stencil_diago_cost, stencil_ortho_cost);
 }
 
 std::pair<Cell, float> DFMPlanner::minCost(const Cell &a, const Cell &b) {
@@ -651,8 +679,10 @@ void DFMPlanner::getBC(TraversalParams &t) {
         cc = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y > t.p1.y);
     }
 
-    std::vector b {grid.getCost(cb), grid.getCost(cb.rightCell()), grid.getCost(cb.bottomCell()), grid.getCost(cb.bottomRightCell())};
-    std::vector c {grid.getCost(cc), grid.getCost(cc.rightCell()), grid.getCost(cc.bottomCell()), grid.getCost(cc.bottomRightCell())};
+    std::vector b{grid.getCost(cb), grid.getCost(cb.rightCell()), grid.getCost(cb.bottomCell()),
+                  grid.getCost(cb.bottomRightCell())};
+    std::vector c{grid.getCost(cc), grid.getCost(cc.rightCell()), grid.getCost(cc.bottomCell()),
+                  grid.getCost(cc.bottomRightCell())};
 
     //t.b = std::accumulate(b.begin(), b.end(), 0)/4;
     //t.c = std::accumulate(c.begin(), c.end(), 0)/4;
