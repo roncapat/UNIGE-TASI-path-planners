@@ -69,8 +69,11 @@ int main(int _argc, char **_argv) {
         std::cout << "[PLANNER]   New position: [" << next_point.x << ", " << next_point.y << "]" << std::endl;
         ack = 1;
         out_fifo.write((char *) &ack, 1);
-        out_fifo.write((char *) &(next_point.x), 4);
-        out_fifo.write((char *) &(next_point.y), 4);
+        Position p = next_point; p.x+=0.5f; p.y+=0.5f;
+        out_fifo.write((char *) &(p.x), 4);
+        out_fifo.write((char *) &(p.y), 4);
+//        out_fifo.write((char *) &(next_point.x), 4);
+//        out_fifo.write((char *) &(next_point.y), 4);
         out_fifo.write((char *) &(next_step_cost), 4);
         out_fifo.flush();
         ack = -1;
@@ -101,8 +104,10 @@ int main(int _argc, char **_argv) {
         auto path_size = (int) planner.path_.size();
         out_fifo.write((char *) &path_size, 4);
         for (const auto &pose : planner.path_) {
-            out_fifo.write((char *) &(pose.x), 4);
-            out_fifo.write((char *) &(pose.y), 4);
+            //TODO remove 0.5 if not necessary
+            Position p = pose; p.x+=0.5f; p.y+=0.5f;
+            out_fifo.write((char *) &(p.x), 4);
+            out_fifo.write((char *) &(p.y), 4);
         }
         out_fifo.flush();
         for (const auto &step_cost: planner.cost_) {

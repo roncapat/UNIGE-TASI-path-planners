@@ -219,10 +219,10 @@ Node Graph::clockwiseNeighbor(const Node &s, const Node &sp) {
     return isValid(c_neighbor) ? c_neighbor : Node{false};
 }
 
-float Graph::getTraversalCost(const Cell &c) {
-    if (!isValid(c))
+float Graph::getCost(const Cell &ind) {
+    if (!isValid(ind))
         return INFINITY;
-    auto cost = map_[c.x * width_ + c.y];
+    auto cost = map_[ind.x * width_ + ind.y];
     return (cost >= occupancy_threshold_uchar_) ? INFINITY : (float) cost;
 }
 

@@ -120,8 +120,8 @@ bool DFMPlanner::end_condition() {
     auto top_key = priority_queue.topKey();
     auto[g, rhs] = map.getGandRHS(grid.start_cell_);
     if ((top_key < calculateKey(grid.start_cell_, g, rhs)) or (rhs > g)) {
-            return false;
-        }
+        return false;
+    }
     return true; //STOP: all 4 conditions met
 }
 
@@ -133,9 +133,12 @@ unsigned long DFMPlanner::computeShortestPath() {
     while ((not priority_queue.empty()) and not end_condition()) {
         // Pop head of queue
         Cell s = priority_queue.topValue();
+        Queue::Key k = priority_queue.topKey();
+        #ifdef VERBOSE_EXTRACTION
+        std::cout << "POP    " << s.x << " " << s.y << "   KEY " << k.first << " " << k.second << std::endl;
+        #endif
         priority_queue.pop();
         ++expanded;
-        //std::cout << "POP    " << s.x << " " << s.y << std::endl;
         // Get reference to the node
         auto s_it = map.find(s);
         assert(s_it != map.end());
@@ -191,10 +194,10 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c) {
         ++y1, ++y2;
     }
 
-    auto [blv, blh] = gradientAtCell({x1, y1});
-    auto [tlv, tlh] = gradientAtCell({x1, y2});
-    auto [brv, brh] = gradientAtCell({x2, y1});
-    auto [trv, trh] = gradientAtCell({x2, y2});
+    auto[blv, blh] = gradientAtCell({x1, y1});
+    auto[tlv, tlh] = gradientAtCell({x1, y2});
+    auto[brv, brh] = gradientAtCell({x2, y1});
+    auto[trv, trh] = gradientAtCell({x2, y2});
     #ifdef VERBOSE_EXTRACTION
     std::cout << "Interpolating gradient for (" << c.x << ", " << c.y << ")" << std::endl;
     std::cout << "Cells (x,y):\n"
@@ -204,15 +207,23 @@ std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c) {
               << "\t(" << blh << ", " << blv << ")" << "\t\t(" << tlh << ", " << tlv << ")\n\n"
               << "\t(" << brh << ", " << brv << ")" << "\t\t(" << trh << ", " << trv << ")\n";
     std::cout << "G-values (u):\n"
-              << "\t" << map.getG({x1-1, y1-1}) << "\t\t" << map.getG({x1-1, y1}) << "\t\t"  << map.getG({x1-1, y2}) << "\t\t"<< map.getG({x1-1, y2+1}) << "\n"
-              << "\t" << map.getG({x1, y1-1}) << "\t\t" << map.getG({x1, y1}) << "\t\t"  << map.getG({x1, y2}) << "\t\t"  << map.getG({x1, y2+1}) << "\n"
-              << "\t" << map.getG({x2, y1-1}) << "\t\t" << map.getG({x2, y1}) << "\t\t"  << map.getG({x2, y2}) << "\t\t"  << map.getG({x2, y2+1}) << "\n"
-              << "\t" << map.getG({x2+1, y1-1}) << "\t\t" << map.getG({x2+1, y1}) << "\t\t"  << map.getG({x2+1, y2})  << "\t\t"<< map.getG({x2+1, y2+1}) << "\n";
+              << "\t" << map.getG({x1 - 1, y1 - 1}) << "\t\t" << map.getG({x1 - 1, y1}) << "\t\t"
+              << map.getG({x1 - 1, y2}) << "\t\t" << map.getG({x1 - 1, y2 + 1}) << "\n"
+              << "\t" << map.getG({x1, y1 - 1}) << "\t\t" << map.getG({x1, y1}) << "\t\t" << map.getG({x1, y2})
+              << "\t\t" << map.getG({x1, y2 + 1}) << "\n"
+              << "\t" << map.getG({x2, y1 - 1}) << "\t\t" << map.getG({x2, y1}) << "\t\t" << map.getG({x2, y2})
+              << "\t\t" << map.getG({x2, y2 + 1}) << "\n"
+              << "\t" << map.getG({x2 + 1, y1 - 1}) << "\t\t" << map.getG({x2 + 1, y1}) << "\t\t"
+              << map.getG({x2 + 1, y2}) << "\t\t" << map.getG({x2 + 1, y2 + 1}) << "\n";
     std::cout << "RHS-values (u):\n"
-        << "\t" << map.getRHS({x1-1, y1-1}) << "\t\t" << map.getRHS({x1-1, y1}) << "\t\t"  << map.getRHS({x1-1, y2})  << "\t\t"<< map.getRHS({x1-1, y2+1}) << "\n"
-        << "\t" << map.getRHS({x1, y1-1}) << "\t\t" << map.getRHS({x1, y1}) << "\t\t"  << map.getRHS({x1, y2}) << "\t\t"  << map.getRHS({x1, y2+1}) << "\n"
-        << "\t" << map.getRHS({x2, y1-1}) << "\t\t" << map.getRHS({x2, y1}) << "\t\t"  << map.getRHS({x2, y2}) << "\t\t"  << map.getRHS({x2, y2+1}) << "\n"
-        << "\t" << map.getRHS({x2+1, y1-1}) << "\t\t" << map.getRHS({x2+1, y1}) << "\t\t"  << map.getRHS({x2+1, y2}) << "\t\t" << map.getRHS({x2+1, y2+1})<< "\n";
+              << "\t" << map.getRHS({x1 - 1, y1 - 1}) << "\t\t" << map.getRHS({x1 - 1, y1}) << "\t\t"
+              << map.getRHS({x1 - 1, y2}) << "\t\t" << map.getRHS({x1 - 1, y2 + 1}) << "\n"
+              << "\t" << map.getRHS({x1, y1 - 1}) << "\t\t" << map.getRHS({x1, y1}) << "\t\t" << map.getRHS({x1, y2})
+              << "\t\t" << map.getRHS({x1, y2 + 1}) << "\n"
+              << "\t" << map.getRHS({x2, y1 - 1}) << "\t\t" << map.getRHS({x2, y1}) << "\t\t" << map.getRHS({x2, y2})
+              << "\t\t" << map.getRHS({x2, y2 + 1}) << "\n"
+              << "\t" << map.getRHS({x2 + 1, y1 - 1}) << "\t\t" << map.getRHS({x2 + 1, y1}) << "\t\t"
+              << map.getRHS({x2 + 1, y2}) << "\t\t" << map.getRHS({x2 + 1, y2 + 1}) << "\n";
     #endif
     //Interpolate WRT centers of the 4 nearest cells (thus, shift 0.5f)
     auto sgx = BilinearInterpolation(blh, tlh, brh, trh,
@@ -292,25 +303,27 @@ void DFMPlanner::updateCell(const Cell &cell) {
         RHS(s_it) = computeOptimalCost(cell);
 
     enqueueIfInconsistent(s_it);
-    //priority_queue.print();
 }
 
 float DFMPlanner::computeOptimalCost(const Cell &c) {
     auto[ca1, g_a_1] = minCost(c.topCell(), c.bottomCell());
     auto[cb1, g_b_1] = minCost(c.leftCell(), c.rightCell());
-/*
+
+    #ifdef VERBOSE_EXTRACTION
     std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
-    std::cout << "X- " << c.topCell().x << " " << c.topCell().y<<  "   cost " << map.getG(c.topCell()) << std::endl;
-    std::cout << "X+ " << c.bottomCell().x << " " << c.bottomCell().y << "   cost " << map.getG(c.bottomCell()) << std::endl;
+    std::cout << "X- " << c.topCell().x << " " << c.topCell().y << "   cost " << map.getG(c.topCell()) << std::endl;
+    std::cout << "X+ " << c.bottomCell().x << " " << c.bottomCell().y << "   cost " << map.getG(c.bottomCell())
+              << std::endl;
     std::cout << "Y- " << c.leftCell().x << " " << c.leftCell().y << "   cost " << map.getG(c.leftCell()) << std::endl;
-    std::cout << "Y+ " << c.rightCell().x << " " << c.rightCell().y << "   cost " << map.getG(c.rightCell()) << std::endl;
+    std::cout << "Y+ " << c.rightCell().x << " " << c.rightCell().y << "   cost " << map.getG(c.rightCell())
+              << std::endl;
     std::cout << "X min " << ca1.x << " " << ca1.y << "   cost " << g_a_1 << std::endl;
     std::cout << "Y min " << cb1.x << " " << cb1.y << "   cost " << g_b_1 << std::endl;
-*/
+    #endif
     if (g_a_1 > g_b_1) std::swap(g_a_1, g_b_1);
     if (g_a_1 == INFINITY and g_b_1 == INFINITY) return INFINITY;
-    if (grid.getTraversalCost(c) == INFINITY) return INFINITY;
-    auto tau = grid.getTraversalCost(c);
+    if (grid.getCost(c) == INFINITY) return INFINITY;
+    auto tau = grid.getCost(c);
     if (tau > (g_b_1 - g_a_1)) {
         return (g_a_1 + g_b_1 + std::sqrt(2 * SQUARE(tau) - SQUARE(g_b_1 - g_a_1))) / 2.0f;
     } else {
@@ -343,7 +356,7 @@ void DFMPlanner::enqueueIfInconsistent(ExpandedMap::iterator it) {
         priority_queue.remove_if_present(CELL(it));
 }
 
-void DFMPlanner::computeRoughtPath( bool eight_if_true){
+void DFMPlanner::computeRoughtPath(bool eight_if_true) {
     path_.clear();
     path_.clear();
     cost_.clear();
@@ -352,17 +365,17 @@ void DFMPlanner::computeRoughtPath( bool eight_if_true){
     std::vector<Cell> path_cells_;
     cost_.push_back(0);
     path_cells_.push_back(grid.start_cell_);
-    while (path_cells_.back() != grid.goal_cell_){
+    while (path_cells_.back() != grid.goal_cell_) {
         float min_cost = 0;
         Cell min_cell;
         float dist;
-        for (auto &c: (eight_if_true ? grid.neighbors_8(path_cells_.back()) : grid.neighbors_4(path_cells_.back()))){
+        for (auto &c: (eight_if_true ? grid.neighbors_8(path_cells_.back()) : grid.neighbors_4(path_cells_.back()))) {
             float cost = map.getRHS(path_cells_.back()) - map.getRHS(c);
-            if (cost > min_cost){
+            if (cost > min_cost) {
                 min_cost = cost,
-                min_cell = c;
+                    min_cell = c;
                 dist = c.distance(path_cells_.back());
-                assert(dist<=SQRT2);
+                assert(dist <= SQRT2);
             }
         }
         total_cost += min_cost;
@@ -371,8 +384,8 @@ void DFMPlanner::computeRoughtPath( bool eight_if_true){
         cost_.push_back(min_cost);
     }
     path_.push_back(grid.start_pos_);
-    std::transform(path_cells_.begin(),path_cells_.end(), std::back_inserter(path_),
-        [](const Cell &c){return Position(c.x+0.5f, c.y+0.5f);});
+    std::transform(path_cells_.begin(), path_cells_.end(), std::back_inserter(path_),
+                   [](const Cell &c) { return Position(c.x + 0.5f, c.y + 0.5f); });
     path_.push_back(grid.goal_pos_);
     cost_.push_back(0);
 }
@@ -443,14 +456,14 @@ float DFMPlanner::computePathAdditionsCost(const std::vector<Position> &p) {
         float weight;
         if (floorf(m.x) == m.x) {
             weight = std::min(
-                grid.getTraversalCost(Node((int) m.x, (int) ceilf(m.y)).neighborCell(false, false)),
-                grid.getTraversalCost(Node((int) m.x, (int) ceilf(m.y)).neighborCell(true, false)));
+                grid.getCost(Node((int) m.x, (int) ceilf(m.y)).neighborCell(false, false)),
+                grid.getCost(Node((int) m.x, (int) ceilf(m.y)).neighborCell(true, false)));
         } else if (floorf(m.y) == m.y) {
             weight = std::min(
-                grid.getTraversalCost(Node((int) ceilf(m.x), (int) m.y).neighborCell(false, false)),
-                grid.getTraversalCost(Node((int) ceilf(m.x), (int) m.y).neighborCell(false, true)));
+                grid.getCost(Node((int) ceilf(m.x), (int) m.y).neighborCell(false, false)),
+                grid.getCost(Node((int) ceilf(m.x), (int) m.y).neighborCell(false, true)));
         } else {
-            weight = grid.getTraversalCost(Cell(m.x, m.y));
+            weight = grid.getCost(Cell(m.x, m.y));
         }
         cost += weight * a->distance(*b);
         //assert(cost != INFINITY);
@@ -523,7 +536,8 @@ bool DFMPlanner::consistent(const ExpandedMap::iterator &it) {
 }
 void DFMPlanner::set_start(const Position &pos) {
     grid.setStart(pos);
-    start_nodes = {Node(pos).cellTopRight(), Node(pos).cellTopLeft(), Node(pos).cellBottomRight(), Node(pos).cellBottomLeft()};
+    start_nodes =
+        {Node(pos).cellTopRight(), Node(pos).cellTopLeft(), Node(pos).cellBottomRight(), Node(pos).cellBottomLeft()};
     new_start = true;
 }
 
@@ -552,8 +566,8 @@ float DFMPlanner::getInterpG(const Node &node) {
             ++count;
         }
     }
-    if (count==0) return INFINITY;
-    assert((sum / count)>0);
+    if (count == 0) return INFINITY;
+    assert((sum / count) > 0);
     return sum / count;
 }
 
@@ -571,8 +585,8 @@ float DFMPlanner::getInterpRHS(const Node &node) {
             ++count;
         }
     }
-    if (count==0) return INFINITY;
-    assert((sum / count)>0);
+    if (count == 0) return INFINITY;
+    assert((sum / count) > 0);
     return sum / count;
 }
 
@@ -603,7 +617,7 @@ void DFMPlanner::computeInterpolatedPath() {
         min_cost = pa.cost_to_goal;
         step_dist = 0;
         for (auto p = it - 1; p < (path_.end() - 1); ++p) {
-            step_dist += p->distance(*(p+1));
+            step_dist += p->distance(*(p + 1));
         }
         total_cost += step_cost;
         total_dist += step_dist;
@@ -627,24 +641,33 @@ void DFMPlanner::computeInterpolatedPath() {
 // at least one of s1 and s2 will have g=inf (thus interpolation degenerates towards
 // the other one, which should be limited).
 void DFMPlanner::getBC(TraversalParams &t) {
-    Cell cell_ind_b, cell_ind_c;
+    Cell cb, cc;
 
     if (t.p0.x == t.p1.x) {
-        cell_ind_b = t.p1.neighborCell(t.p2.x > t.p1.x, t.p0.y > t.p1.y);
-        cell_ind_c = t.p1.neighborCell(t.p2.x < t.p1.x, t.p0.y > t.p1.y);
+        cb = t.p1.neighborCell(t.p2.x > t.p1.x, t.p0.y > t.p1.y);
+        cc = t.p1.neighborCell(t.p2.x < t.p1.x, t.p0.y > t.p1.y);
     } else {
-        cell_ind_b = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y < t.p1.y);
-        cell_ind_c = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y > t.p1.y);
+        cb = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y < t.p1.y);
+        cc = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y > t.p1.y);
     }
 
-    t.b = grid.getTraversalCost(cell_ind_b);
-    t.c = grid.getTraversalCost(cell_ind_c);
+    std::vector b {grid.getCost(cb), grid.getCost(cb.rightCell()), grid.getCost(cb.bottomCell()), grid.getCost(cb.bottomRightCell())};
+    std::vector c {grid.getCost(cc), grid.getCost(cc.rightCell()), grid.getCost(cc.bottomCell()), grid.getCost(cc.bottomRightCell())};
+
+    //t.b = std::accumulate(b.begin(), b.end(), 0)/4;
+    //t.c = std::accumulate(c.begin(), c.end(), 0)/4;
+
+    //t.b = *std::max_element(b.begin(), b.end());
+    //t.c = *std::max_element(c.begin(), c.end());
+
+    t.b = *std::min_element(b.begin(), b.end());
+    t.c = *std::min_element(c.begin(), c.end());
 }
 
 path_additions DFMPlanner::traversalFromCorner(const Position &p,
-                                                  const Node &p_a,
-                                                  const Node &p_b,
-                                                  float &step_cost) {
+                                               const Node &p_a,
+                                               const Node &p_b,
+                                               float &step_cost) {
     assert(isVertex(p));
 
     TraversalParams cell{};
@@ -663,9 +686,9 @@ path_additions DFMPlanner::traversalFromCorner(const Position &p,
 }
 
 path_additions DFMPlanner::traversalFromContiguousEdge(const Position &p,
-                                                          const Node &p_a,
-                                                          const Node &p_b,
-                                                          float &step_cost) {
+                                                       const Node &p_a,
+                                                       const Node &p_b,
+                                                       float &step_cost) {
     TraversalParams cell1{};
     bool cond = p.aligned(p_a);
     cell1.p0 = p;
@@ -684,9 +707,9 @@ path_additions DFMPlanner::traversalFromContiguousEdge(const Position &p,
 }
 
 path_additions DFMPlanner::traversalFromOppositeEdge(const Position &p,
-                                                        const Node &p_a,
-                                                        const Node &p_b,
-                                                        float &step_cost) {
+                                                     const Node &p_a,
+                                                     const Node &p_b,
+                                                     float &step_cost) {
 
     TraversalParams cell1{}, cell2{};
     cell1.p1 = cell2.p2 = p_a;
@@ -718,9 +741,9 @@ path_additions DFMPlanner::traversalFromOppositeEdge(const Position &p,
 }
 
 path_additions DFMPlanner::traversalFromEdge(const Position &p,
-                                                const Node &p_a,
-                                                const Node &p_b,
-                                                float &step_cost) {
+                                             const Node &p_a,
+                                             const Node &p_b,
+                                             float &step_cost) {
 
     assert(!isVertex(p));
 
@@ -735,8 +758,8 @@ path_additions DFMPlanner::traversalFromEdge(const Position &p,
 }
 
 path_additions DFMPlanner::getPathAdditions(const Position &p,
-                                               const bool &do_lookahead,
-                                               float &step_cost) {
+                                            const bool &do_lookahead,
+                                            float &step_cost) {
     float min_cost = INFINITY;
     path_additions min_pa = {};
     path_additions temp_pa;
@@ -763,7 +786,7 @@ path_additions DFMPlanner::getPathAdditions(const Position &p,
                   << "X:" << p_b.x << ", Y:" << p_b.y
                   << ", G:" << getInterpG(p_b) << ", RHS:" << getInterpRHS(p_b)
                   << " || cost: " << temp_pa.cost_to_goal << std::endl;
-        for (const auto& addition: temp_pa.steps) {
+        for (const auto &addition: temp_pa.steps) {
             if (lookahead and not do_lookahead) std::cout << "\t";
             std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl;
         }
@@ -796,7 +819,7 @@ path_additions DFMPlanner::getPathAdditions(const Position &p,
     if (lookahead and not do_lookahead) std::cout << "\t";
     std::cout << "Final choice for X:" << std::to_string(p.x) << ", Y:" << std::to_string(p.y)
               << " || cost: " << std::to_string(min_pa.cost_to_goal) << std::endl;
-    for (const auto& addition: min_pa.steps) {
+    for (const auto &addition: min_pa.steps) {
         if (lookahead and not do_lookahead) std::cout << "\t";
         std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl
                   << std::endl;

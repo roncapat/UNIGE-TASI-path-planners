@@ -38,7 +38,7 @@ class Graph {
   void initializeGraph(std::shared_ptr<uint8_t[]> image, int width, int length);
   void updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h);
 
-  float getTraversalCost(const Cell &ind);
+  float getCost(const Cell &ind);
 
   bool isValid(const Node &s);
   bool isValid(const Position &p);

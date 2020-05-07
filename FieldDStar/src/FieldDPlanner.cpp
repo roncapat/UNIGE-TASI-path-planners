@@ -627,6 +627,6 @@ void FieldDPlanner::getBC(TraversalParams &t) {
         cell_ind_c = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y > t.p1.y);
     }
 
-    t.b = grid.getTraversalCost(cell_ind_b);
-    t.c = grid.getTraversalCost(cell_ind_c);
+    t.b = grid.getCost(cell_ind_b);
+    t.c = grid.getCost(cell_ind_c);
 }
