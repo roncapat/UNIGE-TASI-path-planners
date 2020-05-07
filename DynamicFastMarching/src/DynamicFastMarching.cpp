@@ -35,6 +35,7 @@ int DFMPlanner::step() {
             // Only heuristic changes, so either G or RHS is kept the same
             new_queue.insert(elem.elem, calculateKey(elem.elem, elem.key.second));
         priority_queue.swap(new_queue);
+        //new_queue.insert(grid.goal_cell_, calculateKey(grid.goal_cell_, 0));
         // gather cells with updated edge costs and update affected nodes
         updateCells();
     }
@@ -296,14 +297,6 @@ std::tuple<float, float> DFMPlanner::gradientAtCell(const Cell __c) {
     return {dx, dy};
 }
 
-void DFMPlanner::updateCell(const Cell &cell) {
-    auto s_it = map.find_or_init(cell);
-
-    if (cell != grid.goal_cell_)
-        RHS(s_it) = computeOptimalCost(cell);
-
-    enqueueIfInconsistent(s_it);
-}
 
 float DFMPlanner::computeOptimalCost(const Cell &c) {
     float tau = grid.getCost(c);
@@ -365,6 +358,15 @@ std::pair<Cell, float> DFMPlanner::minCost(const Cell &a, const Cell &b) {
         return {a, ca};
     else
         return {b, cb};
+}
+
+void DFMPlanner::updateCell(const Cell &cell) {
+    auto s_it = map.find_or_init(cell);
+
+    if (cell != grid.goal_cell_)
+        RHS(s_it) = computeOptimalCost(cell);
+
+    enqueueIfInconsistent(s_it);
 }
 
 unsigned long DFMPlanner::updateCells() {
