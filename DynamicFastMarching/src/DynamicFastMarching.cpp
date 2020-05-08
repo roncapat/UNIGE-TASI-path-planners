@@ -136,8 +136,8 @@ unsigned long DFMPlanner::computeShortestPath() {
     while ((not priority_queue.empty())  and not end_condition()) {
         // Pop head of queue
         Cell s = priority_queue.topValue();
-        Queue::Key k = priority_queue.topKey();
         #ifdef VERBOSE_EXTRACTION
+        Queue::Key k = priority_queue.topKey();
         std::cout << "POP    " << s.x << " " << s.y << "   KEY " << k.first << " " << k.second << std::endl;
         #endif
         priority_queue.pop();
@@ -400,7 +400,7 @@ void DFMPlanner::computeRoughtPath(bool eight_if_true) {
     while (path_cells_.back() != grid.goal_cell_) {
         float min_cost = 0;
         Cell min_cell;
-        float dist;
+        float dist = INFINITY;
         for (auto &c: (eight_if_true ? grid.neighbors_8(path_cells_.back()) : grid.neighbors_4(path_cells_.back()))) {
             float cost = map.getRHS(path_cells_.back()) - map.getRHS(c);
             if (cost > min_cost) {
@@ -430,8 +430,6 @@ void DFMPlanner::constructOptimalPath() {
 
     //auto[gh, gv] = costMapGradient();
     path_.push_back(grid.start_pos_);
-
-    char buf[30];
 
     float min_cost = 0;
     int curr_step = 0;

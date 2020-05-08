@@ -5,22 +5,21 @@
 #include <cmath>
 #include <limits>
 #include <tuple>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 #include <utility>
-#include <LinearTraversalCostInterpolation.h>
-#include "ExpandedMap.h"
-#include "Graph.h"
-#include "PriorityQueue.h"
+
 #include "Macros.h"
+#include "Graph.h"
+#include "ExpandedMap.h"
+#include "PriorityQueue.h"
+#include "LinearTraversalCostInterpolation.h"
 
 #define LOOP_OK 0
 #define LOOP_FAILURE_NO_GRAPH -1
 #define LOOP_FAILURE_NO_GOAL -2
 class DFMPlanner {
   typedef PriorityQueue<Cell> Queue;
-  typedef ExpandedMap<Cell, std::pair<Cell,Cell>> Map;
+  typedef ExpandedMap<Cell, std::pair<Cell, Cell>> Map;
  public:
   DFMPlanner();
   void init();
@@ -81,15 +80,15 @@ class DFMPlanner {
   std::pair<std::shared_ptr<float[]>, std::shared_ptr<float[]>> costMapGradient();
   std::tuple<float, float> interpolateGradient(const Position &c);
   float computePathAdditionsCost(const std::vector<Position> &p);
-  void computeRoughtPath( bool eight_if_true = false);
+  void computeRoughtPath(bool eight_if_true = false);
   float getInterpRHS(const Node &node);
   float getInterpG(const Node &node);
   void computeInterpolatedPath();
   void getBC(TraversalParams &t);
   path_additions traversalFromCorner(const Position &p,
-                                                 const Node &p_a,
-                                                 const Node &p_b,
-                                                 float &step_cost);
+                                     const Node &p_a,
+                                     const Node &p_b,
+                                     float &step_cost);
   path_additions traversalFromEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
   path_additions getPathAdditions(const Position &p, const bool &do_lookahead, float &step_cost);
   bool lookahead = false;

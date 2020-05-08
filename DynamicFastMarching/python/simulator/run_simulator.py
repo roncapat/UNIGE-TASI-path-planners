@@ -1,5 +1,4 @@
 import struct
-import time
 
 from .plot_path import *
 

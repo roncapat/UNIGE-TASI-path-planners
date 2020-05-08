@@ -4,6 +4,7 @@
 #include <numeric>
 #include <chrono>
 #include <iostream>
+#include <unordered_set>
 
 FieldDPlanner::FieldDPlanner() = default;
 
