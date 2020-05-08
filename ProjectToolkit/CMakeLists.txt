@@ -8,4 +8,5 @@ add_library(ProjectToolkit STATIC
             Interpolation.cpp
             Node.cpp
             Position.cpp
-            Cell.cpp)
+            Cell.cpp
+            builtin_unreachable.cpp)

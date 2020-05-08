@@ -10,7 +10,7 @@
 #include <vector>
 #include <utility>
 #include <LinearTraversalCostInterpolation.h>
-
+#include "ExpandedMap.h"
 #include "Graph.h"
 #include "PriorityQueue.h"
 #include "Macros.h"
@@ -20,6 +20,7 @@
 #define LOOP_FAILURE_NO_GOAL -2
 class DFMPlanner {
   typedef PriorityQueue<Cell> Queue;
+  typedef ExpandedMap<Cell, std::pair<Cell,Cell>> Map;
  public:
   DFMPlanner();
   void init();
@@ -43,22 +44,7 @@ class DFMPlanner {
 
   bool goalReached(const Position &p);
 
-  class ExpandedMap : public std::unordered_map<Cell, std::tuple<float, float, Cell>> {
-   public:
-    const Cell NULLCELL = Cell(-1, -1);
-    iterator find_or_init(const Cell &n);
-    iterator insert_or_assign(const Cell &s, float g, float rhs);
-    float getG(const Cell &s);
-    float getRHS(const Cell &s);
-    std::pair<float, float> getGandRHS(const Cell &s);
-  };
-
-  static inline const Cell &CELL(const ExpandedMap::iterator &map_it) { return (map_it)->first; }
-  static inline float &G(const ExpandedMap::iterator &map_it) { return std::get<0>((map_it)->second); }
-  static inline float &RHS(const ExpandedMap::iterator &map_it) { return std::get<1>((map_it)->second); }
-  static inline Cell &BPTR(const ExpandedMap::iterator &map_it) { return std::get<2>((map_it)->second); }
-
-  ExpandedMap map;
+  Map map;
 
  private:
   unsigned long num_cells_updated = 0;
@@ -80,9 +66,9 @@ class DFMPlanner {
   Queue::Key calculateKey(const Cell &s);
   Queue::Key calculateKey(const Cell &s, float cost_so_far);
   Queue::Key calculateKey(const Cell &s, float g, float rhs);
-  void enqueueIfInconsistent(ExpandedMap::iterator it);
+  void enqueueIfInconsistent(Map::iterator it);
   bool consistent(const Cell &s);
-  static bool consistent(const ExpandedMap::iterator &it);
+  static bool consistent(const Map::iterator &it);
   void initializeSearch();
   bool isVertex(const Position &p);
   void updateCell(const Cell &cell);

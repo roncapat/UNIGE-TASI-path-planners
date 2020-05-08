@@ -100,7 +100,7 @@ DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float g, float rh
 }
 
 DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float cost_so_far) {
-    return {cost_so_far, cost_so_far};
+    //return {cost_so_far, cost_so_far};
     auto dist = grid.start_cell_.distance(s);
     return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
 }
@@ -120,7 +120,9 @@ void DFMPlanner::initializeSearch() {
 bool DFMPlanner::end_condition() {
     auto top_key = priority_queue.topKey();
     auto[g, rhs] = map.getGandRHS(grid.start_cell_);
-    if ((top_key < calculateKey(grid.start_cell_, g, rhs)) or (rhs > g)) {
+    auto [k1,k2]=calculateKey(grid.start_cell_, g, rhs);
+    std::cout<< "START KEY " << k1 << " " << k2<< std::endl;
+    if ((top_key < calculateKey(grid.start_cell_, g, rhs)) or (rhs != g)) {
         return false;
     }
     return true; //STOP: all 4 conditions met
@@ -131,7 +133,7 @@ unsigned long DFMPlanner::computeShortestPath() {
     //TODO check initial point for traversability
 
     int expanded = 0;
-    while ((not priority_queue.empty()) and not end_condition()) {
+    while ((not priority_queue.empty())  and not end_condition()) {
         // Pop head of queue
         Cell s = priority_queue.topValue();
         Queue::Key k = priority_queue.topKey();
@@ -158,6 +160,87 @@ unsigned long DFMPlanner::computeShortestPath() {
     num_nodes_expanded = expanded;
     std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
     return num_nodes_expanded;
+}
+
+void DFMPlanner::updateCell(const Cell &cell) {
+    auto s_it = map.find_or_init(cell);
+
+    if (cell != grid.goal_cell_)
+        RHS(s_it) = computeOptimalCost(cell);
+
+    enqueueIfInconsistent(s_it);
+}
+
+float DFMPlanner::computeOptimalCost(const Cell &c) {
+    float tau = grid.getCost(c);
+    if (tau == INFINITY) return INFINITY;
+
+    float stencil_ortho_cost = INFINITY;
+    float stencil_diago_cost = INFINITY;
+
+    auto[ca1, g_a_1] = minCost(c.topCell(), c.bottomCell());
+    auto[cb1, g_b_1] = minCost(c.leftCell(), c.rightCell());
+    #ifdef VERBOSE_EXTRACTION
+    std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
+    std::cout << "X- " << c.topCell().x << " " << c.topCell().y << "   cost " << map.getG(c.topCell()) << std::endl;
+    std::cout << "X+ " << c.bottomCell().x << " " << c.bottomCell().y << "   cost " << map.getG(c.bottomCell())
+              << std::endl;
+    std::cout << "Y- " << c.leftCell().x << " " << c.leftCell().y << "   cost " << map.getG(c.leftCell()) << std::endl;
+    std::cout << "Y+ " << c.rightCell().x << " " << c.rightCell().y << "   cost " << map.getG(c.rightCell())
+              << std::endl;
+    std::cout << "X min " << ca1.x << " " << ca1.y << "   cost " << g_a_1 << std::endl;
+    std::cout << "Y min " << cb1.x << " " << cb1.y << "   cost " << g_b_1 << std::endl;
+    #endif
+    if (g_a_1 > g_b_1) std::swap(g_a_1, g_b_1);
+    if (g_a_1 == INFINITY and g_b_1 == INFINITY) {
+        stencil_ortho_cost = INFINITY;
+    } else if (tau > (g_b_1 - g_a_1)) {
+        stencil_ortho_cost = (g_a_1 + g_b_1 + std::sqrt(2 * SQUARE(tau) - SQUARE(g_b_1 - g_a_1))) / 2.0f;
+    } else {
+        stencil_ortho_cost = g_a_1 + tau;
+    }
+
+    auto[cc1, g_c_1] = minCost(c.topLeftCell(), c.bottomRightCell());
+    auto[cd1, g_d_1] = minCost(c.bottomLeftCell(), c.topRightCell());
+    #ifdef VERBOSE_EXTRACTION
+    std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
+    std::cout << "X-Y- " << c.topLeftCell().x << " " << c.topLeftCell().y << "   cost " << map.getG(c.topLeftCell()) << std::endl;
+    std::cout << "X+Y+ " << c.bottomRightCell().x << " " << c.bottomRightCell().y << "   cost " << map.getG(c.bottomRightCell())
+              << std::endl;
+    std::cout << "X+Y- " << c.bottomLeftCell().x << " " << c.bottomLeftCell().y << "   cost " << map.getG(c.bottomLeftCell()) << std::endl;
+    std::cout << "X-Y+ " << c.topRightCell().x << " " << c.topRightCell().y << "   cost " << map.getG(c.topRightCell())
+              << std::endl;
+    std::cout << "D1 min " << cc1.x << " " << cc1.y << "   cost " << g_c_1 << std::endl;
+    std::cout << "D2 min " << cd1.x << " " << cd1.y << "   cost " << g_d_1 << std::endl;
+    #endif
+    if (g_c_1 > g_d_1) std::swap(g_c_1, g_d_1);
+    if (g_c_1 == INFINITY and g_d_1 == INFINITY) {
+        stencil_diago_cost = INFINITY;
+    } else if (tau > (g_d_1 - g_c_1)) {
+        stencil_diago_cost = (g_c_1 + g_d_1 + std::sqrt(2 * SQUARE(tau * SQRT2) - SQUARE(g_d_1 - g_c_1))) / 2.0f;
+    } else {
+        stencil_diago_cost = g_c_1 + tau * SQRT2;
+    }
+
+    return std::min(stencil_diago_cost, stencil_ortho_cost);
+}
+
+std::pair<Cell, float> DFMPlanner::minCost(const Cell &a, const Cell &b) {
+    auto ca = map.getG(a), cb = map.getG(b);
+    if (ca < cb)
+        return {a, ca};
+    else
+        return {b, cb};
+}
+
+unsigned long DFMPlanner::updateCells() {
+    for (const Cell &cell : grid.updated_cells_) {
+        updateCell(cell);
+    }
+
+    num_cells_updated = grid.updated_cells_.size();
+    std::cout << num_cells_updated << " cells updated" << std::endl;
+    return num_cells_updated;
 }
 
 std::pair<std::shared_ptr<float[]>, std::shared_ptr<float[]>> DFMPlanner::costMapGradient() {
@@ -298,92 +381,11 @@ std::tuple<float, float> DFMPlanner::gradientAtCell(const Cell __c) {
 }
 
 
-float DFMPlanner::computeOptimalCost(const Cell &c) {
-    float tau = grid.getCost(c);
-    if (tau == INFINITY) return INFINITY;
-
-    float stencil_ortho_cost = INFINITY;
-    float stencil_diago_cost = INFINITY;
-
-    auto[ca1, g_a_1] = minCost(c.topCell(), c.bottomCell());
-    auto[cb1, g_b_1] = minCost(c.leftCell(), c.rightCell());
-    #ifdef VERBOSE_EXTRACTION
-    std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
-    std::cout << "X- " << c.topCell().x << " " << c.topCell().y << "   cost " << map.getG(c.topCell()) << std::endl;
-    std::cout << "X+ " << c.bottomCell().x << " " << c.bottomCell().y << "   cost " << map.getG(c.bottomCell())
-              << std::endl;
-    std::cout << "Y- " << c.leftCell().x << " " << c.leftCell().y << "   cost " << map.getG(c.leftCell()) << std::endl;
-    std::cout << "Y+ " << c.rightCell().x << " " << c.rightCell().y << "   cost " << map.getG(c.rightCell())
-              << std::endl;
-    std::cout << "X min " << ca1.x << " " << ca1.y << "   cost " << g_a_1 << std::endl;
-    std::cout << "Y min " << cb1.x << " " << cb1.y << "   cost " << g_b_1 << std::endl;
-    #endif
-    if (g_a_1 > g_b_1) std::swap(g_a_1, g_b_1);
-    if (g_a_1 == INFINITY and g_b_1 == INFINITY) {
-        stencil_ortho_cost = INFINITY;
-    } else if (tau > (g_b_1 - g_a_1)) {
-        stencil_ortho_cost = (g_a_1 + g_b_1 + std::sqrt(2 * SQUARE(tau) - SQUARE(g_b_1 - g_a_1))) / 2.0f;
-    } else {
-        stencil_ortho_cost = g_a_1 + tau;
-    }
-
-    auto[cc1, g_c_1] = minCost(c.topLeftCell(), c.bottomRightCell());
-    auto[cd1, g_d_1] = minCost(c.bottomLeftCell(), c.topRightCell());
-    #ifdef VERBOSE_EXTRACTION
-    std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
-    std::cout << "X-Y- " << c.topLeftCell().x << " " << c.topLeftCell().y << "   cost " << map.getG(c.topLeftCell()) << std::endl;
-    std::cout << "X+Y+ " << c.bottomRightCell().x << " " << c.bottomRightCell().y << "   cost " << map.getG(c.bottomRightCell())
-              << std::endl;
-    std::cout << "X+Y- " << c.bottomLeftCell().x << " " << c.bottomLeftCell().y << "   cost " << map.getG(c.bottomLeftCell()) << std::endl;
-    std::cout << "X-Y+ " << c.topRightCell().x << " " << c.topRightCell().y << "   cost " << map.getG(c.topRightCell())
-              << std::endl;
-    std::cout << "D1 min " << cc1.x << " " << cc1.y << "   cost " << g_c_1 << std::endl;
-    std::cout << "D2 min " << cd1.x << " " << cd1.y << "   cost " << g_d_1 << std::endl;
-    #endif
-    if (g_c_1 > g_d_1) std::swap(g_c_1, g_d_1);
-    if (g_c_1 == INFINITY and g_d_1 == INFINITY) {
-        stencil_diago_cost = INFINITY;
-    } else if (tau > (g_d_1 - g_c_1)) {
-        stencil_diago_cost = (g_c_1 + g_d_1 + std::sqrt(2 * SQUARE(tau * SQRT2) - SQUARE(g_d_1 - g_c_1))) / 2.0f;
-    } else {
-        stencil_diago_cost = g_c_1 + tau * SQRT2;
-    }
-
-    return std::min(stencil_diago_cost, stencil_ortho_cost);
-}
-
-std::pair<Cell, float> DFMPlanner::minCost(const Cell &a, const Cell &b) {
-    auto ca = map.getG(a), cb = map.getG(b);
-    if (ca < cb)
-        return {a, ca};
-    else
-        return {b, cb};
-}
-
-void DFMPlanner::updateCell(const Cell &cell) {
-    auto s_it = map.find_or_init(cell);
-
-    if (cell != grid.goal_cell_)
-        RHS(s_it) = computeOptimalCost(cell);
-
-    enqueueIfInconsistent(s_it);
-}
-
-unsigned long DFMPlanner::updateCells() {
-    for (const Cell &cell : grid.updated_cells_) {
-        updateCell(cell);
-    }
-
-    num_cells_updated = grid.updated_cells_.size();
-    std::cout << num_cells_updated << " cells updated" << std::endl;
-    return num_cells_updated;
-}
-
-void DFMPlanner::enqueueIfInconsistent(ExpandedMap::iterator it) {
+void DFMPlanner::enqueueIfInconsistent(Map::iterator it) {
     if (G(it) != RHS(it))
-        priority_queue.insert_or_update(CELL(it), calculateKey(CELL(it), G(it), RHS(it)));
+        priority_queue.insert_or_update(ELEM(it), calculateKey(ELEM(it), G(it), RHS(it)));
     else
-        priority_queue.remove_if_present(CELL(it));
+        priority_queue.remove_if_present(ELEM(it));
 }
 
 void DFMPlanner::computeRoughtPath(bool eight_if_true) {
@@ -508,60 +510,12 @@ bool DFMPlanner::goalReached(const Position &p) {
     return grid.goal_cell_.x == p.x && grid.goal_cell_.y == p.y;
 }
 
-DFMPlanner::ExpandedMap::iterator
-DFMPlanner::ExpandedMap::find_or_init(const Cell &n) {
-    iterator it = find(n);
-    if (it == end()) { // Init node if not yet considered
-        it = emplace(n, std::make_tuple(INFINITY, INFINITY, NULLCELL)).first;
-    }
-    return it;
-}
-
-DFMPlanner::ExpandedMap::iterator
-DFMPlanner::ExpandedMap::insert_or_assign(const Cell &s, float g, float rhs) {
-    // re-assigns value of node in unordered map or inserts new entry
-    auto it = find(s);
-    if (it != end()) {
-        std::get<0>(it->second) = g;
-        std::get<1>(it->second) = rhs;
-        return it;
-    } else {
-        [[maybe_unused]] auto[it, ok] = emplace(s, std::make_tuple(g, rhs, NULLCELL));
-        assert(ok);
-        return it;
-    }
-}
-
-std::pair<float, float> DFMPlanner::ExpandedMap::getGandRHS(const Cell &s) {
-    ExpandedMap::iterator it;
-    if ((it = find(s)) != end())
-        return {G(it), RHS(it)};
-    else
-        return {INFINITY, INFINITY};
-}
-
-float DFMPlanner::ExpandedMap::getG(const Cell &s) {
-    ExpandedMap::iterator it;
-    if ((it = find(s)) != end())
-        return G(it);
-    else
-        return INFINITY;
-}
-
-float DFMPlanner::ExpandedMap::getRHS(const Cell &s) {
-    ExpandedMap::iterator it;
-    if ((it = find(s)) != end())
-        return RHS(it);
-    else
-        return INFINITY;
-}
-
 bool DFMPlanner::consistent(const Cell &s) {
     auto[g, rhs] = map.getGandRHS(s);
     return g == rhs;
 }
 
-bool DFMPlanner::consistent(const ExpandedMap::iterator &it) {
+bool DFMPlanner::consistent(const Map::iterator &it) {
     return G(it) == RHS(it);
 }
 void DFMPlanner::set_start(const Position &pos) {

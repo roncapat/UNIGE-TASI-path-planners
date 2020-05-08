@@ -1,3 +1,6 @@
+
+#include <PriorityQueue.h>
+
 template <typename T>
 void PriorityQueue<T>::insert(const Value &n, const Key &k) {
     HandleType handle = __queue.emplace(n, k);

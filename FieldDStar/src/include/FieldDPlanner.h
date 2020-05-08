@@ -11,6 +11,7 @@
 
 #include "Graph.h"
 #include "PriorityQueue.h"
+#include "ExpandedMap.h"
 #include "LinearTraversalCostInterpolation.h"
 
 #define LOOP_OK 0
@@ -18,6 +19,7 @@
 #define LOOP_FAILURE_NO_GOAL -2
 class FieldDPlanner {
   typedef PriorityQueue<Node> Queue;
+  typedef ExpandedMap<Node, Node> Map;
  public:
   FieldDPlanner();
   void init();
@@ -42,22 +44,7 @@ class FieldDPlanner {
 
   bool goalReached(const Position &p);
 
-  class ExpandedMap : public std::unordered_map<Node, std::tuple<float, float, Node>> {
-   public:
-    const Node NULLNODE = Node(-1, -1);
-    iterator find_or_init(const Node &n);
-    iterator insert_or_assign(const Node &s, float g, float rhs);
-    float getG(const Node &s);
-    float getRHS(const Node &s);
-    std::pair<float, float> getGandRHS(const Node &s);
-  };
-
-  static inline const Node &NODE(const ExpandedMap::iterator &map_it) { return (map_it)->first; }
-  static inline float &G(const ExpandedMap::iterator &map_it) { return std::get<0>((map_it)->second); }
-  static inline float &RHS(const ExpandedMap::iterator &map_it) { return std::get<1>((map_it)->second); }
-  static inline Node &BPTR(const ExpandedMap::iterator &map_it) { return std::get<2>((map_it)->second); }
-
-  ExpandedMap map;
+  Map map;
 
  private:
   unsigned long num_nodes_updated = 0;
@@ -80,11 +67,11 @@ class FieldDPlanner {
   Queue::Key calculateKey(const Node &s);
   Queue::Key calculateKey(const Node &s, float cost_so_far);
   Queue::Key calculateKey(const Node &s, float g, float rhs);
-  void enqueueIfInconsistent(ExpandedMap::iterator it);
+  void enqueueIfInconsistent(Map::iterator it);
   float minRHS_0(const Node &s);
   float minRHS_1(const Node &s, Node &bptr_idx);
   bool consistent(const Node &s);
-  static bool consistent(const ExpandedMap::iterator &it);
+  static bool consistent(const Map::iterator &it);
   void initializeSearch();
   bool isVertex(const Position &p);
   void updateNode_0(const Node &s);

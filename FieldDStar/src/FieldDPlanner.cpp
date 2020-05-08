@@ -25,7 +25,7 @@ int FieldDPlanner::step() {
         initializeSearch();
     } else if (new_start) {
         new_start = false;
-        priority_queue.clear();
+        //priority_queue.clear();
 
         /*
         Queue new_queue;
@@ -139,11 +139,11 @@ unsigned long FieldDPlanner::computeShortestPath_1() {
                 cost2 = cn.isValid() ? computeOptimalCost(sp, cn, s) : INFINITY;
                 if ((cost1 <= cost2) and (RHS(sp_it) > cost1)) {
                     RHS(sp_it) = cost1;
-                    BPTR(sp_it) = s;
+                    INFO(sp_it) = s;
                 }
                 if ((cost1 > cost2) and (RHS(sp_it) > cost2)) {
                     RHS(sp_it) = cost2;
-                    BPTR(sp_it) = cn;
+                    INFO(sp_it) = cn;
                 }
                 enqueueIfInconsistent(sp_it);
             }
@@ -153,9 +153,9 @@ unsigned long FieldDPlanner::computeShortestPath_1() {
                 auto sp_it = map.find(sp);
                 assert(sp_it != map.end());
 
-                if (BPTR(sp_it) == s or BPTR(sp_it) == grid.clockwiseNeighbor(sp, s)) {
+                if (INFO(sp_it) == s or INFO(sp_it) == grid.clockwiseNeighbor(sp, s)) {
                     RHS(sp_it) = minRHS_1(sp, bptr);
-                    if (RHS(sp_it) < INFINITY) BPTR(sp_it) = bptr;
+                    if (RHS(sp_it) < INFINITY) INFO(sp_it) = bptr;
                     enqueueIfInconsistent(sp_it);
                 }
             }
@@ -262,7 +262,7 @@ unsigned long FieldDPlanner::updateNodesAroundUpdatedCells() {
             if (s != grid.goal_node_) {
                 Node bptr;
                 RHS(s_it) = minRHS_1(s, bptr);
-                if (RHS(s_it) < INFINITY) BPTR(s_it) = bptr;
+                if (RHS(s_it) < INFINITY) INFO(s_it) = bptr;
                 enqueueIfInconsistent(s_it);
             }
         }
@@ -273,11 +273,11 @@ unsigned long FieldDPlanner::updateNodesAroundUpdatedCells() {
     return num_nodes_updated;
 }
 
-void FieldDPlanner::enqueueIfInconsistent(ExpandedMap::iterator it) {
+void FieldDPlanner::enqueueIfInconsistent(Map::iterator it) {
     if (G(it) != RHS(it))
-        priority_queue.insert_or_update(NODE(it), calculateKey(NODE(it), G(it), RHS(it)));
+        priority_queue.insert_or_update(ELEM(it), calculateKey(ELEM(it), G(it), RHS(it)));
     else
-        priority_queue.remove_if_present(NODE(it));
+        priority_queue.remove_if_present(ELEM(it));
 }
 
 void FieldDPlanner::constructOptimalPath() {
@@ -551,60 +551,12 @@ bool FieldDPlanner::goalReached(const Position &p) {
     return grid.goal_pos_.x == p.x && grid.goal_pos_.y == p.y;
 }
 
-FieldDPlanner::ExpandedMap::iterator
-FieldDPlanner::ExpandedMap::find_or_init(const Node &n) {
-    iterator it = find(n);
-    if (it == end()) { // Init node if not yet considered
-        it = emplace(n, std::make_tuple(INFINITY, INFINITY, NULLNODE)).first;
-    }
-    return it;
-}
-
-FieldDPlanner::ExpandedMap::iterator
-FieldDPlanner::ExpandedMap::insert_or_assign(const Node &s, float g, float rhs) {
-    // re-assigns value of node in unordered map or inserts new entry
-    auto it = find(s);
-    if (it != end()) {
-        std::get<0>(it->second) = g;
-        std::get<1>(it->second) = rhs;
-        return it;
-    } else {
-        [[maybe_unused]] auto[it, ok] = emplace(s, std::make_tuple(g, rhs, NULLNODE));
-        assert(ok);
-        return it;
-    }
-}
-
-std::pair<float, float> FieldDPlanner::ExpandedMap::getGandRHS(const Node &s) {
-    ExpandedMap::iterator it;
-    if ((it = find(s)) != end())
-        return {G(it), RHS(it)};
-    else
-        return {INFINITY, INFINITY};
-}
-
-float FieldDPlanner::ExpandedMap::getG(const Node &s) {
-    ExpandedMap::iterator it;
-    if ((it = find(s)) != end())
-        return G(it);
-    else
-        return INFINITY;
-}
-
-float FieldDPlanner::ExpandedMap::getRHS(const Node &s) {
-    ExpandedMap::iterator it;
-    if ((it = find(s)) != end())
-        return RHS(it);
-    else
-        return INFINITY;
-}
-
 bool FieldDPlanner::consistent(const Node &s) {
     auto[g, rhs] = map.getGandRHS(s);
     return g == rhs;
 }
 
-bool FieldDPlanner::consistent(const ExpandedMap::iterator &it) {
+bool FieldDPlanner::consistent(const Map::iterator &it) {
     return G(it) == RHS(it);
 }
 
