@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Field D (wall)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="../Tests/Tests/wall-a_27_10_2_10_.bmp 27 10 2 10 1 1 1 logfile.json dbgfile.json infofile.json" WORKING_DIR="file://../../FieldDStar" PASS_PARENT_ENVS_2="true" PROJECT_NAME="roncapat_global_planners" TARGET_NAME="field_d_planner_gui" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="roncapat_global_planners" RUN_TARGET_NAME="field_d_planner_gui">
+  <configuration default="false" name="Field D (wall)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="../Tests/Tests/wall-a_27_10_2_10_.bmp 27 10 2 10 1 1 1 logfile.json dbgfile.json infofile.json" REDIRECT_INPUT="false" WORKING_DIR="file://../../FieldDStar" PASS_PARENT_ENVS_2="true" PROJECT_NAME="roncapat_global_planners" TARGET_NAME="field_d_planner" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="roncapat_global_planners" RUN_TARGET_NAME="field_d_planner">
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
     </method>
