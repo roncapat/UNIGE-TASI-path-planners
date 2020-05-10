@@ -290,7 +290,7 @@ float DFMPlanner::computeOptimalCost(const Cell &c) {
     if (g_c_1 > g_d_1) std::swap(g_c_1, g_d_1);
     if (g_c_1 == INFINITY and g_d_1 == INFINITY) {
         stencil_diago_cost = INFINITY;
-    } else if (tau > (g_d_1 - g_c_1)) {
+    } else if ((tau*SQRT2) > (g_d_1 - g_c_1)) {
         stencil_diago_cost = (g_c_1 + g_d_1 + std::sqrt(2 * SQUARE(tau * SQRT2) - SQUARE(g_d_1 - g_c_1))) / 2.0f;
     } else {
         stencil_diago_cost = g_c_1 + tau * SQRT2;
