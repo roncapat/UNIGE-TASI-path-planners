@@ -160,12 +160,18 @@ unsigned long DFMPlanner::computeShortestPath() {
 
         if (G(s_it) > RHS(s_it)) { // Overconsistent
             G(s_it) = RHS(s_it);
-            for (const Cell &nbr : grid.neighbors_8(s))
+            for (const Cell &nbr : grid.neighbors_8(s)){
                 updateCellDecreasedNeighbor(nbr, s);
+                updateCell(nbr);
+            }
         } else { // Underconsistent
             G(s_it) = INFINITY;
-            for (const Cell &nbr : grid.neighbors_8(s))
-                updateCell(nbr);
+            for (const Cell &nbr : grid.neighbors_8(s)){
+                auto nbr_it = map.find(nbr);
+                assert(nbr_it != map.end());
+                if (INFO(nbr_it).first == s or INFO(nbr_it).second == s)
+                    updateCell(nbr);
+            }
             updateCell(s);
         }
     }
