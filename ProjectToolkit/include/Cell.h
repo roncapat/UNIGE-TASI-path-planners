@@ -12,8 +12,8 @@ class Position;
 
 class Cell{
  public:
-  int x{},y{};
-  Cell() = default;
+  int x,y;
+  Cell();
   Cell(int x, int y);
   Cell(const Cell &other);
   explicit Cell(const std::pair<int, int> &other);

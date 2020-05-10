@@ -177,22 +177,28 @@ unsigned long DFMPlanner::computeShortestPath() {
 void DFMPlanner::updateCellDecreasedNeighbor(const Cell &cell, const Cell &nbr) {
     auto s_it = map.find_or_init(cell);
 
-    if (cell != grid.goal_cell_)
-        RHS(s_it) = std::min(RHS(s_it), computeOptimalCostDecreasedNeighbor(cell, nbr));
-
+    if (cell != grid.goal_cell_) {
+        std::pair<Cell, Cell> bptrs;
+        float rhs = computeOptimalCostDecreasedNeighbor(cell, nbr, bptrs);
+        if (rhs < RHS(s_it)) {
+            RHS(s_it) = rhs;
+            INFO(s_it) = bptrs;
+        }
+    }
     enqueueIfInconsistent(s_it);
 }
 
-float DFMPlanner::computeOptimalCostDecreasedNeighbor(const Cell &c, const Cell &ca1) {
+float DFMPlanner::computeOptimalCostDecreasedNeighbor(const Cell &c, const Cell &nbr, std::pair<Cell, Cell> &bptrs) {
     float tau = grid.getCost(c);
+    bptrs = {};
     if (tau == INFINITY) return INFINITY;
 
-    int dx = ca1.x - c.x;
-    int dy = ca1.y - c.y;
 
-    float g_a_1 = map.getG(ca1);
-    float g_b_1;
-    Cell cb1;
+    float g_a_1 = map.getG(nbr), g_b_1;
+    Cell ca1(nbr), cb1;
+
+    int dx = nbr.x - c.x;
+    int dy = nbr.y - c.y;
 
     if (dx * dy == 0) {
         if (dx != 0) {
@@ -207,6 +213,7 @@ float DFMPlanner::computeOptimalCostDecreasedNeighbor(const Cell &c, const Cell 
             std::tie(cb1, g_b_1) = minCost(c.bottomLeftCell(), c.topRightCell());
         }
     }
+
 
     float stencil_cost = INFINITY;
 
@@ -223,13 +230,16 @@ float DFMPlanner::computeOptimalCostDecreasedNeighbor(const Cell &c, const Cell 
 #endif
     if (g_a_1 > g_b_1) {
         std::swap(g_a_1, g_b_1);
+        std::swap(ca1, cb1);
     }
     float h = HYPOT(dx, dy);
     if (g_a_1 == INFINITY and g_b_1 == INFINITY) {
         stencil_cost = INFINITY;
     } else if ((tau * h) > (g_b_1 - g_a_1)) {
+        bptrs = {ca1, cb1};
         stencil_cost = (g_a_1 + g_b_1 + std::sqrt(2 * SQUARE(tau * h) - SQUARE(g_b_1 - g_a_1))) / 2.0f;
     } else {
+        bptrs = {ca1, {}};
         stencil_cost = g_a_1 + tau * h;
     }
 
@@ -240,17 +250,20 @@ void DFMPlanner::updateCell(const Cell &cell) {
     auto s_it = map.find_or_init(cell);
 
     if (cell != grid.goal_cell_)
-        RHS(s_it) = computeOptimalCost(cell);
+        RHS(s_it) = computeOptimalCost(cell, INFO(s_it));
 
     enqueueIfInconsistent(s_it);
 }
 
-float DFMPlanner::computeOptimalCost(const Cell &c) {
+float DFMPlanner::computeOptimalCost(const Cell &c, std::pair<Cell, Cell> &bptrs) {
     float tau = grid.getCost(c);
+    bptrs = {};
     if (tau == INFINITY) return INFINITY;
 
     float stencil_ortho_cost = INFINITY;
     float stencil_diago_cost = INFINITY;
+
+    std::pair<Cell, Cell> ortho_bptrs{}, diago_bptrs{};
 
     auto[ca1, g_a_1] = minCost(c.topCell(), c.bottomCell());
     auto[cb1, g_b_1] = minCost(c.leftCell(), c.rightCell());
@@ -265,12 +278,17 @@ float DFMPlanner::computeOptimalCost(const Cell &c) {
     std::cout << "X min " << ca1.x << " " << ca1.y << "   cost " << g_a_1 << std::endl;
     std::cout << "Y min " << cb1.x << " " << cb1.y << "   cost " << g_b_1 << std::endl;
 #endif
-    if (g_a_1 > g_b_1) std::swap(g_a_1, g_b_1);
+    if (g_a_1 > g_b_1) {
+        std::swap(g_a_1, g_b_1);
+        std::swap(ca1, cb1);
+    }
     if (g_a_1 == INFINITY and g_b_1 == INFINITY) {
         stencil_ortho_cost = INFINITY;
     } else if (tau > (g_b_1 - g_a_1)) {
+        ortho_bptrs = {ca1, cb1};
         stencil_ortho_cost = (g_a_1 + g_b_1 + std::sqrt(2 * SQUARE(tau) - SQUARE(g_b_1 - g_a_1))) / 2.0f;
     } else {
+        ortho_bptrs = {ca1, {}};
         stencil_ortho_cost = g_a_1 + tau;
     }
 
@@ -287,16 +305,27 @@ float DFMPlanner::computeOptimalCost(const Cell &c) {
     std::cout << "D1 min " << cc1.x << " " << cc1.y << "   cost " << g_c_1 << std::endl;
     std::cout << "D2 min " << cd1.x << " " << cd1.y << "   cost " << g_d_1 << std::endl;
 #endif
-    if (g_c_1 > g_d_1) std::swap(g_c_1, g_d_1);
+    if (g_c_1 > g_d_1) {
+        std::swap(g_c_1, g_d_1);
+        std::swap(cc1, cd1);
+    }
     if (g_c_1 == INFINITY and g_d_1 == INFINITY) {
         stencil_diago_cost = INFINITY;
-    } else if ((tau*SQRT2) > (g_d_1 - g_c_1)) {
+    } else if ((tau * SQRT2) > (g_d_1 - g_c_1)) {
+        diago_bptrs = {cc1, cd1};
         stencil_diago_cost = (g_c_1 + g_d_1 + std::sqrt(2 * SQUARE(tau * SQRT2) - SQUARE(g_d_1 - g_c_1))) / 2.0f;
     } else {
+        diago_bptrs = {cc1, {}};
         stencil_diago_cost = g_c_1 + tau * SQRT2;
     }
 
-    return std::min(stencil_diago_cost, stencil_ortho_cost);
+    if (stencil_diago_cost < stencil_ortho_cost) {
+        bptrs = std::move(diago_bptrs);
+        return stencil_diago_cost;
+    } else {
+        bptrs = std::move(ortho_bptrs);
+        return stencil_ortho_cost;
+    }
 }
 
 std::pair<Cell, float> DFMPlanner::minCost(const Cell &a, const Cell &b) {

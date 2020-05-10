@@ -60,7 +60,7 @@ class DFMPlanner {
   Graph grid;
   bool initialize_search = true;  // set to true if the search problem must be initialized
 
-  float computeOptimalCost(const Cell &p);
+  float computeOptimalCost(const Cell &p, std::pair<Cell, Cell> &bptrs);
   bool end_condition();
   Queue::Key calculateKey(const Cell &s);
   Queue::Key calculateKey(const Cell &s, float cost_so_far);
@@ -103,7 +103,7 @@ class DFMPlanner {
 
     void updateCellDecreasedNeighbor(const Cell &cell, const Cell &nbr);
 
-    float computeOptimalCostDecreasedNeighbor(const Cell &c, const Cell &nbr);
+    float computeOptimalCostDecreasedNeighbor(const Cell &c, const Cell &nbr, std::pair<Cell, Cell> &bptrs);
 };
 
 #endif

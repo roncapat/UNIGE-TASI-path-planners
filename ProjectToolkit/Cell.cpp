@@ -56,3 +56,5 @@ bool Cell::hasNode(const Node &n) const {
 float Cell::distance(const Cell &n) const {
     return std::hypot(x - n.x, y - n.y);
 }
+
+Cell::Cell() :x(-1),y(-1){}
