@@ -100,7 +100,7 @@ DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float g, float rh
 }
 
 DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float cost_so_far) {
-    //return {cost_so_far, cost_so_far};
+    return {cost_so_far, cost_so_far};
     auto dist = grid.start_cell_.distance(s);
     return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
 }
