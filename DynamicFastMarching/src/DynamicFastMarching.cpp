@@ -101,8 +101,20 @@ DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float g, float rh
 
 DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float cost_so_far) {
     return {cost_so_far, cost_so_far};
+}
+
+DFMPlanner::Queue::Key DFMPlanner::calculateHeurKey(const Cell &s) {
+    auto[g, rhs] = map.getGandRHS(s);
+    return calculateHeurKey(s, g, rhs);
+}
+
+DFMPlanner::Queue::Key DFMPlanner::calculateHeurKey(const Cell &s, float g, float rhs) {
+    return calculateHeurKey(s, std::min(g, rhs));
+}
+
+DFMPlanner::Queue::Key DFMPlanner::calculateHeurKey(const Cell &s, float cost_so_far) {
     auto dist = grid.start_cell_.distance(s);
-    return {cost_so_far + heuristic_multiplier * dist, cost_so_far};
+    return {cost_so_far + heuristic_multiplier * dist+255, cost_so_far};
 }
 
 void DFMPlanner::initializeSearch() {
@@ -120,8 +132,8 @@ void DFMPlanner::initializeSearch() {
 bool DFMPlanner::end_condition() {
     auto top_key = priority_queue.topKey();
     auto[g, rhs] = map.getGandRHS(grid.start_cell_);
-    auto [k1,k2]=calculateKey(grid.start_cell_, g, rhs);
-    std::cout<< "START KEY " << k1 << " " << k2<< std::endl;
+    //auto [k1,k2]=calculateKey(grid.start_cell_, g, rhs);
+    //std::cout<< "START KEY " << k1 << " " << k2<< std::endl;
     if ((top_key < calculateKey(grid.start_cell_, g, rhs)) or (rhs != g)) {
         return false;
     }

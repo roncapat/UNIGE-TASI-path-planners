@@ -91,9 +91,15 @@ class DFMPlanner {
                                      float &step_cost);
   path_additions traversalFromEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
   path_additions getPathAdditions(const Position &p, const bool &do_lookahead, float &step_cost);
-  bool lookahead = false;
+  bool lookahead = true;
   path_additions traversalFromOppositeEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
   path_additions traversalFromContiguousEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
+
+    PriorityQueue<Cell>::Key calculateHeurKey(const Cell &s);
+
+    PriorityQueue<Cell>::Key calculateHeurKey(const Cell &s, float g, float rhs);
+
+    PriorityQueue<Cell>::Key calculateHeurKey(const Cell &s, float cost_so_far);
 };
 
 #endif
