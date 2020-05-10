@@ -100,6 +100,10 @@ class DFMPlanner {
     PriorityQueue<Cell>::Key calculateHeurKey(const Cell &s, float g, float rhs);
 
     PriorityQueue<Cell>::Key calculateHeurKey(const Cell &s, float cost_so_far);
+
+    void updateCellDecreasedNeighbor(const Cell &cell, const Cell &nbr);
+
+    float computeOptimalCostDecreasedNeighbor(const Cell &c, const Cell &nbr);
 };
 
 #endif
