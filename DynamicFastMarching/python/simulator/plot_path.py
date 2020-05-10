@@ -100,7 +100,7 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
         font = ImageFont.truetype(fontpath, fsize)
         char_width = font.getsize('h')[0]  # this should be 0.6*fsize
         line_height = font.getsize('hg')[1]
-        out_map = cv2.copyMakeBorder(out_map, line_height * 5 + vmargin * 2, 0, 0, 0, cv2.BORDER_CONSTANT,
+        out_map = cv2.copyMakeBorder(out_map, line_height * 5 + vmargin * 2 + 36, 0, 36, 0, cv2.BORDER_CONSTANT,
                                      value=(255, 255, 255))
         img_pil = Image.fromarray(out_map)
         draw = ImageDraw.Draw(img_pil)
@@ -117,6 +117,19 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
         draw.text((base_t, vmargin + line_height * 2), caption4, font=font, fill=(100, 100, 100))
         draw.text((base_t, vmargin + line_height * 3), caption5, font=font, fill=(100, 100, 100))
         draw.text((base_t, vmargin + line_height * 4), caption6, font=font, fill=(100, 100, 100))
+
+        font = ImageFont.truetype(fontpath, 20)
+
+        for n in range(0, img.shape[1]):
+            img_main = Image.new("RGB", (36, 20), (255,255,255))
+            draw = ImageDraw.Draw(img_main)
+            draw.text((0, 0), str(n), font=font, fill=(0, 0, 0))
+            t = img_main.rotate(90, expand=1)
+            img_pil.paste(t, (36 + n*21, line_height*5 + (vmargin * 2)))
+        for n in range(0, img.shape[1]):
+            draw = ImageDraw.Draw(img_pil)
+            draw.text((0, line_height*5 + (vmargin * 2) + 36 + 21*n), str(n).rjust(3), font=font, fill=(0, 0, 0))
+
         out_map = numpy.array(img_pil)
     return out_map
 

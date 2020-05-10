@@ -3,7 +3,7 @@
 # -*- coding: UTF-8 -*-
 import sys
 print("Python version" + sys.version)
-print("Version info" + sys.version_info)
+print("Version info" + str(sys.version_info))
 from setuptools import setup, find_packages
 setup(name='simulator',
       version='0.0.1',
