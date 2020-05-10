@@ -10,8 +10,6 @@
 #include <LinearTraversalCostInterpolation.h>
 #include <Interpolation.h>
 
-const float SQRT2 = 1.41421356237309504880168872420969807856967187537694f;
-
 void DFMPlanner::init() {
     initialize_search = true;
 }
@@ -30,13 +28,10 @@ int DFMPlanner::step() {
         initializeSearch();
     } else if (new_start) {
         new_start = false;
-        Queue new_queue;
-        for (const auto &elem: priority_queue)
-            // Only heuristic changes, so either G or RHS is kept the same
-            new_queue.insert(elem.elem, calculateKey(elem.elem, elem.key.second));
-        priority_queue.swap(new_queue);
-        //new_queue.insert(grid.goal_cell_, calculateKey(grid.goal_cell_, 0));
-        // gather cells with updated edge costs and update affected nodes
+//        Queue new_queue;
+//        for (const auto &elem: priority_queue) // Heuristic update
+//            new_queue.insert(elem.elem, calculateKey(elem.elem, elem.key.second));
+//        priority_queue.swap(new_queue);
         updateCells();
     }
     auto end = std::chrono::steady_clock::now();
@@ -100,21 +95,7 @@ DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float g, float rh
 }
 
 DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float cost_so_far) {
-    return {cost_so_far, cost_so_far};
-}
-
-DFMPlanner::Queue::Key DFMPlanner::calculateHeurKey(const Cell &s) {
-    auto[g, rhs] = map.getGandRHS(s);
-    return calculateHeurKey(s, g, rhs);
-}
-
-DFMPlanner::Queue::Key DFMPlanner::calculateHeurKey(const Cell &s, float g, float rhs) {
-    return calculateHeurKey(s, std::min(g, rhs));
-}
-
-DFMPlanner::Queue::Key DFMPlanner::calculateHeurKey(const Cell &s, float cost_so_far) {
-    auto dist = grid.start_cell_.distance(s);
-    return {cost_so_far + heuristic_multiplier * dist + 255, cost_so_far};
+    return {cost_so_far};
 }
 
 void DFMPlanner::initializeSearch() {
@@ -132,12 +113,7 @@ void DFMPlanner::initializeSearch() {
 bool DFMPlanner::end_condition() {
     auto top_key = priority_queue.topKey();
     auto[g, rhs] = map.getGandRHS(grid.start_cell_);
-    //auto [k1,k2]=calculateKey(grid.start_cell_, g, rhs);
-    //std::cout<< "START KEY " << k1 << " " << k2<< std::endl;
-    if ((top_key < calculateKey(grid.start_cell_, g, rhs)) or (rhs != g)) {
-        return false;
-    }
-    return true; //STOP: all 4 conditions met
+    return ((top_key >= calculateKey(grid.start_cell_, g, rhs)) and (rhs == g));
 }
 
 unsigned long DFMPlanner::computeShortestPath() {
@@ -160,17 +136,24 @@ unsigned long DFMPlanner::computeShortestPath() {
 
         if (G(s_it) > RHS(s_it)) { // Overconsistent
             G(s_it) = RHS(s_it);
-            for (const Cell &nbr : grid.neighbors_8(s)){
-                updateCellDecreasedNeighbor(nbr, s);
-                updateCell(nbr);
+            for (const Cell &nbr : grid.neighbors_8(s)) {
+                if (optimization_lvl == 0) {
+                    updateCell(nbr);
+                } else {
+                    updateCellDecreasedNeighbor(nbr, s);
+                }
             }
         } else { // Underconsistent
             G(s_it) = INFINITY;
-            for (const Cell &nbr : grid.neighbors_8(s)){
-                auto nbr_it = map.find(nbr);
-                assert(nbr_it != map.end());
-                if (INFO(nbr_it).first == s or INFO(nbr_it).second == s)
+            for (const Cell &nbr : grid.neighbors_8(s)) {
+                if (optimization_lvl == 0) {
                     updateCell(nbr);
+                } else {
+                    auto nbr_it = map.find(nbr);
+                    assert(nbr_it != map.end());
+                    if (INFO(nbr_it).first == s or INFO(nbr_it).second == s)
+                        updateCell(nbr);
+                }
             }
             updateCell(s);
         }
@@ -234,22 +217,29 @@ float DFMPlanner::computeOptimalCostDecreasedNeighbor(const Cell &c, const Cell 
     std::cout << "X min " << ca1.x << " " << ca1.y << "   cost " << g_a_1 << std::endl;
     std::cout << "Y min " << cb1.x << " " << cb1.y << "   cost " << g_b_1 << std::endl;
 #endif
-    if (g_a_1 > g_b_1) {
-        std::swap(g_a_1, g_b_1);
+    std::tie(stencil_cost, bptrs) = FMcost(ca1, cb1, g_a_1, g_b_1, tau, HYPOT(dx, dy));
+    return stencil_cost;
+}
+
+std::pair<float, std::pair<Cell, Cell>>
+DFMPlanner::FMcost(Cell &ca1, Cell &cb1, float ga1, float gb1, float tau, float h) {
+    if (ga1 > gb1) {
+        std::swap(ga1, gb1);
         std::swap(ca1, cb1);
     }
-    float h = HYPOT(dx, dy);
-    if (g_a_1 == INFINITY and g_b_1 == INFINITY) {
+    float stencil_cost;
+    std::pair<Cell, Cell> bptrs;
+    if (ga1 == INFINITY and gb1 == INFINITY) {
+        bptrs = {};
         stencil_cost = INFINITY;
-    } else if ((tau * h) > (g_b_1 - g_a_1)) {
+    } else if ((tau * h) > (gb1 - ga1)) {
         bptrs = {ca1, cb1};
-        stencil_cost = (g_a_1 + g_b_1 + std::sqrt(2 * SQUARE(tau * h) - SQUARE(g_b_1 - g_a_1))) / 2.0f;
+        stencil_cost = (ga1 + gb1 + std::sqrt(2 * SQUARE(tau * h) - SQUARE(gb1 - ga1))) / 2.0f;
     } else {
         bptrs = {ca1, {}};
-        stencil_cost = g_a_1 + tau * h;
+        stencil_cost = ga1 + tau * h;
     }
-
-    return stencil_cost;
+    return {stencil_cost, bptrs};
 }
 
 void DFMPlanner::updateCell(const Cell &cell) {
@@ -284,19 +274,7 @@ float DFMPlanner::computeOptimalCost(const Cell &c, std::pair<Cell, Cell> &bptrs
     std::cout << "X min " << ca1.x << " " << ca1.y << "   cost " << g_a_1 << std::endl;
     std::cout << "Y min " << cb1.x << " " << cb1.y << "   cost " << g_b_1 << std::endl;
 #endif
-    if (g_a_1 > g_b_1) {
-        std::swap(g_a_1, g_b_1);
-        std::swap(ca1, cb1);
-    }
-    if (g_a_1 == INFINITY and g_b_1 == INFINITY) {
-        stencil_ortho_cost = INFINITY;
-    } else if (tau > (g_b_1 - g_a_1)) {
-        ortho_bptrs = {ca1, cb1};
-        stencil_ortho_cost = (g_a_1 + g_b_1 + std::sqrt(2 * SQUARE(tau) - SQUARE(g_b_1 - g_a_1))) / 2.0f;
-    } else {
-        ortho_bptrs = {ca1, {}};
-        stencil_ortho_cost = g_a_1 + tau;
-    }
+    std::tie(stencil_ortho_cost, ortho_bptrs) = FMcost(ca1, cb1, g_a_1, g_b_1, tau, 1);
 
     auto[cc1, g_c_1] = minCost(c.topLeftCell(), c.bottomRightCell());
     auto[cd1, g_d_1] = minCost(c.bottomLeftCell(), c.topRightCell());
@@ -311,19 +289,7 @@ float DFMPlanner::computeOptimalCost(const Cell &c, std::pair<Cell, Cell> &bptrs
     std::cout << "D1 min " << cc1.x << " " << cc1.y << "   cost " << g_c_1 << std::endl;
     std::cout << "D2 min " << cd1.x << " " << cd1.y << "   cost " << g_d_1 << std::endl;
 #endif
-    if (g_c_1 > g_d_1) {
-        std::swap(g_c_1, g_d_1);
-        std::swap(cc1, cd1);
-    }
-    if (g_c_1 == INFINITY and g_d_1 == INFINITY) {
-        stencil_diago_cost = INFINITY;
-    } else if ((tau * SQRT2) > (g_d_1 - g_c_1)) {
-        diago_bptrs = {cc1, cd1};
-        stencil_diago_cost = (g_c_1 + g_d_1 + std::sqrt(2 * SQUARE(tau * SQRT2) - SQUARE(g_d_1 - g_c_1))) / 2.0f;
-    } else {
-        diago_bptrs = {cc1, {}};
-        stencil_diago_cost = g_c_1 + tau * SQRT2;
-    }
+    std::tie(stencil_diago_cost, diago_bptrs) = FMcost(cc1, cd1, g_c_1, g_d_1, tau, SQRT2);
 
     if (stencil_diago_cost < stencil_ortho_cost) {
         bptrs = std::move(diago_bptrs);
@@ -350,20 +316,6 @@ unsigned long DFMPlanner::updateCells() {
     num_cells_updated = grid.updated_cells_.size();
     std::cout << num_cells_updated << " cells updated" << std::endl;
     return num_cells_updated;
-}
-
-std::pair<std::shared_ptr<float[]>, std::shared_ptr<float[]>> DFMPlanner::costMapGradient() {
-    std::shared_ptr<float[]> _gh(new float[grid.size_], std::default_delete<float[]>());
-    std::shared_ptr<float[]> _gv(new float[grid.size_], std::default_delete<float[]>());
-    auto gh = [&](int x, int y) -> float & { return _gh.get()[x * grid.width_ + y]; };
-    auto gv = [&](int x, int y) -> float & { return _gv.get()[x * grid.width_ + y]; };
-    for (int i = 0; i < grid.length_; ++i) {
-        for (int j = 0; j < grid.width_; ++j) {
-            Cell c(i, j);
-            std::tie(gh(i, j), gv(i, j)) = gradientAtCell(c);
-        }
-    }
-    return {_gh, _gv};
 }
 
 std::tuple<float, float> DFMPlanner::interpolateGradient(const Position &c) {

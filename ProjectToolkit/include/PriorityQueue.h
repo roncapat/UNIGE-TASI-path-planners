@@ -10,10 +10,10 @@
 #include "Graph.h"
 #include <boost/heap/fibonacci_heap.hpp>
 
-template <typename T>
+template <typename K, typename T>
 class PriorityQueue {
  public:
-  typedef std::pair<float, float> Key;
+  typedef K Key;
   typedef T Value;
 
   class ElemType {
