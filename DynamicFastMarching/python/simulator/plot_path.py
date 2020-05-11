@@ -11,16 +11,16 @@ from PIL import ImageFont, ImageDraw, Image
 thismodule = sys.modules[__name__]
 
 
-def plot_path(mapfile, pathfile, dbgfile):
+def plot_path(mapfile, label, use_cell, pathfile, dbgfile):
     mapdata = cv2.imread(mapfile, 0)
     with open(pathfile, 'r') as pathfile:
         poses = json.load(pathfile)['poses']
     with open(dbgfile, 'r') as dbgfile:
         expanded = json.load(dbgfile)['expanded']
-    return plot_path_on_map(mapdata, dbgfile, nextpath=poses, expanded=expanded)
+    return plot_path_on_map(mapdata, label, use_cell, dbgfile, nextpath=poses, expanded=expanded)
 
 
-def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
+def plot_path_on_map(img, label, use_cell, prevpath=[], nextpath=[], expanded=[], info=None):
     mult = 21
 
     width = int(img.shape[1] * mult) + 1
@@ -43,19 +43,22 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
             max_g = max(max_g, p[3])
 
     period = max_g / 8
+    offs = 0
+    if use_cell:
+        offs = floor(mult / 2)
     for p in expanded:
         x = p[1]
         y = p[0]
         if p[3] != float("inf"):
             (r, g, b) = colorsys.hsv_to_rgb(p[3] / period, 1.0, 1.0)
             color = (int(200 * r), int(200 * g), int(200 * b))
-            cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), ceil(mult / 5), color,
+            cv2.circle(out_map, (mult * x + offs, mult * y + offs), ceil(mult / 5), color,
                        cv2.FILLED)
         else:
-            cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), floor(mult / 5),
+            cv2.circle(out_map, (mult * x + offs, mult * y + offs), floor(mult / 5),
                        (0, 0, 0), cv2.FILLED)
         if p[2] != p[3]:
-            cv2.circle(out_map, (mult * x + floor(mult / 2), mult * y + floor(mult / 2)), ceil(mult / 3),
+            cv2.circle(out_map, (mult * x + offs, mult * y + offs), ceil(mult / 3),
                        (100, 100, 100), 1)
 
     for a, b in zip(prevpath, prevpath[1:]):
@@ -108,7 +111,7 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
         cw = font.getsize(caption1)[0]
         base_t = width - cw - tw - char_width * 5
         base_c = width - cw - lmargin
-        draw.text((lmargin, vmargin), "Dynamic FM", font=font, fill=(100, 100, 100))
+        draw.text((lmargin, vmargin), label, font=font, fill=(100, 100, 100))
         draw.text((base_c, vmargin), captionc, font=font, fill=(100, 100, 100))
         draw.text((base_c, vmargin + line_height), caption1, font=font, fill=(100, 100, 100))
         draw.text((base_c, vmargin + line_height * 2), caption2, font=font, fill=(100, 100, 100))
@@ -121,22 +124,23 @@ def plot_path_on_map(img, prevpath=[], nextpath=[], expanded=[], info=None):
         font = ImageFont.truetype(fontpath, 20)
 
         for n in range(0, img.shape[1]):
-            img_main = Image.new("RGB", (36, 20), (255,255,255))
+            img_main = Image.new("RGB", (36, 20), (255, 255, 255))
             draw = ImageDraw.Draw(img_main)
             draw.text((0, 0), str(n), font=font, fill=(0, 0, 0))
             t = img_main.rotate(90, expand=1)
-            img_pil.paste(t, (36 + n*21, line_height*5 + (vmargin * 2)))
+            img_pil.paste(t, (36 + n * 21, line_height * 5 + (vmargin * 2)))
         for n in range(0, img.shape[1]):
             draw = ImageDraw.Draw(img_pil)
-            draw.text((0, line_height*5 + (vmargin * 2) + 36 + 21*n), str(n).rjust(3), font=font, fill=(0, 0, 0))
+            draw.text((0, line_height * 5 + (vmargin * 2) + 36 + 21 * n), str(n).rjust(3), font=font, fill=(0, 0, 0))
 
         out_map = numpy.array(img_pil)
     return out_map
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 5:
-        sys.stderr.write("Usage:\n\t %s <mapfile.bmp> <logfile.json> <dbgfile.json> <outfile.jpg>\n" % sys.argv[0])
+    if len(sys.argv) < 7:
+        sys.stderr.write(
+            "Usage:\n\t %s <mapfile.bmp> label use_cell <logfile.json> <dbgfile.json> <outfile.jpg>\n" % sys.argv[0])
         exit()
-    result = plot_path(*sys.argv[1:4])
-    cv2.imwrite(sys.argv[4], result)
+    result = plot_path(*sys.argv[1:6])
+    cv2.imwrite(sys.argv[6], result)
