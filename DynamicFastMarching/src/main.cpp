@@ -3,7 +3,8 @@
 #include <chrono>
 #include <iomanip>
 #include <fstream>
-#include "FieldDPlanner.h"
+#include <memory>
+#include "DynamicFastMarching.h"
 #include "Graph.h"
 
 int main(int _argc, char **_argv) {
@@ -19,8 +20,9 @@ int main(int _argc, char **_argv) {
 
     Position next_point, goal;
     float next_step_cost = 0;
+
     auto res = std::system((std::string("python3 -m simulator.run_simulator ") +
-        _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " + _argv[12] + " 'Field D*' n &").data());
+        _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " + _argv[12] + " MS-DFM c &").data());
     (void) res;
 
     char ack = -1;
@@ -51,13 +53,11 @@ int main(int _argc, char **_argv) {
     goal.x = std::stof(_argv[4]);
     goal.y = std::stof(_argv[5]);
 
-    FieldDPlanner planner{};
+    DFMPlanner planner{};
     planner.init();
     planner.set_optimization_lvl(std::stoi(_argv[8]));
     planner.set_first_run_trick(false);
     planner.set_occupancy_threshold(1);
-    planner.set_lookahead(std::stoi(_argv[6]));
-    // FIXME handle remplanning, for now i put the lowest possible value for consistency
     planner.set_heuristic_multiplier(min);
     planner.set_map(data, width, height);
     planner.set_start(next_point);
@@ -69,8 +69,11 @@ int main(int _argc, char **_argv) {
         std::cout << "[PLANNER]   New position: [" << next_point.x << ", " << next_point.y << "]" << std::endl;
         ack = 1;
         out_fifo.write((char *) &ack, 1);
-        out_fifo.write((char *) &(next_point.x), 4);
-        out_fifo.write((char *) &(next_point.y), 4);
+        Position p = next_point; p.x+=0.5f; p.y+=0.5f;
+        out_fifo.write((char *) &(p.x), 4);
+        out_fifo.write((char *) &(p.y), 4);
+//        out_fifo.write((char *) &(next_point.x), 4);
+//        out_fifo.write((char *) &(next_point.y), 4);
         out_fifo.write((char *) &(next_step_cost), 4);
         out_fifo.flush();
         ack = -1;
@@ -101,8 +104,10 @@ int main(int _argc, char **_argv) {
         auto path_size = (int) planner.path_.size();
         out_fifo.write((char *) &path_size, 4);
         for (const auto &pose : planner.path_) {
-            out_fifo.write((char *) &(pose.x), 4);
-            out_fifo.write((char *) &(pose.y), 4);
+            //TODO remove 0.5 if not necessary
+            Position p = pose; p.x+=0.5f; p.y+=0.5f;
+            out_fifo.write((char *) &(p.x), 4);
+            out_fifo.write((char *) &(p.y), 4);
         }
         out_fifo.flush();
         for (const auto &step_cost: planner.cost_) {
@@ -122,7 +127,7 @@ int main(int _argc, char **_argv) {
         auto expanded_size = (long long) planner.map.size();
         out_fifo.write((char *) &expanded_size, 8);
         for (const auto &expanded : planner.map) {
-            const Node &exp = expanded.first;
+            const Cell &exp = expanded.first;
             auto[g, rhs, _] = expanded.second;
             out_fifo.write((char *) &(exp.x), 4);
             out_fifo.write((char *) &(exp.y), 4);
@@ -130,9 +135,15 @@ int main(int _argc, char **_argv) {
             out_fifo.write((char *) &(rhs), 4);
         }
         out_fifo.flush();
-
-        next_point = {planner.path_[1].x, planner.path_[1].y};
-        next_step_cost = planner.cost_.front();
+        next_point = planner.path_[1];
+        float next_idx = 1;
+        next_step_cost = planner.cost_[0];
+        while(planner.path_[0].distance(next_point)<0.5){
+            if (next_point == goal)
+                break; //Goal reached
+            next_step_cost += planner.cost_[next_idx];
+            next_point = planner.path_[++next_idx];
+        }
         if (next_point == goal)
             break; //Goal reached
         planner.set_start(next_point);

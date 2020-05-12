@@ -1,6 +1,5 @@
 import struct
-import time
-
+import matplotlib.pyplot as plt
 from .plot_path import *
 
 
@@ -117,15 +116,17 @@ def plot_upscaled_map_with_robot_circle(data_l, height, width, scale, center, ra
 
 
 def main():
-    if len(sys.argv) < 7:
+    if len(sys.argv) < 9:
         print("Usage:")
-        print("\t %s <mapfile.bmp> cspace pipe_in pipe_out gui outpath")
+        print("\t %s <mapfile.bmp> cspace pipe_in pipe_out gui outpath label c_cell_n_node")
 
     pipe_in = os.path.abspath(sys.argv[3])
     pipe_out = os.path.abspath(sys.argv[4])
     gui = bool(int(sys.argv[5]))
     outpath = sys.argv[6]
     cspace = int(sys.argv[2])
+    label = sys.argv[7]
+    use_cell = (sys.argv[8] == "c")
 
     print(pipe_out)
     print(pipe_in)
@@ -158,6 +159,9 @@ def main():
     utt = 0
     ptt = 0
     ett = 0
+    uts = []
+    pts = []
+    ets = []
 
     while get_byte(p_in) == 1:
         pos_x, pos_y, step_cost = receive_traversal_update(p_in)
@@ -186,6 +190,9 @@ def main():
         utt = utt + times['update']
         ptt = ptt + times['planning']
         ett = ett + times['extraction']
+        uts.append(times['update'])
+        pts.append(times['planning'])
+        ets.append(times['extraction'])
 
         info = {"cost_from_start": cost_from_beginning,
                 "cost_to_goal": cost_to_goal,
@@ -195,18 +202,18 @@ def main():
                 "cum": times['update'] + times['planning'] + times['extraction'],
                 "cum_tot": utt + ptt + ett}
         info.update(times)
-        dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
+        dbgview = plot_path_on_map(~data_l_cspace, label, use_cell, prev_path, next_path, expanded, info)
         [w, h, _] = dbgview.shape
         if out is None:
             if gui:
-                cv2.namedWindow('Field D* planner', cv2.WINDOW_NORMAL)
-                cv2.resizeWindow('Field D* planner', 900, 900)  # TODO keep image aspect ratio
-                cv2.moveWindow('Field D* planner', 100, 100)
+                cv2.namedWindow(label + " Planner", cv2.WINDOW_NORMAL)
+                cv2.resizeWindow(label + " Planner", 900, 900)  # TODO keep image aspect ratio
+                cv2.moveWindow(label + " Planner", 100, 100)
             video_path = os.path.join(os.path.abspath(outpath), mapname.split('.')[0] + '.avi')
             out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'DIVX'), 5, (h, w))
         out.write(dbgview)
         if gui:
-            cv2.imshow('Field D* planner', dbgview)
+            cv2.imshow(label + " Planner", dbgview)
             cv2.waitKey(1)
 
     cost_from_beginning += cost_to_goal
@@ -227,11 +234,21 @@ def main():
             "cum": 0,
             "cum_tot": utt + ptt + ett}
     if gui:
-        dbgview = plot_path_on_map(~data_l, prev_path, next_path, expanded, info)
-        cv2.imshow('Field D* planner', dbgview)
+        dbgview = plot_path_on_map(~data_l, label, use_cell, prev_path, next_path, expanded, info)
+        cv2.imshow(label + " Planner", dbgview)
+        plt.plot(range(1, len(uts) + 1), uts, label="Update")
+        plt.plot(range(1, len(pts) + 1), pts, label="Planning")
+        plt.plot(range(1, len(ets) + 1), ets, label="Extraction")
+        plt.legend(title='CPU time (ms)')
+        plt.title(label + " runtime analysis")
+        plt.gcf().canvas.set_window_title(label + " runtime analysis")
+        cv2.waitKey(1)
+        plt.show()
+
     out.write(dbgview)
     out.release()
-    cv2.waitKey()
+
+
 
     p_in.close()
     send_byte(p_out, 2)

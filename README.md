@@ -27,3 +27,8 @@ chmod +x run_test__field_d_star.sh
 The test files can be found in [Tests/Tests](Tests/Tests).
 
 The logs and the results can be found in [Tests/Results](Tests/Results) after a successful run of the above commands.
+
+## Python 3 requirements
+opencv-python
+Pillow
+setuptools

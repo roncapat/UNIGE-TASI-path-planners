@@ -5,19 +5,22 @@
 #include <functional>
 #include <set>
 #include <utility>
+#include <unordered_map>
 
 #include "Graph.h"
 #include <boost/heap/fibonacci_heap.hpp>
 
+template <typename K, typename T>
 class PriorityQueue {
  public:
-  typedef std::pair<float, float> Key;
+  typedef K Key;
+  typedef T Value;
 
   class ElemType {
    public:
-    Node node;
+    Value elem;
     Key key;
-    ElemType(const Node &node, const Key &key) : node(node), key(key){};
+    ElemType(const Value &cell, const Key &key) : elem(cell), key(key){};
   };
 
  private:
@@ -32,11 +35,11 @@ class PriorityQueue {
   typedef boost::heap::mutable_<true> MutableOption;
   typedef boost::heap::fibonacci_heap<ElemType, CompareOption, MutableOption> QueueType;
   QueueType __queue;
-  std::unordered_map<Node, QueueType::handle_type> __handles;
+  std::unordered_map<Value, typename QueueType::handle_type> __handles;
 
  public:
-  typedef QueueType::handle_type HandleType;
-  typedef QueueType::iterator IteratorType;
+  typedef typename QueueType::handle_type HandleType;
+  typedef typename QueueType::iterator IteratorType;
 
   PriorityQueue() = default;
 
@@ -48,15 +51,15 @@ class PriorityQueue {
   };
 
   void swap(PriorityQueue &other);
-  void insert_or_update(const Node &n, const Key &k);
-  void remove_if_present(const Node &n);
-  void insert(const Node &n, const Key &k);
+  void insert_or_update(const Value &n, const Key &k);
+  void remove_if_present(const Value &n);
+  void insert(const Value &n, const Key &k);
   void clear();
   void pop();
   Key topKey();
-  Node topNode();
+  Value topValue();
   int size();
   bool empty();
 };
-
+#include "impl/PriorityQueue_impl.h"
 #endif

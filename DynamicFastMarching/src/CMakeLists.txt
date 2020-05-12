@@ -21,8 +21,9 @@ ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
 include_directories(include)
 include_directories(../../ProjectToolkit/include)
-add_executable(field_d_planner
-               FieldDPlanner.cpp
+add_executable(dfm_planner
+               DynamicFastMarching.cpp
                main.cpp)
-target_link_libraries(field_d_planner gcov)
-target_link_libraries(field_d_planner ProjectToolkit)
+
+target_link_libraries(dfm_planner gcov)
+target_link_libraries(dfm_planner ProjectToolkit)

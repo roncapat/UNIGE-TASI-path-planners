@@ -7,7 +7,7 @@ gen
 /cmake-build-*/
 Makefile
 doc/
-/venv/
+/venv*/
 *.json
 *.jpg
 *.jpeg
