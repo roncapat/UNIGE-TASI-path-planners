@@ -163,6 +163,8 @@ def main():
     pts = []
     ets = []
 
+    first_time = True
+
     while get_byte(p_in) == 1:
         pos_x, pos_y, step_cost = receive_traversal_update(p_in)
         print("[SIMULATOR] New position: [%f, %f]" % (pos_x, pos_y))
@@ -179,6 +181,23 @@ def main():
         send_byte(p_out, 1)
         send_patch(p_out, p_data_cspace, p_pos)
         send_int(p_out, int(min_cost))
+
+        if not first_time:
+            dbgview = plot_path_on_map(~data_l_cspace, label, use_cell, prev_path, next_path, expanded, info)
+            if out is None:
+                if gui:
+                    cv2.namedWindow(label + " Planner", cv2.WINDOW_NORMAL)
+                    cv2.resizeWindow(label + " Planner", 900, 900)  # TODO keep image aspect ratio
+                    cv2.moveWindow(label + " Planner", 100, 100)
+                video_path = os.path.join(os.path.abspath(outpath), mapname.split('.')[0] + '.avi')
+                [w, h, _] = dbgview.shape
+                out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'DIVX'), 5, (h, w))
+            out.write(dbgview)
+            if gui:
+                cv2.imshow(label + " Planner", dbgview)
+                cv2.waitKey(1)
+        else:
+            first_time = False
 
         wait_byte(p_in, 3)
         (next_path, costs, dist, cost, times) = receive_path(p_in)
@@ -202,19 +221,12 @@ def main():
                 "cum": times['update'] + times['planning'] + times['extraction'],
                 "cum_tot": utt + ptt + ett}
         info.update(times)
-        dbgview = plot_path_on_map(~data_l_cspace, label, use_cell, prev_path, next_path, expanded, info)
-        [w, h, _] = dbgview.shape
-        if out is None:
-            if gui:
-                cv2.namedWindow(label + " Planner", cv2.WINDOW_NORMAL)
-                cv2.resizeWindow(label + " Planner", 900, 900)  # TODO keep image aspect ratio
-                cv2.moveWindow(label + " Planner", 100, 100)
-            video_path = os.path.join(os.path.abspath(outpath), mapname.split('.')[0] + '.avi')
-            out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'DIVX'), 5, (h, w))
-        out.write(dbgview)
-        if gui:
-            cv2.imshow(label + " Planner", dbgview)
-            cv2.waitKey(1)
+
+    dbgview = plot_path_on_map(~data_l_cspace, label, use_cell, prev_path, next_path, expanded, info)
+    out.write(dbgview)
+    if gui:
+        cv2.imshow(label + " Planner", dbgview)
+        cv2.waitKey(1)
 
     cost_from_beginning += cost_to_goal
     cost_to_goal = 0

@@ -78,6 +78,38 @@ std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) {
     return neighbors;
 }
 
+std::vector<Node> Graph::neighbors_4(const Node &s, bool include_invalid) {
+    std::vector<Node> neighbors{
+            s.topNode(), s.leftNode(),
+            s.bottomNode(), s.rightNode()
+    };
+
+    if (not include_invalid)
+        neighbors.erase(
+                std::remove_if(neighbors.begin(), neighbors.end(),
+                               [&](Node const &p) { return not isValid(p); }),
+                neighbors.end()
+        );
+
+    return neighbors;
+}
+
+std::vector<Node> Graph::neighbors_diag_4(const Node &s, bool include_invalid) {
+    std::vector<Node> neighbors{
+            s.topLeftNode(), s.bottomLeftNode(),
+            s.topRightNode(), s.bottomRightNode()
+    };
+
+    if (not include_invalid)
+        neighbors.erase(
+                std::remove_if(neighbors.begin(), neighbors.end(),
+                               [&](Node const &p) { return not isValid(p); }),
+                neighbors.end()
+        );
+
+    return neighbors;
+}
+
 std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) {
     std::vector<Cell> neighbors{
         s.topCell(), s.topLeftCell(), s.leftCell(), s.bottomLeftCell(),

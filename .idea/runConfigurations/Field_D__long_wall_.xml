@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Field D (long wall)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="../../../Tests/Tests/wall-c_4_45_4_4_.bmp 45 4 4 4 1 9 0 ../../pipe_1 ../../pipe_2 1  ../../../" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="roncapat_global_planners" TARGET_NAME="field_d_planner" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="roncapat_global_planners" RUN_TARGET_NAME="field_d_planner">
+  <configuration default="false" name="Field D (long wall)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="../../../Tests/Tests/wall-c_4_45_4_4_.bmp 45 4 4 4 1 9 1 ../../pipe_1 ../../pipe_2 1  ../../../" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="roncapat_global_planners" TARGET_NAME="field_d_planner" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="roncapat_global_planners" RUN_TARGET_NAME="field_d_planner">
     <envs>
       <env name="PYTHONPATH" value="../../Simulator/build/lib" />
     </envs>

@@ -46,6 +46,7 @@ class Graph {
 
   std::vector<Node> neighbors_8(const Node &s, bool include_invalid = false);
   std::vector<Cell> neighbors_8(const Cell &s, bool include_invalid = false);
+  std::vector<Node> neighbors_4(const Node &s, bool include_invalid = false);
   std::vector<Cell> neighbors_4(const Cell &s, bool include_invalid = false);
 
   std::vector<Edge> consecutiveNeighbors(const Position &p);
@@ -57,6 +58,9 @@ class Graph {
   static Cell getCell(const Node &a, const Node &b, const Node &c);
   static std::vector<Position> getGridBoundariesTraversals(const Position &a, const Position &b);
   uint8_t &get(int x, int y);
+
+
+    std::vector<Node> neighbors_diag_4(const Node &s, bool include_invalid = false);
 };
 
 #endif  // GRAPHSEARCH_H

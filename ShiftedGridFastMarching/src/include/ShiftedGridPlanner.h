@@ -101,8 +101,8 @@ private:
     void updateNode_0(const Node &s);
 
     unsigned long computeShortestPath_0();
-
     unsigned long computeShortestPath_1();
+    unsigned long computeShortestPath_2();
 
     unsigned long updateNodesAroundUpdatedCells();
 
@@ -137,6 +137,10 @@ private:
     bool new_start;
 
     void getC(TraversalParams &t);
+
+    float minRHS_2(const Node &s, Node &bptr);
+
+    float computeOptimalCost(const Node &n, const Node &p_a, const Node &p_b, float ga, float gb);
 };
 
 #endif

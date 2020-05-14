@@ -59,9 +59,9 @@ int DFMPlanner::step() {
 
     end = std::chrono::steady_clock::now();
     e_time = std::chrono::duration<float, std::milli>(end - begin).count();
-    std::cout << "Update time     = " << u_time << " ms" << std::endl;
-    std::cout << "Planning time   = " << p_time << " ms" << std::endl;
-    std::cout << "Extraction time = " << e_time << " ms" << std::endl;
+    //std::cout << "Update time     = " << u_time << " ms" << std::endl;
+    //std::cout << "Planning time   = " << p_time << " ms" << std::endl;
+    //std::cout << "Extraction time = " << e_time << " ms" << std::endl;
 
     return LOOP_OK;
 }

@@ -701,7 +701,7 @@ path_additions directTraversalFromContiguousEdge(TraversalParams &cell1, float &
     cell1.f = cell1.g1 - cell1.g2;
     assert(cell1.q > 0 and cell1.q < 1);
     assert(cell1.g1 >= 0 and cell1.g2 >= 0); //Goal has g=0
-    assert(cell1.b > 0 and cell1.c > 0);
+    assert(cell1.c > 0);
 
     std::vector<float> step_costs;
     std::vector<Position> positions;
@@ -744,7 +744,7 @@ path_additions directTraversalFromOppositeEdge(TraversalParams &cell1, Traversal
     assert(cell1.p > 0 and cell1.p < 1);
     assert((cell1.p + cell2.p) == 1);
     assert(cell1.g1 >= 0 and cell1.g2 >= 0); // goal has g=0
-    assert(cell1.b > 0 and cell2.b > 0 and cell1.c > 0);
+    assert(cell1.c > 0);
 
     // Use _f1, _p1, _b1, _g_s2;
     // Use neg(_f), 1-_p1, _b2, _g_s1;
