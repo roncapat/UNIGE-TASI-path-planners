@@ -280,6 +280,38 @@ float ShiftedGridPlanner::minRHS_1(const Node &s, Node &bptr) {
     return rhs;
 }
 
+float ShiftedGridPlanner::minRHS_2(const Node &s, Node &bptr) {
+//    std::cout << "V2" << std::endl;
+    float rhs = INFINITY, cost;
+    for (const auto &sp : grid.neighbors_diag_4(s)) {
+        auto ccn = grid.counterClockwiseNeighbor(s, sp);
+        auto cn = grid.clockwiseNeighbor(s, sp);
+        float ccn_g = map.getG(ccn);
+        float cn_g = map.getG(cn);
+        float sp_g = map.getG(sp);
+        bool valid1 = ccn.isValid();
+        bool valid2 = cn.isValid();
+
+        if (valid1 and ((not valid2) or (valid2 and ccn_g <= cn_g))) {
+            rhs = std::min(rhs, cost = computeOptimalCost(s, sp, ccn, sp_g, ccn_g));
+//                std::cout << "SP " << sp.x << " " << sp.y << " G " << map.getG(sp)
+//                          << " CCN " << ccn.x << " " << ccn.y << " G " << map.getG(ccn)
+//                          << " COST " << cost << std::endl;
+            if (rhs == cost)
+                bptr = sp;
+        } else if (valid2 and ((not valid1) or (valid1 and ccn_g > cn_g))) {
+            rhs = std::min(rhs, cost = computeOptimalCost(s, sp, cn, sp_g, cn_g));
+//                    std::cout << "SP " << cn.x << " " << cn.y << " G " << map.getG(cn)
+//                              << " CCN " << sp.x << " " << sp.y << " G " << map.getG(sp)
+//                              << " COST " << cost << std::endl;
+            if (rhs == cost)
+                bptr = cn;
+        }
+    }
+//    std::cout << "CHOICE " << bptr.x << " " << bptr.y << " COST " << rhs << std::endl;
+    return rhs;
+}
+
 bool ShiftedGridPlanner::end_condition() {
     // We need to check expansion until all 4 corners of start cell
     // used early stop from D* LITE

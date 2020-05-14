@@ -31,9 +31,8 @@ int main(int _argc, char **_argv) {
     auto ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cset);
     if (ret != 0) abort();
 
-    struct sched_param priomax, priomin;
+    struct sched_param priomax;
     priomax.sched_priority=sched_get_priority_max(SCHED_FIFO);
-    priomin.sched_priority=sched_get_priority_min(SCHED_FIFO);
 
     ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &priomax);
     if (ret != 0)
