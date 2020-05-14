@@ -135,12 +135,8 @@ private:
     void getBC(TraversalParams &t);
 
     bool new_start;
-
-    unsigned long computeShortestPath_2();
-
+    
     float computeOptimalCost(const Node &n, const Node &p_a, const Node &p_b, float ga, float gb);
-
-    float minRHS_2(const Node &s, Node &bptr);
 };
 
 #endif
