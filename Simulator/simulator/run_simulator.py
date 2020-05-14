@@ -128,8 +128,6 @@ def main():
     label = sys.argv[7]
     use_cell = (sys.argv[8] == "c")
 
-    print(pipe_out)
-    print(pipe_in)
     p_out = open(pipe_out, 'wb')
     p_in = open(pipe_in, 'rb')
 

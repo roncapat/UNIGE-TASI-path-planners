@@ -132,13 +132,9 @@ private:
                                     const bool &do_lookahead,
                                     float &step_cost);
 
-    void getBC(TraversalParams &t);
-
     bool new_start;
 
     void getC(TraversalParams &t);
-
-    float minRHS_2(const Node &s, Node &bptr);
 
     float computeOptimalCost(const Node &n, const Node &p_a, const Node &p_b, float ga, float gb);
 };

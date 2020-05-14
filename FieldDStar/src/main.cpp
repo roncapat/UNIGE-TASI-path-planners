@@ -3,6 +3,7 @@
 #include <chrono>
 #include <iomanip>
 #include <fstream>
+#include <pthread.h>
 #include "FieldDPlanner.h"
 #include "Graph.h"
 
@@ -22,6 +23,20 @@ int main(int _argc, char **_argv) {
     auto res = std::system((std::string("python3 -m simulator.run_simulator ") +
         _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " + _argv[12] + " 'FD* V"+_argv[8]+"' n &").data());
     (void) res;
+
+    cpu_set_t cset;
+    CPU_ZERO( &cset);
+    CPU_SET( 0, &cset);
+    auto ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cset);
+    if (ret != 0) abort();
+
+    struct sched_param priomax, priomin;
+    priomax.sched_priority=sched_get_priority_max(SCHED_FIFO);
+    priomin.sched_priority=sched_get_priority_min(SCHED_FIFO);
+
+    ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &priomax);
+    if (ret != 0)
+        std::cout << "No privileges for setting maximum scheduling priority" << std::endl;
 
     char ack = -1;
     long size;

@@ -199,7 +199,6 @@ unsigned long ShiftedGridPlanner::computeShortestPath_2() {
                 assert(sp_it != map.end());
 
                 if (INFO(sp_it) == s or INFO(sp_it) == grid.clockwiseNeighbor(sp, s)) {
-                    assert(minRHS_1(sp, bptr) == minRHS_2(sp, bptr));
                     RHS(sp_it) = minRHS_2(sp, bptr);
                     if (RHS(sp_it) < INFINITY) INFO(sp_it) = bptr;
                     enqueueIfInconsistent(sp_it);
@@ -264,51 +263,18 @@ unsigned long ShiftedGridPlanner::computeShortestPath_1() {
         }
     }
     num_nodes_expanded = expanded;
-    std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
+    //std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
     return num_nodes_expanded;
 }
 
 float ShiftedGridPlanner::minRHS_1(const Node &s, Node &bptr) {
     float rhs = INFINITY, cost;
-    Node ccn;
     for (const auto &sp : grid.neighbors_8(s)) {
-        ccn = grid.counterClockwiseNeighbor(s, sp);
+        auto ccn = grid.counterClockwiseNeighbor(s, sp);
         if (ccn.isValid()) {
             rhs = std::min(rhs, cost = computeOptimalCost(s, sp, ccn));
             if (rhs == cost)
                 bptr = sp;
-        }
-    }
-    return rhs;
-}
-
-float ShiftedGridPlanner::minRHS_2(const Node &s, Node &bptr) {
-    float rhs = INFINITY, cost, ccn_g, cn_g, sp_g;
-    bool valid1, valid2;
-    Node ccn, cn;
-    for (const auto &sp : grid.neighbors_diag_4(s)) {
-        ccn = grid.counterClockwiseNeighbor(s, sp);
-        cn = grid.clockwiseNeighbor(s, sp);
-        if (first_run_trick and initialize_search) {
-            ccn_g = map.getRHS(ccn);
-            cn_g = map.getRHS(cn);
-            sp_g = map.getRHS(sp);
-        } else {
-            ccn_g = map.getG(ccn);
-            cn_g = map.getG(cn);
-            sp_g = map.getG(sp);
-        }
-        valid1 = ccn.isValid();
-        valid2 = cn.isValid();
-
-        if (valid1 and ((not valid2) or (ccn_g <= cn_g))) {
-            rhs = std::min(rhs, cost = computeOptimalCost(s, sp, ccn, sp_g, ccn_g));
-            if (rhs == cost)
-                bptr = sp;
-        } else if (valid2 and ((not valid1) or (ccn_g > cn_g))) {
-            rhs = std::min(rhs, cost = computeOptimalCost(s, sp, cn, sp_g, cn_g));
-            if (rhs == cost)
-                bptr = cn;
         }
     }
     return rhs;
@@ -358,7 +324,7 @@ unsigned long ShiftedGridPlanner::computeShortestPath_0() {
         }
     }
     num_nodes_expanded = expanded;
-    std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
+    //std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
     return num_nodes_expanded;
 }
 
@@ -467,7 +433,7 @@ void ShiftedGridPlanner::constructOptimalPath() {
         path_.clear();
     }
 
-    std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
+    //std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
 }
 
 float ShiftedGridPlanner::computeOptimalCost(const Node &n,
@@ -723,21 +689,6 @@ void ShiftedGridPlanner::set_optimization_lvl(int lvl) { optimization_lvl = lvl;
 void ShiftedGridPlanner::set_first_run_trick(bool enable) { first_run_trick = enable; }
 
 // p must be aligned with p_1, p_1 aligned with p_2, p and P_2 diagonal neighbors
-void ShiftedGridPlanner::getBC(TraversalParams &t) {
-    Cell cell_ind_b, cell_ind_c;
-
-    if (t.p0.x == t.p1.x) {
-        cell_ind_b = t.p1.neighborCell(t.p2.x > t.p1.x, t.p0.y > t.p1.y);
-        cell_ind_c = t.p1.neighborCell(t.p2.x < t.p1.x, t.p0.y > t.p1.y);
-    } else {
-        cell_ind_b = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y < t.p1.y);
-        cell_ind_c = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y > t.p1.y);
-    }
-
-    t.b = grid.getCost(cell_ind_b);
-    t.c = grid.getCost(cell_ind_c);
-}
-
 void ShiftedGridPlanner::getC(TraversalParams &t) {
     Cell cell_ind_c;
 

@@ -9,4 +9,9 @@ add_executable(dfm_planner
                main.cpp)
 
 target_link_libraries(dfm_planner gcov)
+target_link_libraries(dfm_planner pthread)
 target_link_libraries(dfm_planner ProjectToolkit)
+
+add_custom_command(TARGET dfm_planner
+        POST_BUILD
+        COMMAND sudo setcap 'cap_sys_nice=eip' "${CMAKE_CURRENT_BINARY_DIR}/dfm_planner")

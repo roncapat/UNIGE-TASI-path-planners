@@ -159,7 +159,7 @@ unsigned long DFMPlanner::computeShortestPath() {
         }
     }
     num_nodes_expanded = expanded;
-    std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
+    //std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
     return num_nodes_expanded;
 }
 
@@ -314,7 +314,7 @@ unsigned long DFMPlanner::updateCells() {
     }
 
     num_cells_updated = grid.updated_cells_.size();
-    std::cout << num_cells_updated << " cells updated" << std::endl;
+    //std::cout << num_cells_updated << " cells updated" << std::endl;
     return num_cells_updated;
 }
 
@@ -535,7 +535,7 @@ void DFMPlanner::constructOptimalPath() {
         std::cerr << "[Extraction] Maximum step number reached" << std::endl;
     }
 
-    std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
+    //std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
 }
 
 float DFMPlanner::computePathAdditionsCost(const std::vector<Position> &p) {
@@ -683,7 +683,7 @@ void DFMPlanner::computeInterpolatedPath() {
         std::cerr << "[Extraction] Maximum step number reached" << std::endl;
         //path_.clear();
     }
-    std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
+    //std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
 }
 
 //TODO consider p0, p1 p2 center of cells. Interpolate traversabilities

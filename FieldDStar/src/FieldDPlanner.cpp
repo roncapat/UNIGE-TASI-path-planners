@@ -162,7 +162,7 @@ unsigned long FieldDPlanner::computeShortestPath_1() {
         }
     }
     num_nodes_expanded = expanded;
-    std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
+    //std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
     return num_nodes_expanded;
 }
 
@@ -223,7 +223,7 @@ unsigned long FieldDPlanner::computeShortestPath_0() {
         }
     }
     num_nodes_expanded = expanded;
-    std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
+    //std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
     return num_nodes_expanded;
 }
 
@@ -268,7 +268,7 @@ unsigned long FieldDPlanner::updateNodesAroundUpdatedCells() {
     }
 
     num_nodes_updated = to_update.size();
-    std::cout << num_nodes_updated << " nodes updated" << std::endl;
+    //std::cout << num_nodes_updated << " nodes updated" << std::endl;
     return num_nodes_updated;
 }
 
@@ -323,7 +323,7 @@ void FieldDPlanner::constructOptimalPath() {
         path_.clear();
     }
 
-    std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
+    //std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
 }
 
 float FieldDPlanner::computeOptimalCost(const Node &n,
