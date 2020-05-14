@@ -387,7 +387,7 @@ path_additions ShiftedGridPlanner::traversalFromCorner(const Position &p,
 
     cell.g1 = map.getRHS(cell.p1);
     cell.g2 = map.getRHS(cell.p2);
-    getBC(cell);
+    getC(cell);
 
     return InterpolatedTraversal::directTraversalFromCorner(cell, step_cost);
 }
@@ -407,7 +407,7 @@ path_additions ShiftedGridPlanner::traversalFromContiguousEdge(const Position &p
 
     cell1.g1 = map.getRHS(Node(cell1.p1));
     cell1.g2 = map.getRHS(Node(cell1.p2));
-    getBC(cell1);
+    getC(cell1);
     cell1.q = 1 - std::abs(cell1.p1.y - p.y) - std::abs(cell1.p1.x - p.x);
 
     return InterpolatedTraversal::directTraversalFromContiguousEdge(cell1, step_cost);
@@ -438,8 +438,8 @@ path_additions ShiftedGridPlanner::traversalFromOppositeEdge(const Position &p,
 
     cell1.g1 = cell2.g2 = map.getRHS(p_a);
     cell1.g2 = cell2.g1 = map.getRHS(p_b);
-    getBC(cell1);
-    getBC(cell2);
+    getC(cell1);
+    cell2.c = cell1.c;
     cell1.p = std::abs(p.y - cell1.p0.y) + std::abs(p.x - cell1.p0.x);
     cell2.p = 1 - cell1.p;
 
@@ -576,5 +576,17 @@ void ShiftedGridPlanner::getBC(TraversalParams &t) {
     }
 
     t.b = grid.getCost(cell_ind_b);
+    t.c = grid.getCost(cell_ind_c);
+}
+
+void ShiftedGridPlanner::getC(TraversalParams &t) {
+    Cell cell_ind_c;
+
+    if (t.p0.x == t.p1.x) {
+        cell_ind_c = t.p1.neighborCell(t.p2.x < t.p1.x, t.p0.y > t.p1.y);
+    } else {
+        cell_ind_c = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y > t.p1.y);
+    }
+
     t.c = grid.getCost(cell_ind_c);
 }

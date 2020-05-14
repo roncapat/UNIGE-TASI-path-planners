@@ -135,6 +135,8 @@ private:
     void getBC(TraversalParams &t);
 
     bool new_start;
+
+    void getC(TraversalParams &t);
 };
 
 #endif
