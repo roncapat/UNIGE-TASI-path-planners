@@ -45,8 +45,10 @@ int FieldDPlanner::step() {
     if ((num_nodes_updated > 0)) {
         if (optimization_lvl == 0) {
             computeShortestPath_0();
-        } else {
+        } else if (optimization_lvl == 1){
             computeShortestPath_1();
+        } else {
+            computeShortestPath_2();
         }
     } else {
         num_nodes_expanded = 0;
@@ -109,6 +111,106 @@ void FieldDPlanner::initializeSearch() {
     map.insert_or_assign(grid.goal_node_, INFINITY, 0.0f);
     priority_queue.insert(grid.goal_node_, calculateKey(grid.goal_node_, 0));
     num_nodes_updated = 1;
+}
+
+unsigned long FieldDPlanner::computeShortestPath_2() {
+    float cost1, cost2;
+    Node cn, ccn, bptr;
+
+    //TODO check initial point for traversability
+
+    int expanded = 0;
+    while ((not priority_queue.empty()) and not end_condition()) {
+        // Pop head of queue
+        Node s = priority_queue.topValue();
+        ++expanded;
+
+        auto s_it = map.find(s);
+        assert(s_it != map.end());
+
+        if (G(s_it) > RHS(s_it)) {
+            G(s_it) = RHS(s_it);
+            priority_queue.pop();
+            float g_ccn, g_cn, g_s, cost = INFINITY;
+            bool valid1, valid2;
+            Node bptr;
+
+            for (Node &sp : grid.neighbors_diag_4(s)) {
+                auto sp_it = map.find_or_init(sp);
+
+                ccn = grid.counterClockwiseNeighbor(sp, s);
+                cn = grid.clockwiseNeighbor(sp, s);
+                if (first_run_trick and initialize_search) {
+                    g_ccn = map.getRHS(ccn);
+                    g_cn = map.getRHS(cn);
+                    g_s = map.getRHS(s);
+                } else {
+                    g_ccn = map.getG(ccn);
+                    g_cn = map.getG(cn);
+                    g_s = map.getG(s);
+                }
+                valid1 = ccn.isValid();
+                valid2 = cn.isValid();
+
+                if (valid1 and ((not valid2) or (g_ccn <= g_cn))) {
+                    cost = computeOptimalCost(sp, s, ccn, g_s, g_ccn);
+                    bptr = s;
+                } else if (valid2 and ((not valid1) or (g_ccn > g_cn))) {
+                    cost = computeOptimalCost(sp, s, cn, g_s, g_cn);
+                    bptr = cn;
+                }
+                if (RHS(sp_it) > cost){
+                    RHS(sp_it)=cost;
+                    INFO(sp_it) = bptr;
+                }
+                enqueueIfInconsistent(sp_it);
+            }
+            cost = INFINITY;
+            for (Node &sp : grid.neighbors_4(s)) {
+                auto sp_it = map.find_or_init(sp);
+
+                ccn = grid.counterClockwiseNeighbor(sp, s);
+                cn = grid.clockwiseNeighbor(sp, s);
+                if (first_run_trick and initialize_search) {
+                    g_s = map.getRHS(s);
+                    g_cn = map.getRHS(cn);
+                    g_ccn = map.getRHS(ccn);
+                } else {
+                    g_s = map.getG(s);
+                    g_cn = map.getG(cn);
+                    g_ccn = map.getG(ccn);
+                }
+                cost1 = ccn.isValid() ? computeOptimalCost(sp, s, ccn, g_s, g_ccn) : INFINITY;
+                cost2 = cn.isValid() ? computeOptimalCost(sp, s, cn, g_s, g_cn) : INFINITY;
+                if ((cost1 <= cost2) and (RHS(sp_it) > cost1)) {
+                    RHS(sp_it) = cost1;
+                    INFO(sp_it) = s;
+                }
+                if ((cost1 > cost2) and (RHS(sp_it) > cost2)) {
+                    RHS(sp_it) = cost2;
+                    INFO(sp_it) = cn;
+                }
+                enqueueIfInconsistent(sp_it);
+            }
+        } else {
+            G(s_it) = INFINITY;
+            for (Node &sp : grid.neighbors_8(s)) {
+                auto sp_it = map.find(sp);
+                assert(sp_it != map.end());
+
+                if (INFO(sp_it) == s or INFO(sp_it) == grid.clockwiseNeighbor(sp, s)) {
+                    assert(minRHS_1(sp, bptr) == minRHS_2(sp, bptr));
+                    RHS(sp_it) = minRHS_2(sp, bptr);
+                    if (RHS(sp_it) < INFINITY) INFO(sp_it) = bptr;
+                    enqueueIfInconsistent(sp_it);
+                }
+            }
+            enqueueIfInconsistent(s_it);
+        }
+    }
+    num_nodes_expanded = expanded;
+    //std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
+    return num_nodes_expanded;
 }
 
 unsigned long FieldDPlanner::computeShortestPath_1() {
@@ -179,6 +281,38 @@ float FieldDPlanner::minRHS_1(const Node &s, Node &bptr) {
     return rhs;
 }
 
+float FieldDPlanner::minRHS_2(const Node &s, Node &bptr) {
+    float rhs = INFINITY, cost, ccn_g, cn_g, sp_g;
+    bool valid1, valid2;
+    Node ccn, cn;
+    for (const auto &sp : grid.neighbors_diag_4(s)) {
+        ccn = grid.counterClockwiseNeighbor(s, sp);
+        cn = grid.clockwiseNeighbor(s, sp);
+        if (first_run_trick and initialize_search) {
+            ccn_g = map.getRHS(ccn);
+            cn_g = map.getRHS(cn);
+            sp_g = map.getRHS(sp);
+        } else {
+            ccn_g = map.getG(ccn);
+            cn_g = map.getG(cn);
+            sp_g = map.getG(sp);
+        }
+        valid1 = ccn.isValid();
+        valid2 = cn.isValid();
+
+        if (valid1 and ((not valid2) or (ccn_g <= cn_g))) {
+            rhs = std::min(rhs, cost = computeOptimalCost(s, sp, ccn, sp_g, ccn_g));
+            if (rhs == cost)
+                bptr = sp;
+        } else if (valid2 and ((not valid1) or (ccn_g > cn_g))) {
+            rhs = std::min(rhs, cost = computeOptimalCost(s, sp, cn, sp_g, cn_g));
+            if (rhs == cost)
+                bptr = cn;
+        }
+    }
+    return rhs;
+}
+
 bool FieldDPlanner::end_condition() {
     // We need to check expansion until all 4 corners of start cell
     // used early stop from D* LITE
@@ -187,10 +321,10 @@ bool FieldDPlanner::end_condition() {
     for (auto &node: start_nodes) {
         auto[g, rhs] = map.getGandRHS(node);
         auto key = calculateKey(node, g, rhs);
-        if (key.first != INFINITY)
-            max_start_key = std::max(max_start_key, key);
         if (rhs > g)
             return false; //Start node underconsistent
+        if (key.first != INFINITY)
+            max_start_key = std::max(max_start_key, key);
     }
     if (max_start_key.first == 0) return false; //Start node not reached
     return max_start_key <= top_key; //Start node surpassed
@@ -327,8 +461,23 @@ void FieldDPlanner::constructOptimalPath() {
 }
 
 float FieldDPlanner::computeOptimalCost(const Node &n,
-                                        const Node &p_a,
-                                        const Node &p_b) {
+                                             const Node &p_a,
+                                             const Node &p_b) {
+    float ga, gb;
+    if (first_run_trick and initialize_search) {
+        ga = map.getRHS(p_a);
+        gb = map.getRHS(p_b);
+    } else {
+        ga = map.getG(p_a);
+        gb = map.getG(p_b);
+    }
+
+    return computeOptimalCost(n, p_a, p_b, ga, gb);
+}
+
+float FieldDPlanner::computeOptimalCost(const Node &n,
+                                             const Node &p_a,
+                                             const Node &p_b, float ga, float gb) {
 
     Position p(n);
     std::vector<Position> positions;
@@ -345,13 +494,9 @@ float FieldDPlanner::computeOptimalCost(const Node &n,
     assert((cell.p0.x == cell.p1.x) || (cell.p0.y == cell.p1.y));
     assert((cell.p0.x != cell.p2.x) && (cell.p0.y != cell.p2.y));
 
-    if (first_run_trick and initialize_search) {
-        cell.g1 = map.getRHS(cell.p1);
-        cell.g2 = map.getRHS(cell.p2);
-    } else {
-        cell.g1 = map.getG(cell.p1);
-        cell.g2 = map.getG(cell.p2);
-    }
+    cell.g1 = cond ? ga: gb;
+    cell.g2 = cond ? gb: ga;
+
     if (cell.g1 == INFINITY && cell.g2 == INFINITY)
         return INFINITY;
     getBC(cell);

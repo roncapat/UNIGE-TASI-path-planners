@@ -20,7 +20,7 @@ ExpandedMap<E,I>::insert_or_assign(const ElemType &s, float g, float rhs) {
         return it;
     } else {
         [[maybe_unused]] auto[it, ok] = emplace(s, std::make_tuple(g, rhs, NULLINFO));
-        assert(ok);
+        assert(ok); (void) ok;
         return it;
     }
 }

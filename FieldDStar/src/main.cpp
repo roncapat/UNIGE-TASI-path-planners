@@ -3,7 +3,7 @@
 #include <chrono>
 #include <iomanip>
 #include <fstream>
-#include "ShiftedGridPlanner.h"
+#include "FieldDPlanner.h"
 #include "Graph.h"
 
 int main(int _argc, char **_argv) {
@@ -20,7 +20,7 @@ int main(int _argc, char **_argv) {
     Position next_point, goal;
     float next_step_cost = 0;
     auto res = std::system((std::string("python3 -m simulator.run_simulator ") +
-        _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " + _argv[12] + " 'Field D*' n &").data());
+        _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " + _argv[12] + " 'FD* V"+_argv[8]+"' n &").data());
     (void) res;
 
     char ack = -1;

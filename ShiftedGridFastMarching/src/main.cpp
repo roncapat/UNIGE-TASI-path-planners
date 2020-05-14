@@ -20,12 +20,13 @@ int main(int _argc, char **_argv) {
     Position next_point, goal;
     float next_step_cost = 0;
     auto res = std::system((std::string("python3 -m simulator.run_simulator ") +
-        _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " + _argv[12] + " 'Shifted-Grid DFM' n &").data());
+                            _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " +
+                            _argv[12] + " 'SG-DFM V"+_argv[8]+"' n &").data());
     (void) res;
 
     char ack = -1;
     long size;
-    int32_t width = 0, height = 0, top = 0, left = 0, min=0;
+    int32_t width = 0, height = 0, top = 0, left = 0, min = 0;
     std::ifstream in__fifo{_argv[9], std::ios::in | std::ios::binary};
     std::ofstream out_fifo{_argv[10], std::ios::out | std::ios::binary};
 
@@ -124,6 +125,7 @@ int main(int _argc, char **_argv) {
         for (const auto &expanded : planner.map) {
             const Node &exp = expanded.first;
             auto[g, rhs, _] = expanded.second;
+            (void) _;
             out_fifo.write((char *) &(exp.x), 4);
             out_fifo.write((char *) &(exp.y), 4);
             out_fifo.write((char *) &(g), 4);
