@@ -169,6 +169,14 @@ path_additions traversalFromContiguousEdge(TraversalParams &cell1,
 path_additions traversalFromOppositeEdge(TraversalParams &cell1,
                                          TraversalParams &cell2,
                                          float &step_cost);
+
+path_additions directTraversalFromCorner(TraversalParams &cell,
+                                   float &step_cost);
+path_additions directTraversalFromContiguousEdge(TraversalParams &cell1,
+                                           float &step_cost);
+path_additions directTraversalFromOppositeEdge(TraversalParams &cell1,
+                                         TraversalParams &cell2,
+                                         float &step_cost);
 }
 
 #endif //RONCAPAT_GLOBAL_PLANNERS_TRAVERSAL_INTERPOLATION_H

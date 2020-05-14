@@ -21,8 +21,8 @@ ENDIF (CMAKE_BUILD_TYPE MATCHES Debug)
 
 include_directories(include)
 include_directories(../../ProjectToolkit/include)
-add_executable(field_d_planner
+add_executable(shifted_grid_planner
         ShiftedGridPlanner.cpp
                main.cpp)
-target_link_libraries(field_d_planner gcov)
-target_link_libraries(field_d_planner ProjectToolkit)
+target_link_libraries(shifted_grid_planner gcov)
+target_link_libraries(shifted_grid_planner ProjectToolkit)
