@@ -292,14 +292,14 @@ float ShiftedGridPlanner::minRHS_2(const Node &s, Node &bptr) {
         bool valid1 = ccn.isValid();
         bool valid2 = cn.isValid();
 
-        if (valid1 and ((not valid2) or (valid2 and ccn_g <= cn_g))) {
+        if (valid1 and ((not valid2) or (ccn_g <= cn_g))) {
             rhs = std::min(rhs, cost = computeOptimalCost(s, sp, ccn, sp_g, ccn_g));
 //                std::cout << "SP " << sp.x << " " << sp.y << " G " << map.getG(sp)
 //                          << " CCN " << ccn.x << " " << ccn.y << " G " << map.getG(ccn)
 //                          << " COST " << cost << std::endl;
             if (rhs == cost)
                 bptr = sp;
-        } else if (valid2 and ((not valid1) or (valid1 and ccn_g > cn_g))) {
+        } else if (valid2 and ((not valid1) or (ccn_g > cn_g))) {
             rhs = std::min(rhs, cost = computeOptimalCost(s, sp, cn, sp_g, cn_g));
 //                    std::cout << "SP " << cn.x << " " << cn.y << " G " << map.getG(cn)
 //                              << " CCN " << sp.x << " " << sp.y << " G " << map.getG(sp)

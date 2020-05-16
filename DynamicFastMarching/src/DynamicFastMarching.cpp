@@ -706,12 +706,6 @@ void DFMPlanner::getBC(TraversalParams &t) {
     std::vector c{grid.getCost(cc), grid.getCost(cc.rightCell()), grid.getCost(cc.bottomCell()),
                   grid.getCost(cc.bottomRightCell())};
 
-    //t.b = std::accumulate(b.begin(), b.end(), 0)/4;
-    //t.c = std::accumulate(c.begin(), c.end(), 0)/4;
-
-    //t.b = *std::max_element(b.begin(), b.end());
-    //t.c = *std::max_element(c.begin(), c.end());
-
     t.b = *std::min_element(b.begin(), b.end());
     t.c = *std::min_element(c.begin(), c.end());
 }
