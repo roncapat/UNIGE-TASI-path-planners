@@ -19,7 +19,8 @@ ExpandedMap<E,I>::insert_or_assign(const ElemType &s, float g, float rhs) {
         std::get<1>(it->second) = rhs;
         return it;
     } else {
-        [[maybe_unused]] auto[it, ok] = emplace(s, std::make_tuple(g, rhs, NULLINFO));
+        bool ok;
+        std::tie(it, ok) = emplace(s, std::make_tuple(g, rhs, NULLINFO));
         assert(ok); (void) ok;
         return it;
     }
@@ -53,7 +54,7 @@ float ExpandedMap<E,I>::getRHS(const ElemType &s) {
 }
 
 template<typename iterator>
-const ElemType<iterator> &ELEM(const iterator &map_it) { return (map_it)->first; }
+const auto &ELEM(const iterator &map_it) { return (map_it)->first; }
 
 template<typename iterator>
 float &G(const iterator &map_it) { return std::get<0>((map_it)->second); }
@@ -62,4 +63,4 @@ template<typename iterator>
 float &RHS(const iterator &map_it) { return std::get<1>((map_it)->second); }
 
 template<typename iterator>
-InfoType<iterator> &INFO(const iterator &map_it) { return std::get<2>((map_it)->second); }
+auto &INFO(const iterator &map_it) { return std::get<2>((map_it)->second); }

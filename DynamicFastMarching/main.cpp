@@ -32,13 +32,11 @@ int main(int _argc, char **_argv) {
     auto ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cset);
     if (ret != 0) abort();
 
-    struct sched_param priomax, priomin;
+    struct sched_param priomax;
     priomax.sched_priority=sched_get_priority_max(SCHED_FIFO);
-    priomin.sched_priority=sched_get_priority_min(SCHED_FIFO);
 
     ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &priomax);
-    if (ret != 0)
-        std::cout << "No privileges for setting maximum scheduling priority" << std::endl;
+    if (ret != 0) std::cout << "No privileges for setting maximum scheduling priority" << std::endl;
 
     char ack = -1;
     long size;
@@ -143,7 +141,7 @@ int main(int _argc, char **_argv) {
         out_fifo.write((char *) &expanded_size, 8);
         for (const auto &expanded : planner.map) {
             const Cell &exp = expanded.first;
-            auto[g, rhs, _] = expanded.second;
+            auto[g, rhs, _] = expanded.second; (void)_;
             out_fifo.write((char *) &(exp.x), 4);
             out_fifo.write((char *) &(exp.y), 4);
             out_fifo.write((char *) &(g), 4);

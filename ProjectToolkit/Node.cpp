@@ -7,23 +7,22 @@
 #include "Cell.h"
 
 Node::Node(bool valid) : valid(valid) {}
-Node::Node(int x, int y) {
-    this->x = x;
-    this->y = y;
-}
-Node::Node(const Node &other) : x(other.x), y(other.y), valid(other.valid) {}
+
+Node::Node(int x, int y) : x(x), y(y) {}
+
+Node::Node(const Node &other) = default;
+
+Node::Node(Node &&other) noexcept = default;
+
 Node::Node(const std::pair<int, int> &other) : x(other.first), y(other.second) {}
+
 Node::Node(const Position &n) {
     x = static_cast<int>(std::roundf(n.x));
     y = static_cast<int>(std::roundf(n.y));
 }
-Node &Node::operator=(const Node &other) {
-    if (this == &other) return *this;
-    x = other.x;
-    y = other.y;
-    valid = other.valid;
-    return *this;
-}
+
+Node &Node::operator=(const Node &other) = default;
+Node &Node::operator=(Node &&other) noexcept = default;
 
 void Node::setValidity(bool is_valid) { this->valid = is_valid; }
 
@@ -31,22 +30,33 @@ bool Node::operator==(const Node &other) const {
     if (this == &other) return true;
     return (x == other.x) and (y == other.y);
 }
+
 bool Node::operator!=(const Node &other) const { return not(*this == other); }
 
 bool Node::isValid() const { return valid; }
 
-Node Node::topNode() const { return Node(x - 1, y); }
-Node Node::topLeftNode() const { return Node(x - 1, y-1); }
-Node Node::topRightNode() const { return Node(x - 1, y+1); }
-Node Node::bottomNode() const { return Node(x + 1, y); }
-Node Node::bottomLeftNode() const { return Node(x + 1, y-1); }
-Node Node::bottomRightNode() const { return Node(x + 1, y+1); }
-Node Node::leftNode() const { return Node(x, y - 1); }
-Node Node::rightNode() const { return Node(x, y + 1); }
+Node Node::topNode() const { return {x - 1, y}; }
+
+Node Node::topLeftNode() const { return {x - 1, y - 1}; }
+
+Node Node::topRightNode() const { return {x - 1, y + 1}; }
+
+Node Node::bottomNode() const { return {x + 1, y}; }
+
+Node Node::bottomLeftNode() const { return {x + 1, y - 1}; }
+
+Node Node::bottomRightNode() const { return {x + 1, y + 1}; }
+
+Node Node::leftNode() const { return {x, y - 1}; }
+
+Node Node::rightNode() const { return {x, y + 1}; }
 
 Cell Node::cellBottomLeft() const { return {x, y - 1}; }
+
 Cell Node::cellBottomRight() const { return {x, y}; }
+
 Cell Node::cellTopLeft() const { return {x - 1, y - 1}; }
+
 Cell Node::cellTopRight() const { return {x - 1, y}; }
 
 Cell Node::neighborCell(bool bottom_TOP, bool left_RIGHT) const {
@@ -55,6 +65,7 @@ Cell Node::neighborCell(bool bottom_TOP, bool left_RIGHT) const {
     else
         return left_RIGHT ? cellBottomRight() : cellBottomLeft();
 }
+
 std::vector<Cell> Node::cells() const {
     return {cellTopLeft(), cellTopRight(), cellBottomLeft(), cellBottomRight()};
 }
@@ -62,6 +73,11 @@ std::vector<Cell> Node::cells() const {
 float Node::distance(const Node &n) const {
     return std::hypot(x - n.x, y - n.y);
 }
+
+float Node::distance(const Position &n) const {
+    return std::hypot((float)x - n.x, (float)y - n.y);
+}
+
 bool Node::aligned(const Node &p) const {
     return ((x == p.x) || (y == p.y));
 }

@@ -12,7 +12,7 @@ void Graph::setStart(const Position &start) {
 
 void Graph::setGoal(const Position &goal) {
     goal_pos_ = goal;
-    goal_cell_ = Cell(goal);;
+    goal_cell_ = Cell(goal);
     goal_node_ = Node(goal);
 }
 

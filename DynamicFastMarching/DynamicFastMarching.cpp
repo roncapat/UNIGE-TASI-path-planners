@@ -94,8 +94,8 @@ DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float g, float rh
     return calculateKey(s, std::min(g, rhs));
 }
 
-DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &s, float cost_so_far) {
-    return {cost_so_far};
+DFMPlanner::Queue::Key DFMPlanner::calculateKey(const Cell &, float cost_so_far) {
+    return cost_so_far;
 }
 
 void DFMPlanner::initializeSearch() {
@@ -483,61 +483,6 @@ void DFMPlanner::computeRoughtPath(bool eight_if_true) {
     cost_.push_back(0);
 }
 
-void DFMPlanner::constructOptimalPath() {
-    path_.clear();
-    cost_.clear();
-    total_cost = 0;
-    total_dist = 0;
-
-    //auto[gh, gv] = costMapGradient();
-    path_.push_back(grid.start_pos_);
-
-    float min_cost = 0;
-    int curr_step = 0;
-    float step_cost;
-    // TODO do something better than this sh*t
-    int max_steps = 3000;
-
-    float alpha = 0.1;
-    auto s = grid.start_pos_;
-    while (grid.goal_pos_.distance(s) > 0.8) {
-        if (curr_step > max_steps) break;
-        auto[sgx, sgy] = interpolateGradient(s);
-#ifdef VERBOSE_EXTRACTION
-        std::sprintf(buf, "s = [ %7.4f %7.4f]", s.x, s.y);
-        std::cout << "Step " << curr_step << " " << buf << std::flush;
-        std::sprintf(buf, " g = [ %7.4f %7.4f]", sgx, sgy);
-        std::cout << buf << std::endl;
-#endif
-        if (std::abs(sgx) < 0.0001 && std::abs(sgy) < 0.0001)
-            break;
-        s = Position(s.x - alpha * sgx, s.y - alpha * sgy);
-        total_dist += path_.back().distance(s);
-        auto pp = grid.getGridBoundariesTraversals(path_.back(), s);
-        step_cost = computePathAdditionsCost(pp);
-        total_cost += step_cost;
-        path_.push_back(s);
-        cost_.push_back(step_cost);
-        ++curr_step;
-        if (curr_step == 347) return;
-    }
-    auto pp = grid.getGridBoundariesTraversals(s, grid.goal_pos_);
-    step_cost = computePathAdditionsCost(pp);
-    total_cost += step_cost;
-    total_dist += s.distance(grid.goal_pos_);
-    path_.push_back(grid.goal_pos_);
-    cost_.push_back(step_cost);
-    //std::reverse(path_.begin(), path_.end());
-
-    if (min_cost == INFINITY) {
-        std::cerr << "[Extraction] No valid path exists" << std::endl;
-    } else if (curr_step >= max_steps) {
-        std::cerr << "[Extraction] Maximum step number reached" << std::endl;
-    }
-
-    //std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
-}
-
 float DFMPlanner::computePathAdditionsCost(const std::vector<Position> &p) {
     float cost = 0;
     for (auto a = p.begin(); a < p.end() - 1; ++a) {
@@ -600,46 +545,6 @@ void DFMPlanner::set_first_run_trick(bool enable) { first_run_trick = enable; }
 
 DFMPlanner::DFMPlanner() {}
 
-float DFMPlanner::getInterpG(const Node &node) {
-    //return getInterpRHS(node);
-    return map.getG(Cell(node.x, node.y));
-    std::vector<float> gs;
-    gs.push_back(map.getG(node.cellTopLeft()));
-    gs.push_back(map.getG(node.cellTopRight()));
-    gs.push_back(map.getG(node.cellBottomLeft()));
-    gs.push_back(map.getG(node.cellBottomRight()));
-    float sum = 0;
-    int count = 0;
-    for (auto val: gs) {
-        if (val < INFINITY) {
-            sum += val;
-            ++count;
-        }
-    }
-    if (count == 0) return INFINITY;
-    assert((sum / count) > 0);
-    return sum / count;
-}
-
-float DFMPlanner::getInterpRHS(const Node &node) {
-    std::vector<float> gs;
-    gs.push_back(map.getRHS(node.cellTopLeft()));
-    gs.push_back(map.getRHS(node.cellTopRight()));
-    gs.push_back(map.getRHS(node.cellBottomLeft()));
-    gs.push_back(map.getRHS(node.cellBottomRight()));
-    float sum = 0;
-    int count = 0;
-    for (auto val: gs) {
-        if (val < INFINITY) {
-            sum += val;
-            ++count;
-        }
-    }
-    if (count == 0) return INFINITY;
-    assert((sum / count) > 0);
-    return sum / count;
-}
-
 void DFMPlanner::computeInterpolatedPath() {
     path_.clear();
     cost_.clear();
@@ -686,10 +591,6 @@ void DFMPlanner::computeInterpolatedPath() {
     //std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
 }
 
-//TODO consider p0, p1 p2 center of cells. Interpolate traversabilities
-// for obstacles, it is possible to still use a traversable average, since
-// at least one of s1 and s2 will have g=inf (thus interpolation degenerates towards
-// the other one, which should be limited).
 void DFMPlanner::getBC(TraversalParams &t) {
     Cell cb, cc;
 

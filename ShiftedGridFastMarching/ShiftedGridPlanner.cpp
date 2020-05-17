@@ -4,7 +4,6 @@
 #include <numeric>
 #include <chrono>
 #include <iostream>
-#include <unordered_set>
 
 ShiftedGridPlanner::ShiftedGridPlanner() = default;
 
@@ -73,13 +72,12 @@ void ShiftedGridPlanner::set_map(const std::shared_ptr<uint8_t[]> &m, int w, int
 }
 
 void ShiftedGridPlanner::set_goal(const Position &point) {
-    Node new_goal(point);
-    if (grid.goal_node_ != new_goal)
-        new_goal_ = true;
-    grid.setGoal(new_goal);
+    new_goal_ = grid.goal_node_ != Node(point);
+    grid.setGoal(point);
     goal_set_ = true;
 }
 
+//TODO move to grid
 bool ShiftedGridPlanner::isVertex(const Position &p) {
     bool is_vertex = (ceilf(p.x) == p.x) && (ceilf(p.y) == p.y);
     bool satisfies_bounds = grid.isValid(p);
@@ -133,7 +131,6 @@ unsigned long ShiftedGridPlanner::computeShortestPath_2() {
             priority_queue.pop();
             float g_ccn, g_cn, g_s, cost = INFINITY;
             bool valid1, valid2;
-            Node bptr;
 
             for (Node &sp : grid.neighbors_diag_4(s)) {
                 auto sp_it = map.find_or_init(sp);
@@ -165,7 +162,6 @@ unsigned long ShiftedGridPlanner::computeShortestPath_2() {
                 }
                 enqueueIfInconsistent(sp_it);
             }
-            cost = INFINITY;
             for (Node &sp : grid.neighbors_4(s)) {
                 auto sp_it = map.find_or_init(sp);
 
@@ -317,13 +313,22 @@ bool ShiftedGridPlanner::end_condition() {
     // used early stop from D* LITE
     auto top_key = priority_queue.topKey();
     Queue::Key max_start_key = {0, 0};
+/*
+    std::cout << std::endl;
     for (auto &node: start_nodes) {
         auto[g, rhs] = map.getGandRHS(node);
         auto key = calculateKey(node, g, rhs);
-        if (rhs > g)
-            return false; //Start node underconsistent
-        if (key.first != INFINITY)
+        std::cout << g << " " << rhs << " " << key.first << std::endl;
+    }
+*/
+    for (auto &node: start_nodes) {
+        auto[g, rhs] = map.getGandRHS(node);
+        auto key = calculateKey(node, g, rhs);
+        if (rhs != INFINITY and key.first!=INFINITY){
             max_start_key = std::max(max_start_key, key);
+            if (rhs > g)
+                return false; //Start node underconsistent
+        }
     }
     if (max_start_key.first == 0) return false; //Start node not reached
     return max_start_key <= top_key; //Start node surpassed
@@ -377,7 +382,7 @@ float ShiftedGridPlanner::minRHS_0(const Node &s) {
 }
 
 unsigned long ShiftedGridPlanner::updateNodesAroundUpdatedCells() {
-    std::unordered_set<Node> to_update;
+    robin_hood::unordered_flat_set<Node> to_update;
     std::vector<Node> updates;
     // construct a set of all updated nodes
     for (const Cell &cell : grid.updated_cells_) {

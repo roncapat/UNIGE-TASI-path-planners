@@ -30,10 +30,8 @@ int main(int _argc, char **_argv) {
     auto ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cset);
     if (ret != 0) abort();
 
-    struct sched_param priomax, priomin;
+    struct sched_param priomax;
     priomax.sched_priority=sched_get_priority_max(SCHED_FIFO);
-    priomin.sched_priority=sched_get_priority_min(SCHED_FIFO);
-
     ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &priomax);
     if (ret != 0)
         std::cout << "No privileges for setting maximum scheduling priority" << std::endl;
@@ -71,8 +69,7 @@ int main(int _argc, char **_argv) {
     planner.set_optimization_lvl(std::stoi(_argv[8]));
     planner.set_first_run_trick(false);
     planner.set_occupancy_threshold(1);
-    planner.set_lookahead(std::stoi(_argv[6]));
-    // FIXME handle remplanning, for now i put the lowest possible value for consistency
+    planner.set_lookahead((bool)std::stoi(_argv[6]));
     planner.set_heuristic_multiplier(min);
     planner.set_map(data, width, height);
     planner.set_start(next_point);
@@ -138,7 +135,7 @@ int main(int _argc, char **_argv) {
         out_fifo.write((char *) &expanded_size, 8);
         for (const auto &expanded : planner.map) {
             const Node &exp = expanded.first;
-            auto[g, rhs, _] = expanded.second;
+            auto[g, rhs, _] = expanded.second; (void)_;
             out_fifo.write((char *) &(exp.x), 4);
             out_fifo.write((char *) &(exp.y), 4);
             out_fifo.write((char *) &(g), 4);

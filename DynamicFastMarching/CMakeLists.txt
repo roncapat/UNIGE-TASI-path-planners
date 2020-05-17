@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include_directories(SYSTEM ../RobinHoodHashMap/src/include)
 include_directories(include)
 include_directories(../ProjectToolkit/include)
 add_executable(dfm_planner
@@ -11,6 +12,7 @@ add_executable(dfm_planner
 target_link_libraries(dfm_planner gcov)
 target_link_libraries(dfm_planner pthread)
 target_link_libraries(dfm_planner ProjectToolkit)
+target_link_libraries(dfm_planner robin_hood)
 
 add_custom_command(TARGET dfm_planner
         POST_BUILD

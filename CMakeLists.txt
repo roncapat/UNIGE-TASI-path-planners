@@ -28,12 +28,12 @@ add_subdirectory(FieldDStar)
 add_subdirectory(DynamicFastMarching)
 add_subdirectory(ShiftedGridFastMarching)
 add_subdirectory(ProjectToolkit)
+add_subdirectory(RobinHoodHashMap)
 
-add_dependencies(field_d_planner simulator)
-add_dependencies(dfm_planner simulator)
-add_dependencies(shifted_grid_planner simulator)
-
-include_directories()
+add_dependencies(ProjectToolkit robin_hood)
+add_dependencies(field_d_planner simulator ProjectToolkit)
+add_dependencies(dfm_planner simulator ProjectToolkit)
+add_dependencies(shifted_grid_planner simulator ProjectToolkit)
 
 execute_process(COMMAND rm -rf "${CMAKE_BINARY_DIR}/pipe_1" "${CMAKE_BINARY_DIR}/pipe_2")
 execute_process(COMMAND mkfifo "${CMAKE_BINARY_DIR}/pipe_1" "${CMAKE_BINARY_DIR}/pipe_2")

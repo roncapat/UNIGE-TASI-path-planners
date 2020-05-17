@@ -5,10 +5,10 @@
 #include <functional>
 #include <set>
 #include <utility>
-#include <unordered_map>
 
 #include "Graph.h"
 #include <boost/heap/fibonacci_heap.hpp>
+#include <robin_hood.h>
 
 template <typename K, typename T>
 class PriorityQueue {
@@ -21,6 +21,7 @@ class PriorityQueue {
     Value elem;
     Key key;
     ElemType(const Value &cell, const Key &key) : elem(cell), key(key){};
+    ElemType(Value &&cell, Key &&key) : elem(std::move(cell)), key(std::move(key)){};
   };
 
  private:
@@ -35,7 +36,7 @@ class PriorityQueue {
   typedef boost::heap::mutable_<true> MutableOption;
   typedef boost::heap::fibonacci_heap<ElemType, CompareOption, MutableOption> QueueType;
   QueueType __queue;
-  std::unordered_map<Value, typename QueueType::handle_type> __handles;
+  robin_hood::unordered_node_map<Value, typename QueueType::handle_type> __handles;
 
  public:
   typedef typename QueueType::handle_type HandleType;
@@ -56,10 +57,10 @@ class PriorityQueue {
   void insert(const Value &n, const Key &k);
   void clear();
   void pop();
-  Key topKey();
-  Value topValue();
+  const Key& topKey();
+  const Value& topValue();
   int size();
   bool empty();
 };
 #include "impl/PriorityQueue_impl.h"
-#endif
+#endif /* PRIORITYQUEUE_H */
