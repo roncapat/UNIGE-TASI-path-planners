@@ -6,7 +6,7 @@ include_directories(SYSTEM ../RobinHoodHashMap/src/include)
 include_directories(include)
 include_directories(../ProjectToolkit/include)
 add_executable(dfm_planner
-               DynamicFastMarching.cpp
+        DynamicFastMarching_impl.h
                main.cpp)
 
 target_link_libraries(dfm_planner gcov)

@@ -129,7 +129,7 @@ protected:
         static_cast<Derived *>(this)->plan();
     }
 
-    Key calculateKey(const Node &s, float g, float rhs) {
+    Key calculateKey(const MapElem_ &s, float g, float rhs) {
         return static_cast<Derived *>(this)->calculateKey(s, g, rhs);
     }
 
