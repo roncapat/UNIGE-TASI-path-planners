@@ -239,13 +239,8 @@ float FieldDPlanner<O>::computeOptimalCost(const Node &n,
                                         const Node &p_a,
                                         const Node &p_b) {
     float ga, gb;
-    if (this->initialize_search) {
-        ga = map.getRHS(p_a);
-        gb = map.getRHS(p_b);
-    } else {
-        ga = map.getG(p_a);
-        gb = map.getG(p_b);
-    }
+    ga = map.getG(p_a);
+    gb = map.getG(p_b);
 
     return computeOptimalCost(n, p_a, p_b, ga, gb);
 }

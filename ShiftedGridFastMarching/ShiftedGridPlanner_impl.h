@@ -137,15 +137,9 @@ void ShiftedGridPlanner<2>::plan() {
 
                 ccn = grid.counterClockwiseNeighbor(sp, s);
                 cn = grid.clockwiseNeighbor(sp, s);
-                if (initialize_search) {
-                    g_ccn = map.getRHS(ccn);
-                    g_cn = map.getRHS(cn);
-                    g_s = map.getRHS(s);
-                } else {
-                    g_ccn = map.getG(ccn);
-                    g_cn = map.getG(cn);
-                    g_s = map.getG(s);
-                }
+                g_ccn = map.getG(ccn);
+                g_cn = map.getG(cn);
+                g_s = map.getG(s);
                 valid1 = ccn.isValid();
                 valid2 = cn.isValid();
 
@@ -167,15 +161,9 @@ void ShiftedGridPlanner<2>::plan() {
 
                 ccn = grid.counterClockwiseNeighbor(sp, s);
                 cn = grid.clockwiseNeighbor(sp, s);
-                if (initialize_search) {
-                    g_s = map.getRHS(s);
-                    g_cn = map.getRHS(cn);
-                    g_ccn = map.getRHS(ccn);
-                } else {
-                    g_s = map.getG(s);
-                    g_cn = map.getG(cn);
-                    g_ccn = map.getG(ccn);
-                }
+                g_s = map.getG(s);
+                g_cn = map.getG(cn);
+                g_ccn = map.getG(ccn);
                 cost1 = ccn.isValid() ? computeOptimalCost(sp, s, ccn, g_s, g_ccn) : INFINITY;
                 cost2 = cn.isValid() ? computeOptimalCost(sp, s, cn, g_s, g_cn) : INFINITY;
                 if ((cost1 <= cost2) and (RHS(sp_it) > cost1)) {
@@ -358,13 +346,8 @@ float ShiftedGridPlanner<O>::computeOptimalCost(const Node &n,
                                              const Node &p_a,
                                              const Node &p_b) {
     float ga, gb;
-    if (this->initialize_search) {
-        ga = map.getRHS(p_a);
-        gb = map.getRHS(p_b);
-    } else {
-        ga = map.getG(p_a);
-        gb = map.getG(p_b);
-    }
+    ga = map.getG(p_a);
+    gb = map.getG(p_b);
 
     return computeOptimalCost(n, p_a, p_b, ga, gb);
 }

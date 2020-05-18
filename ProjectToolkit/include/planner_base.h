@@ -43,11 +43,9 @@ public:
         if (initialize_search or new_goal_) {
             num_nodes_updated = 0;
             num_nodes_expanded = 0;
-            new_goal_ = initialize_search = false;
             map.clear();
             priority_queue.clear();
             grid.updated_cells_.clear();
-            num_nodes_updated = 1;
             init();
         } else if (new_start) {
             new_start = false;
@@ -58,11 +56,12 @@ public:
 
         // only update the graph if nodes have been updated
         begin = std::chrono::steady_clock::now();
-        if (num_nodes_updated > 0) {
+        if (new_goal_ or initialize_search or num_nodes_updated > 0) {
             plan();
         } else {
             num_nodes_expanded = 0;
         }
+        new_goal_ = initialize_search = false;
 
         end = std::chrono::steady_clock::now();
         p_time = std::chrono::duration<float, std::milli>(end - begin).count();
