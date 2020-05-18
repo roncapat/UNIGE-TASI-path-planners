@@ -148,8 +148,8 @@ void FieldDPlanner<1>::updateNode(const Node &node) {
         RHS(s_it) = minRHS(node, bptr);
         if (RHS(s_it) < INFINITY) //TODO check if this branch is necessary
             INFO(s_it) = bptr;
+        enqueueIfInconsistent(s_it);
     }
-    enqueueIfInconsistent(s_it);
 }
 
 
