@@ -68,7 +68,7 @@ int main(int _argc, char **_argv) {
     goal.y = std::stof(_argv[5]);
 
     ShiftedGridPlanner<2> planner{};
-    DirectLinearInterpolationPathExtractorCells extractor(planner.get_expanded_map(), planner.get_grid());
+    DirectLinearInterpolationPathExtractor extractor(planner.get_expanded_map(), planner.get_grid());
     planner.reset();
     planner.set_occupancy_threshold(1);
     planner.set_heuristic_multiplier(min);

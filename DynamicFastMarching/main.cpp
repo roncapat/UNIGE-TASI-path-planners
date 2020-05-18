@@ -68,7 +68,7 @@ int main(int _argc, char **_argv) {
     goal.x = std::stof(_argv[4]);
     goal.y = std::stof(_argv[5]);
 
-    DFMPlanner<0> planner{};
+    DFMPlanner<1> planner{};
     DirectLinearInterpolationPathExtractorCells extractor(planner.get_expanded_map(), planner.get_grid());
     planner.reset();
     planner.set_occupancy_threshold(1);

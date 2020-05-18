@@ -58,9 +58,9 @@ private:
 
     float minRHS(const Node &s, Node &bptr);
 
-    void getBC(TraversalParams &t);
-
     float minRHSDecreasedNeighbor(const Node &sp, const Node &s, Node &bptr);
+
+    void getBC(TraversalParams &t);
 
     void updateNode(const Node &node);
 };
@@ -76,6 +76,9 @@ void FieldDPlanner<1>::plan();
 
 template<>
 float FieldDPlanner<1>::minRHS(const Node &, Node &bptr);
+
+template<>
+float FieldDPlanner<1>::minRHSDecreasedNeighbor(const Node &sp, const Node &s, Node &bptr);
 
 #include "FieldDPlanner_impl.h"
 

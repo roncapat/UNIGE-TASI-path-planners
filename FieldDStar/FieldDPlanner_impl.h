@@ -152,7 +152,6 @@ void FieldDPlanner<1>::updateNode(const Node &node) {
     }
 }
 
-
 template<int O>
 typename FieldDPlanner<O>::Key FieldDPlanner<O>::calculateKey(const Node &s) {
     auto[g, rhs] = map.getGandRHS(s);
@@ -192,8 +191,8 @@ float FieldDPlanner<1>::minRHS(const Node &s, Node &bptr) {
     return rhs;
 }
 
-template <int O>
-float FieldDPlanner<O>::minRHSDecreasedNeighbor(const Node &sp, const Node &s, Node &bptr){
+template <>
+float FieldDPlanner<1>::minRHSDecreasedNeighbor(const Node &sp, const Node &s, Node &bptr){
     auto ccn = grid.counterClockwiseNeighbor(sp, s);
     auto cn = grid.clockwiseNeighbor(sp, s);
     float cost1 = ccn.isValid() ? computeOptimalCost(sp, s, ccn) : INFINITY;
