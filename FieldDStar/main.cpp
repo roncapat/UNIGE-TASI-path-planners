@@ -65,7 +65,7 @@ int main(int _argc, char **_argv) {
     goal.x = std::stof(_argv[4]);
     goal.y = std::stof(_argv[5]);
 
-    FieldDPlanner<1> planner{};
+    FieldDPlanner<0> planner{};
     LinearInterpolationPathExtractor extractor(planner.get_expanded_map(), planner.get_grid());
     planner.reset();
     planner.set_occupancy_threshold(1);

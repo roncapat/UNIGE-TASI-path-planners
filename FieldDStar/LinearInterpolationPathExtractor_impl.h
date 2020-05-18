@@ -11,6 +11,7 @@ LinearInterpolationPathExtractor<T>::LinearInterpolationPathExtractor(
 
 template<typename T>
 void LinearInterpolationPathExtractor<T>::extract_path() {
+    auto begin = std::chrono::steady_clock::now();
     path_.clear();
     cost_.clear();
     total_cost = 0;
@@ -53,7 +54,8 @@ void LinearInterpolationPathExtractor<T>::extract_path() {
         std::cerr << "[Extraction] Maximum step number reached" << std::endl;
         path_.clear();
     }
-
+    auto end = std::chrono::steady_clock::now();
+    e_time = std::chrono::duration<float, std::milli>(end - begin).count();
     //std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
 }
 

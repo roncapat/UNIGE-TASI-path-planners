@@ -16,24 +16,28 @@
 #include "planner_base.h"
 
 template<int OptimizationLevel>
-class FieldDPlanner  : public ReplannerBase<FieldDPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>>{
-typedef ReplannerBase<FieldDPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>> Base;
-friend Base;
-typedef typename Base::Key Key;
-typedef typename Base::Queue Queue;
-typedef typename Base::Map Map;
+class FieldDPlanner : public ReplannerBase<FieldDPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>> {
+    typedef ReplannerBase<FieldDPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>> Base;
+    friend Base;
+    typedef typename Base::Key Key;
+    typedef typename Base::Queue Queue;
+    typedef typename Base::Map Map;
 public:
-using Base::grid;
-using Base::priority_queue;
-using Base::map;
+    using Base::grid;
+    using Base::priority_queue;
+    using Base::map;
 public:
     FieldDPlanner() = default;
+
     void set_start(const Position &pos);
 
 protected:
     void init();
+
     void update();
+
     void plan();
+
     Key calculateKey(const Node &s, float g, float rhs);
 
 
@@ -51,22 +55,28 @@ private:
     Key calculateKey(const Node &s, float cost_so_far);
 
     float minRHS(const Node &s);
+
     float minRHS(const Node &s, Node &bptr);
 
-    bool new_start;
-
     void getBC(TraversalParams &t);
+
+    float minRHSDecreasedNeighbor(const Node &sp, const Node &s, Node &bptr);
+
+    void updateNode(const Node &node);
 };
 
 template<>
 void FieldDPlanner<0>::plan();
+
 template<>
 float FieldDPlanner<0>::minRHS(const Node &);
 
 template<>
 void FieldDPlanner<1>::plan();
+
 template<>
 float FieldDPlanner<1>::minRHS(const Node &, Node &bptr);
 
 #include "FieldDPlanner_impl.h"
+
 #endif

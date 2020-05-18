@@ -16,8 +16,8 @@
 #include "planner_base.h"
 
 template<int OptimizationLevel>
-class DFMPlanner : public ReplannerBase<DFMPlanner<OptimizationLevel>, Cell, std::pair<Cell,Cell>, float>{
-    typedef ReplannerBase<DFMPlanner<OptimizationLevel>, Cell, std::pair<Cell,Cell>, float> Base;
+class DFMPlanner : public ReplannerBase<DFMPlanner<OptimizationLevel>, Cell, std::pair<Cell, Cell>, float> {
+    typedef ReplannerBase<DFMPlanner<OptimizationLevel>, Cell, std::pair<Cell, Cell>, float> Base;
     friend Base;
     typedef typename Base::Key Key;
     typedef typename Base::Queue Queue;
@@ -28,18 +28,24 @@ public:
     using Base::map;
 public:
     DFMPlanner() = default;
+
     void set_start(const Position &pos);
 
 protected:
     void init();
+
     void update();
+
     void plan();
+
     Key calculateKey(const Cell &s, float g, float rhs);
 
 private:
     std::vector<Cell> start_nodes;
 
-    float computeOptimalCost(const Cell &p, std::pair<Cell, Cell> &bptrs);
+    float minRHS(const Cell &c);
+
+    float minRHS(const Cell &p, std::pair<Cell, Cell> &bptrs);
 
     bool end_condition();
 
@@ -59,9 +65,24 @@ private:
 
     void updateCellDecreasedNeighbor(const Cell &cell, const Cell &nbr);
 
-    float computeOptimalCostDecreasedNeighbor(const Cell &c, const Cell &nbr, std::pair<Cell, Cell> &bptrs);
+    float minRHSDecreasedNeighbor(const Cell &c, const Cell &nbr, std::pair<Cell, Cell> &bptrs);
 
-    std::pair<float, std::pair<Cell, Cell>> FMcost(Cell &ca1, Cell &cb1, float ga1, float gb1, float tau, float h);
+    std::pair<float, std::pair<Cell, Cell>>
+    computeOptimalCost(Cell &ca1, Cell &cb1, float ga1, float gb1, float tau, float h);
 };
+
+template<>
+void DFMPlanner<0>::plan();
+
+template<>
+float DFMPlanner<0>::minRHS(const Cell &);
+
+template<>
+void DFMPlanner<1>::plan();
+
+template<>
+float DFMPlanner<1>::minRHS(const Cell &, std::pair<Cell, Cell> &bptrs);
+
 #include "DynamicFastMarching_impl.h"
+
 #endif

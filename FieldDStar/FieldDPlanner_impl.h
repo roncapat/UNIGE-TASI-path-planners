@@ -63,11 +63,9 @@ void FieldDPlanner<0>::plan() {
 
 template<>
 void FieldDPlanner<1>::plan() {
-    float cost1, cost2;
-    Node cn, ccn, bptr;
 
     //TODO check initial point for traversability
-
+    Node bptr;
     int expanded = 0;
     while ((not priority_queue.empty()) and not end_condition()) {
         // Pop head of queue
@@ -80,20 +78,12 @@ void FieldDPlanner<1>::plan() {
         if (G(s_it) > RHS(s_it)) {
             G(s_it) = RHS(s_it);
             priority_queue.pop();
-            for (Node &sp : grid.neighbors_8(s)) {
+            for (const Node &sp : grid.neighbors_8(s)) {
                 auto sp_it = map.find_or_init(sp);
-
-                ccn = grid.counterClockwiseNeighbor(sp, s);
-                cn = grid.clockwiseNeighbor(sp, s);
-                cost1 = ccn.isValid() ? computeOptimalCost(sp, s, ccn) : INFINITY;
-                cost2 = cn.isValid() ? computeOptimalCost(sp, cn, s) : INFINITY;
-                if ((cost1 <= cost2) and (RHS(sp_it) > cost1)) {
-                    RHS(sp_it) = cost1;
-                    INFO(sp_it) = s;
-                }
-                if ((cost1 > cost2) and (RHS(sp_it) > cost2)) {
-                    RHS(sp_it) = cost2;
-                    INFO(sp_it) = cn;
+                float rhs = minRHSDecreasedNeighbor(sp, s, bptr);
+                if (rhs < RHS(sp_it)) {
+                    RHS(sp_it) = rhs;
+                    INFO(sp_it) = bptr;
                 }
                 enqueueIfInconsistent(sp_it);
             }
@@ -102,10 +92,10 @@ void FieldDPlanner<1>::plan() {
             for (Node &sp : grid.neighbors_8(s)) {
                 auto sp_it = map.find(sp);
                 assert(sp_it != map.end());
-
                 if (INFO(sp_it) == s or INFO(sp_it) == grid.clockwiseNeighbor(sp, s)) {
                     RHS(sp_it) = minRHS(sp, bptr);
-                    if (RHS(sp_it) < INFINITY) INFO(sp_it) = bptr;
+                    if (RHS(sp_it) < INFINITY) //TODO understand theese are necessary
+                        INFO(sp_it) = bptr;
                     enqueueIfInconsistent(sp_it);
                 }
             }
@@ -132,25 +122,34 @@ void FieldDPlanner<O>::update() {
         to_update.insert(updates.begin(), updates.end());
     }
 
-    for (const Node &s : to_update) {
-        if constexpr(O == 0) {
-            auto s_it = map.find_or_init(s);
-            if (s != grid.goal_node_)
-                RHS(s_it) = minRHS(s);
-            enqueueIfInconsistent(s_it);
-        } else if constexpr(O == 1) {
-            auto s_it = map.find_or_init(s);
-            if (s != grid.goal_node_) {
-                Node bptr;
-                RHS(s_it) = minRHS(s, bptr);
-                if (RHS(s_it) < INFINITY) INFO(s_it) = bptr;
-                this->enqueueIfInconsistent(s_it);
-            }
-        } else static_assert(always_false<Base>, "FieldDPlanner supports Optimization LVLs 0,1");
-    }
+    for (const Node &s : to_update)
+        updateNode(s);
 
-    Base::num_nodes_updated = to_update.size();
+    this->num_nodes_updated = to_update.size();
     //std::cout << num_nodes_updated << " nodes updated" << std::endl;
+}
+
+template<>
+void FieldDPlanner<0>::updateNode(const Node &node) {
+    auto s_it = map.find_or_init(node);
+
+    if (node != grid.goal_node_)
+        RHS(s_it) = minRHS(node);
+
+    enqueueIfInconsistent(s_it);
+}
+
+template<>
+void FieldDPlanner<1>::updateNode(const Node &node) {
+    auto s_it = map.find_or_init(node);
+
+    if (node != grid.goal_node_) {
+        Node bptr;
+        RHS(s_it) = minRHS(node, bptr);
+        if (RHS(s_it) < INFINITY) //TODO check if this branch is necessary
+            INFO(s_it) = bptr;
+    }
+    enqueueIfInconsistent(s_it);
 }
 
 
@@ -191,6 +190,21 @@ float FieldDPlanner<1>::minRHS(const Node &s, Node &bptr) {
         }
     }
     return rhs;
+}
+
+template <int O>
+float FieldDPlanner<O>::minRHSDecreasedNeighbor(const Node &sp, const Node &s, Node &bptr){
+    auto ccn = grid.counterClockwiseNeighbor(sp, s);
+    auto cn = grid.clockwiseNeighbor(sp, s);
+    float cost1 = ccn.isValid() ? computeOptimalCost(sp, s, ccn) : INFINITY;
+    float cost2 = cn.isValid() ? computeOptimalCost(sp, cn, s) : INFINITY;
+    if (cost1<=cost2){
+        bptr = s;
+        return cost1;
+    } else {
+        bptr = cn;
+        return cost2;
+    }
 }
 
 template<int O>
