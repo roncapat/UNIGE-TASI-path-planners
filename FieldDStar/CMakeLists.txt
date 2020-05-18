@@ -7,7 +7,7 @@ include_directories(include)
 include_directories(../ProjectToolkit/include)
 
 add_executable(field_d_planner
-        FieldDPlanner.cpp
+        FieldDPlanner_impl.h
                main.cpp)
 target_link_libraries(field_d_planner gcov)
 target_link_libraries(field_d_planner pthread)

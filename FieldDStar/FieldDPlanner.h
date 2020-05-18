@@ -1,5 +1,5 @@
-#ifndef ShiftedGridPlanner_H
-#define ShiftedGridPlanner_H
+#ifndef FIELDDPLANNER_H
+#define FIELDDPLANNER_H
 
 #include <cassert>
 #include <cmath>
@@ -16,8 +16,8 @@
 #include "planner_base.h"
 
 template<int OptimizationLevel>
-class ShiftedGridPlanner : public ReplannerBase<ShiftedGridPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>> {
-typedef ReplannerBase<ShiftedGridPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>> Base;
+class FieldDPlanner  : public ReplannerBase<FieldDPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>>{
+typedef ReplannerBase<FieldDPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>> Base;
 friend Base;
 typedef typename Base::Key Key;
 typedef typename Base::Queue Queue;
@@ -27,7 +27,7 @@ using Base::grid;
 using Base::priority_queue;
 using Base::map;
 public:
-    ShiftedGridPlanner() = default;
+    FieldDPlanner() = default;
     void set_start(const Position &pos);
 
 protected:
@@ -55,22 +55,18 @@ private:
 
     bool new_start;
 
-    void getC(TraversalParams &t);
+    void getBC(TraversalParams &t);
 };
 
 template<>
-void ShiftedGridPlanner<0>::plan();
+void FieldDPlanner<0>::plan();
 template<>
-float ShiftedGridPlanner<0>::minRHS(const Node &);
+float FieldDPlanner<0>::minRHS(const Node &);
 
 template<>
-void ShiftedGridPlanner<1>::plan();
+void FieldDPlanner<1>::plan();
 template<>
-float ShiftedGridPlanner<1>::minRHS(const Node &, Node &bptr);
+float FieldDPlanner<1>::minRHS(const Node &, Node &bptr);
 
-template<>
-void ShiftedGridPlanner<2>::plan();
-template<>
-float ShiftedGridPlanner<2>::minRHS(const Node &, Node &bptr);
-#include "ShiftedGridPlanner_impl.h"
+#include "FieldDPlanner_impl.h"
 #endif

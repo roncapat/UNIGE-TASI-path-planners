@@ -76,8 +76,6 @@ int main(int _argc, char **_argv) {
     planner.set_start(next_point);
     planner.set_goal(goal);
 
-    float time = 0;
-
     while (true) {
         std::cout << "[PLANNER]   New position: [" << next_point.x << ", " << next_point.y << "]" << std::endl;
         ack = 1;
