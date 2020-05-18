@@ -27,8 +27,8 @@ ExpandedMap<E,I>::insert_or_assign(const ElemType &s, float g, float rhs) {
 }
 
 template<typename E, typename I>
-std::pair<float, float> ExpandedMap<E,I>::getGandRHS(const ElemType &s) {
-    iterator it;
+std::pair<float, float> ExpandedMap<E,I>::getGandRHS(const ElemType &s) const{
+    const_iterator it;
     if ((it = find(s)) != end())
         return {G(it), RHS(it)};
     else
@@ -36,8 +36,8 @@ std::pair<float, float> ExpandedMap<E,I>::getGandRHS(const ElemType &s) {
 }
 
 template<typename E, typename I>
-float ExpandedMap<E,I>::getG(const ElemType &s) {
-    iterator it;
+float ExpandedMap<E,I>::getG(const ElemType &s) const{
+    const_iterator it;
     if ((it = find(s)) != end())
         return G(it);
     else
@@ -45,8 +45,8 @@ float ExpandedMap<E,I>::getG(const ElemType &s) {
 }
 
 template<typename E, typename I>
-float ExpandedMap<E,I>::getRHS(const ElemType &s) {
-    iterator it;
+float ExpandedMap<E,I>::getRHS(const ElemType &s) const{
+    const_iterator it;
     if ((it = find(s)) != end())
         return RHS(it);
     else
@@ -56,11 +56,24 @@ float ExpandedMap<E,I>::getRHS(const ElemType &s) {
 template<typename iterator>
 const auto &ELEM(const iterator &map_it) { return (map_it)->first; }
 
-template<typename iterator>
+template<typename iterator, std::enable_if_t<not is_const_iterator<iterator>::value, int> = 0>
 float &G(const iterator &map_it) { return std::get<0>((map_it)->second); }
 
-template<typename iterator>
+template<typename iterator, std::enable_if_t<is_const_iterator<iterator>::value, int> = 0>
+const float &G(const iterator &map_it) { return std::get<0>((map_it)->second); }
+
+template<typename iterator, std::enable_if_t<not is_const_iterator<iterator>::value, int> = 0>
 float &RHS(const iterator &map_it) { return std::get<1>((map_it)->second); }
 
-template<typename iterator>
+template<typename iterator, std::enable_if_t<is_const_iterator<iterator>::value, int> = 0>
+const float &RHS(const iterator &map_it) { return std::get<1>((map_it)->second); }
+
+
+template<typename iterator, std::enable_if_t<not is_const_iterator<iterator>::value, int> = 0>
 auto &INFO(const iterator &map_it) { return std::get<2>((map_it)->second); }
+
+template<typename iterator, std::enable_if_t<is_const_iterator<iterator>::value, int> = 0>
+const auto &INFO(const iterator &map_it) { return std::get<2>((map_it)->second); }
+
+template<typename iterator>
+bool &CONSISTENT(const iterator &map_it) { return G(map_it) == RHS(map_it); }

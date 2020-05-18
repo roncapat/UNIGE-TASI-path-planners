@@ -6,7 +6,7 @@ include_directories(SYSTEM ../RobinHoodHashMap/src/include)
 include_directories(include)
 include_directories(../ProjectToolkit/include)
 add_executable(shifted_grid_planner
-        ShiftedGridPlanner.cpp
+        ShiftedGridPlanner_impl.h
         main.cpp)
 target_link_libraries(shifted_grid_planner gcov)
 target_link_libraries(shifted_grid_planner pthread)

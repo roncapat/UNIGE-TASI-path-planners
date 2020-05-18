@@ -50,19 +50,26 @@ void Graph::updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, i
     }
 }
 
-bool Graph::isValid(const Node &s) {
+bool Graph::isValid(const Node &s) const {
     return (s.x <= length_) && (s.y <= width_) && (s.x >= 0) && (s.y >= 0);
 }
 
-bool Graph::isValid(const Position &p) {
+bool Graph::isValid(const Position &p) const{
     return (p.x >= 0.0f) && (p.x <= flength_) && (p.y >= 0.0f) && (p.y <= fwidth_);
 }
 
-bool Graph::isValid(const Cell &c) {
+bool Graph::isValid(const Cell &c) const{
     return (c.x >= 0) && (c.x < length_) && (c.y >= 0) && (c.y < width_);
 }
 
-std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) {
+bool Graph::isValidVertex(const Position &p) const {
+    bool is_vertex = (ceilf(p.x) == p.x) && (ceilf(p.y) == p.y);
+    bool satisfies_bounds = isValid(p);
+    return is_vertex && satisfies_bounds;
+}
+
+
+std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) const{
     std::vector<Node> neighbors{
         s.topNode(), s.topLeftNode(), s.leftNode(), s.bottomLeftNode(),
         s.bottomNode(), s.bottomRightNode(), s.rightNode(), s.topRightNode()
@@ -78,7 +85,7 @@ std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) {
     return neighbors;
 }
 
-std::vector<Node> Graph::neighbors_4(const Node &s, bool include_invalid) {
+std::vector<Node> Graph::neighbors_4(const Node &s, bool include_invalid) const{
     std::vector<Node> neighbors{
             s.topNode(), s.leftNode(),
             s.bottomNode(), s.rightNode()
@@ -94,7 +101,7 @@ std::vector<Node> Graph::neighbors_4(const Node &s, bool include_invalid) {
     return neighbors;
 }
 
-std::vector<Node> Graph::neighbors_diag_4(const Node &s, bool include_invalid) {
+std::vector<Node> Graph::neighbors_diag_4(const Node &s, bool include_invalid) const{
     std::vector<Node> neighbors{
             s.topLeftNode(), s.bottomLeftNode(),
             s.topRightNode(), s.bottomRightNode()
@@ -110,7 +117,7 @@ std::vector<Node> Graph::neighbors_diag_4(const Node &s, bool include_invalid) {
     return neighbors;
 }
 
-std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) {
+std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) const{
     std::vector<Cell> neighbors{
         s.topCell(), s.topLeftCell(), s.leftCell(), s.bottomLeftCell(),
         s.bottomCell(), s.bottomRightCell(), s.rightCell(), s.topRightCell()
@@ -126,7 +133,7 @@ std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) {
     return neighbors;
 }
 
-std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) {
+std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) const{
     std::vector<Cell> neighbors{
         s.topCell(), s.leftCell(),
         s.bottomCell(), s.rightCell()
@@ -142,7 +149,7 @@ std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) {
     return neighbors;
 }
 
-std::vector<Edge> Graph::consecutiveNeighbors(const Position &p) {
+std::vector<Edge> Graph::consecutiveNeighbors(const Position &p) const{
     std::vector<Node> neighbors;
     std::vector<Edge> consecutive_neighbors;
 
@@ -193,7 +200,7 @@ std::vector<Edge> Graph::consecutiveNeighbors(const Position &p) {
     return consecutive_neighbors;
 }
 
-std::vector<Edge> Graph::consecutiveNeighbors(const Node &s) {
+std::vector<Edge> Graph::consecutiveNeighbors(const Node &s) const{
     std::vector<Node> neighbors;
     std::vector<Edge> consecutive_neighbors;
     neighbors.reserve(8);
@@ -223,7 +230,7 @@ std::vector<Edge> Graph::consecutiveNeighbors(const Node &s) {
     return consecutive_neighbors;
 }
 
-Node Graph::counterClockwiseNeighbor(const Node &s, const Node &sp) {
+Node Graph::counterClockwiseNeighbor(const Node &s, const Node &sp) const{
     int delta_x = sp.x - s.x + 1;
     int delta_y = sp.y - s.y + 1;
 
@@ -237,7 +244,7 @@ Node Graph::counterClockwiseNeighbor(const Node &s, const Node &sp) {
     return isValid(cc_neighbor) ? cc_neighbor : Node{false};
 }
 
-Node Graph::clockwiseNeighbor(const Node &s, const Node &sp) {
+Node Graph::clockwiseNeighbor(const Node &s, const Node &sp) const{
     int delta_x = sp.x - s.x + 1;
     int delta_y = sp.y - s.y + 1;
 
@@ -251,7 +258,7 @@ Node Graph::clockwiseNeighbor(const Node &s, const Node &sp) {
     return isValid(c_neighbor) ? c_neighbor : Node{false};
 }
 
-float Graph::getCost(const Cell &ind) {
+float Graph::getCost(const Cell &ind) const{
     if (!isValid(ind))
         return INFINITY;
     auto cost = map_[ind.x * width_ + ind.y];
@@ -313,3 +320,4 @@ std::vector<Position> Graph::getGridBoundariesTraversals(const Position &a, cons
     ysplit.push_back(xsplit.back());
     return ysplit;
 }
+

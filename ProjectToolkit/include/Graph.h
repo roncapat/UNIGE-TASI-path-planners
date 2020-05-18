@@ -38,29 +38,31 @@ class Graph {
   void initializeGraph(std::shared_ptr<uint8_t[]> image, int width, int length);
   void updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h);
 
-  float getCost(const Cell &ind);
+  float getCost(const Cell &ind) const;
 
-  bool isValid(const Node &s);
-  bool isValid(const Position &p);
-  bool isValid(const Cell &c);
+  bool isValid(const Node &s)const;
+  bool isValid(const Position &p)const;
+  bool isValid(const Cell &c)const;
+  bool isValidVertex(const Position &p) const;
 
-  std::vector<Node> neighbors_8(const Node &s, bool include_invalid = false);
-  std::vector<Cell> neighbors_8(const Cell &s, bool include_invalid = false);
-  std::vector<Node> neighbors_4(const Node &s, bool include_invalid = false);
-  std::vector<Cell> neighbors_4(const Cell &s, bool include_invalid = false);
+  std::vector<Node> neighbors_8(const Node &s, bool include_invalid = false) const;
+  std::vector<Cell> neighbors_8(const Cell &s, bool include_invalid = false) const;
+  std::vector<Node> neighbors_4(const Node &s, bool include_invalid = false) const;
+  std::vector<Cell> neighbors_4(const Cell &s, bool include_invalid = false) const;
+  std::vector<Node> neighbors_diag_4(const Node &s, bool include_invalid = false) const;
 
-  std::vector<Edge> consecutiveNeighbors(const Position &p);
-  std::vector<Edge> consecutiveNeighbors(const Node &s);
+  std::vector<Edge> consecutiveNeighbors(const Position &p) const;
+  std::vector<Edge> consecutiveNeighbors(const Node &s) const;
 
-  Node counterClockwiseNeighbor(const Node &s, const Node &s_prime);
-  Node clockwiseNeighbor(const Node &s, const Node &s_prime);
+  Node counterClockwiseNeighbor(const Node &s, const Node &s_prime) const;
+  Node clockwiseNeighbor(const Node &s, const Node &s_prime) const;
 
   static Cell getCell(const Node &a, const Node &b, const Node &c);
   static std::vector<Position> getGridBoundariesTraversals(const Position &a, const Position &b);
   uint8_t &get(int x, int y);
 
 
-    std::vector<Node> neighbors_diag_4(const Node &s, bool include_invalid = false);
+
 };
 
 #endif  // GRAPHSEARCH_H
