@@ -118,16 +118,17 @@ def plot_upscaled_map_with_robot_circle(data_l, height, width, scale, center, ra
 def main():
     if len(sys.argv) < 10:
         print("Usage:")
-        print("\t %s <mapfile.bmp> cspace pipe_in pipe_out gui outpath label c_cell_n_node get_expanded")
+        print("\t %s <mapfile> <algo> <type> <cspace> <pipe_in> <pipe_out> <gui> <tof> <outpath>")
 
-    pipe_in = os.path.abspath(sys.argv[3])
-    pipe_out = os.path.abspath(sys.argv[4])
-    gui = bool(int(sys.argv[5]))
-    outpath = sys.argv[6]
-    cspace = int(sys.argv[2])
-    label = sys.argv[7]
-    use_cell = (sys.argv[8] == "c")
-    wait_expanded = bool(int(sys.argv[9]))
+    label = sys.argv[2]
+    use_cell = (sys.argv[3] == "c")
+    cspace = int(sys.argv[4])
+    pipe_in = os.path.abspath(sys.argv[5])
+    pipe_out = os.path.abspath(sys.argv[6])
+    gui = bool(int(sys.argv[7]))
+    tof = bool(int(sys.argv[8]))
+    outpath = sys.argv[9]
+
 
     p_out = open(pipe_out, 'wb')
     p_in = open(pipe_in, 'rb')
@@ -204,7 +205,7 @@ def main():
 
         wait_byte(p_in, 3)
         (next_path, costs, dist, cost, times) = receive_path(p_in)
-        if wait_expanded:
+        if tof:
             wait_byte(p_in, 4)
             expanded = receive_expanded(p_in)
 

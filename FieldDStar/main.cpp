@@ -5,24 +5,45 @@
 #include <fstream>
 #include <pthread.h>
 #include "FieldDPlanner.h"
-#include "Graph.h"
 #include "LinearInterpolationPathExtractor.h"
+#include "Graph.h"
 
 int main(int _argc, char **_argv) {
-    if (_argc < 13) {
+    if (_argc < 12) {
         std::cerr << "Missing required argument." << std::endl;
         std::cerr << "Usage:" << std::endl;
-        std::cerr << "\t" << _argv[0]
-                  << " <mapfile.bmp> <from_x> <from_y> <to_x> <to_y>"
-                     " lookahead cspace optimiziation_lvl <fifo_in> <fifo_out> <gui> <outpath>"
+        std::cerr << "\t" << _argv[0] << " <mapfile> <from_x> <from_y> <to_x> <to_y> "
+                                         "<cspace> <fifo_in> <fifo_out> <gui> <tof> <outpath>"
                   << std::endl;
         return 1;
     }
 
+    auto map_name = _argv[1];
+    auto from_x = std::stof(_argv[2]);
+    auto from_y = std::stof(_argv[3]);
+    auto to_x = std::stof(_argv[4]);
+    auto to_y = std::stof(_argv[5]);
+    int cspace = std::stoi(_argv[6]);
+    auto fifo_in = _argv[7];
+    auto fifo_out = _argv[8];
+    bool gui = bool(std::stoi(_argv[9]));
+    bool tof = bool(std::stoi(_argv[10]));
+    auto out_path = _argv[11];
+
     Position next_point, goal;
     float next_step_cost = 0;
-    auto res = std::system((std::string("python3 -m simulator.run_simulator ") +
-        _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " + _argv[12] + " 'FD* V"+_argv[8]+"' n &").data());
+    auto command = std::string("python3 -u -m simulator.run_simulator ") +
+        map_name + " " +
+        "'FD*'" + " " +
+        "n" + " " +
+        std::to_string(cspace) + " " +
+        fifo_out + " " +
+        fifo_in + " " +
+        std::to_string(gui) + " " +
+        std::to_string(tof) + " " +
+        out_path + " &";
+    std::cout << command << std::endl;
+    auto res = std::system(command.data());
     (void) res;
 
     cpu_set_t cset;
@@ -33,15 +54,16 @@ int main(int _argc, char **_argv) {
 
     struct sched_param priomax;
     priomax.sched_priority=sched_get_priority_max(SCHED_FIFO);
+
     ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &priomax);
     if (ret != 0)
         std::cout << "No privileges for setting maximum scheduling priority" << std::endl;
 
     char ack = -1;
     long size;
-    int32_t width = 0, height = 0, top = 0, left = 0, min=0;
-    std::ifstream in__fifo{_argv[9], std::ios::in | std::ios::binary};
-    std::ofstream out_fifo{_argv[10], std::ios::out | std::ios::binary};
+    int32_t width = 0, height = 0, top = 0, left = 0, min = 0;
+    std::ifstream in__fifo{fifo_in, std::ios::in | std::ios::binary};
+    std::ofstream out_fifo{fifo_out, std::ios::out | std::ios::binary};
 
     ack = 0;
     out_fifo.write((char *) &ack, 1); //Send 0
@@ -59,11 +81,11 @@ int main(int _argc, char **_argv) {
     in__fifo.read((char *) data.get(), size); //Receive image
     in__fifo.read((char *) &min, 4); //Receive heuristic hint
 
-    next_point.x = std::stof(_argv[2]);
-    next_point.y = std::stof(_argv[3]);
+    next_point.x = from_x;
+    next_point.y = from_y;
 
-    goal.x = std::stof(_argv[4]);
-    goal.y = std::stof(_argv[5]);
+    goal.x = to_x;
+    goal.y = to_y;
 
     FieldDPlanner<1> planner{};
     LinearInterpolationPathExtractor extractor(planner.get_expanded_map(), planner.get_grid());
@@ -123,20 +145,22 @@ int main(int _argc, char **_argv) {
         out_fifo.write((char *) &(extractor.e_time), 4);
         out_fifo.flush();
 
-        ack = 4;
-        out_fifo.write((char *) &ack, 1);
-        auto expanded_size = (long long) planner.map.size();
-        out_fifo.write((char *) &expanded_size, 8);
-        for (const auto &expanded : planner.map) {
-            const Node &exp = expanded.first;
-            auto[g, rhs, _] = expanded.second;
-            (void) _;
-            out_fifo.write((char *) &(exp.x), 4);
-            out_fifo.write((char *) &(exp.y), 4);
-            out_fifo.write((char *) &(g), 4);
-            out_fifo.write((char *) &(rhs), 4);
+        if (tof){
+            ack = 4;
+            out_fifo.write((char *) &ack, 1);
+            auto expanded_size = (long long) planner.map.size();
+            out_fifo.write((char *) &expanded_size, 8);
+            for (const auto &expanded : planner.map) {
+                const Node &exp = expanded.first;
+                auto[g, rhs, _] = expanded.second;
+                (void) _;
+                out_fifo.write((char *) &(exp.x), 4);
+                out_fifo.write((char *) &(exp.y), 4);
+                out_fifo.write((char *) &(g), 4);
+                out_fifo.write((char *) &(rhs), 4);
+            }
+            out_fifo.flush();
         }
-        out_fifo.flush();
         next_point = {extractor.path_[1].x, extractor.path_[1].y};
         next_step_cost = extractor.cost_.front();
         if (next_point == goal)

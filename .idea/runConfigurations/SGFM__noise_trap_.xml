@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="SGFM (noise trap)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="../../Tests/Tests/noise-trap_90_90_25_25_.bmp 90 90 25 25 1 9 2 ../pipe_1 ../pipe_2 1 ../../" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="roncapat_global_planners" TARGET_NAME="shifted_grid_planner" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="roncapat_global_planners" RUN_TARGET_NAME="shifted_grid_planner">
+  <configuration default="false" name="SGFM (noise trap)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$ProjectFileDir$/Tests/Tests/noise-trap_90_90_25_25_.bmp 90 90 25 25 5 ../pipe_1 ../pipe_2 1 0 ../../" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="roncapat_global_planners" TARGET_NAME="shifted_grid_planner" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="roncapat_global_planners" RUN_TARGET_NAME="shifted_grid_planner">
     <envs>
       <env name="PYTHONPATH" value="../Simulator/build/lib" />
     </envs>

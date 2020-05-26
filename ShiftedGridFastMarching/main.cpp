@@ -9,26 +9,42 @@
 #include "Graph.h"
 
 int main(int _argc, char **_argv) {
-    if (_argc < 13) {
+    if (_argc < 12) {
         std::cerr << "Missing required argument." << std::endl;
         std::cerr << "Usage:" << std::endl;
-        std::cerr << "\t" << _argv[0]
-                  << " <mapfile.bmp> <from_x> <from_y> <to_x> <to_y>"
-                     " publish_expanded cspace optimiziation_lvl <fifo_in> <fifo_out> <gui> <outpath>"
+        std::cerr << "\t" << _argv[0] << " <mapfile> <from_x> <from_y> <to_x> <to_y> "
+                                         "<cspace> <fifo_in> <fifo_out> <gui> <tof> <outpath>"
                   << std::endl;
         return 1;
     }
 
-    bool pub_exp = (bool)std::stoi(_argv[6]);
+    auto map_name = _argv[1];
+    auto from_x = std::stof(_argv[2]);
+    auto from_y = std::stof(_argv[3]);
+    auto to_x = std::stof(_argv[4]);
+    auto to_y = std::stof(_argv[5]);
+    int cspace = std::stoi(_argv[6]);
+    auto fifo_in = _argv[7];
+    auto fifo_out = _argv[8];
+    bool gui = bool(std::stoi(_argv[9]));
+    bool tof = bool(std::stoi(_argv[10]));
+    auto out_path = _argv[11];
 
     Position next_point, goal;
     float next_step_cost = 0;
     auto command = std::string("python3 -u -m simulator.run_simulator ") +
-        _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " +
-        _argv[12] + " 'SG-DFM V"+_argv[8]+"' n " + _argv[6] + " &";
+        map_name + " " +
+        "'SG-DFM'" + " " +
+        "n" + " " +
+        std::to_string(cspace) + " " +
+        fifo_out + " " +
+        fifo_in + " " +
+        std::to_string(gui) + " " +
+        std::to_string(tof) + " " +
+        out_path + " &";
     std::cout << command << std::endl;
-    //auto res = std::system(command.data());
-    //(void) res;
+    auto res = std::system(command.data());
+    (void) res;
 
     cpu_set_t cset;
     CPU_ZERO( &cset);
@@ -46,8 +62,8 @@ int main(int _argc, char **_argv) {
     char ack = -1;
     long size;
     int32_t width = 0, height = 0, top = 0, left = 0, min = 0;
-    std::ifstream in__fifo{_argv[9], std::ios::in | std::ios::binary};
-    std::ofstream out_fifo{_argv[10], std::ios::out | std::ios::binary};
+    std::ifstream in__fifo{fifo_in, std::ios::in | std::ios::binary};
+    std::ofstream out_fifo{fifo_out, std::ios::out | std::ios::binary};
 
     ack = 0;
     out_fifo.write((char *) &ack, 1); //Send 0
@@ -65,11 +81,11 @@ int main(int _argc, char **_argv) {
     in__fifo.read((char *) data.get(), size); //Receive image
     in__fifo.read((char *) &min, 4); //Receive heuristic hint
 
-    next_point.x = std::stof(_argv[2]);
-    next_point.y = std::stof(_argv[3]);
+    next_point.x = from_x;
+    next_point.y = from_y;
 
-    goal.x = std::stof(_argv[4]);
-    goal.y = std::stof(_argv[5]);
+    goal.x = to_x;
+    goal.y = to_y;
 
     ShiftedGridPlanner<2> planner{};
     DirectLinearInterpolationPathExtractor extractor(planner.get_expanded_map(), planner.get_grid());
@@ -129,7 +145,7 @@ int main(int _argc, char **_argv) {
         out_fifo.write((char *) &(extractor.e_time), 4);
         out_fifo.flush();
 
-        if (pub_exp){
+        if (tof){
             std::cout << "PUBLISHING EXPANDED" << std::endl;
             ack = 4;
             out_fifo.write((char *) &ack, 1);
