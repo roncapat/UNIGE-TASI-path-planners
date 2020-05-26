@@ -116,9 +116,9 @@ def plot_upscaled_map_with_robot_circle(data_l, height, width, scale, center, ra
 
 
 def main():
-    if len(sys.argv) < 9:
+    if len(sys.argv) < 10:
         print("Usage:")
-        print("\t %s <mapfile.bmp> cspace pipe_in pipe_out gui outpath label c_cell_n_node")
+        print("\t %s <mapfile.bmp> cspace pipe_in pipe_out gui outpath label c_cell_n_node get_expanded")
 
     pipe_in = os.path.abspath(sys.argv[3])
     pipe_out = os.path.abspath(sys.argv[4])
@@ -127,6 +127,7 @@ def main():
     cspace = int(sys.argv[2])
     label = sys.argv[7]
     use_cell = (sys.argv[8] == "c")
+    wait_expanded = bool(int(sys.argv[9]))
 
     p_out = open(pipe_out, 'wb')
     p_in = open(pipe_in, 'rb')
@@ -180,27 +181,32 @@ def main():
         send_patch(p_out, p_data_cspace, p_pos)
         send_int(p_out, int(min_cost))
 
-        if not first_time:
-            dbgview = plot_path_on_map(~data_l_cspace, label, use_cell, prev_path, next_path, expanded, info)
-            if out is None:
-                if gui:
-                    cv2.namedWindow(label + " Planner", cv2.WINDOW_NORMAL)
-                    cv2.resizeWindow(label + " Planner", 900, 900)  # TODO keep image aspect ratio
-                    cv2.moveWindow(label + " Planner", 100, 100)
-                video_path = os.path.join(os.path.abspath(outpath), mapname.split('.')[0] + '.avi')
-                [w, h, _] = dbgview.shape
-                out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'DIVX'), 5, (h, w))
-            out.write(dbgview)
+        if first_time:
             if gui:
-                cv2.imshow(label + " Planner", dbgview)
-                cv2.waitKey(1)
+                cv2.namedWindow(label + " Planner", cv2.WINDOW_NORMAL)
+                cv2.resizeWindow(label + " Planner", 900, 900)  # TODO keep image aspect ratio
+                cv2.moveWindow(label + " Planner", 100, 100)
         else:
-            first_time = False
+            if gui:
+                dbgview = plot_path_on_map(~data_l_cspace, label, use_cell, prev_path, next_path, expanded, info)
+                if out is None:
+                    video_path = os.path.join(os.path.abspath(outpath), mapname.split('.')[0] + '.avi')
+                    [w, h, _] = dbgview.shape
+                    try:
+                        out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'DIVX'), 5, (h, w))
+                    except:
+                        out = None
+                if out is not None:
+                    out.write(dbgview)
+                cv2.imshow(label + " Planner", dbgview)
+                cv2.waitKey(100)
+        first_time = False
 
         wait_byte(p_in, 3)
         (next_path, costs, dist, cost, times) = receive_path(p_in)
-        wait_byte(p_in, 4)
-        expanded = receive_expanded(p_in)
+        if wait_expanded:
+            wait_byte(p_in, 4)
+            expanded = receive_expanded(p_in)
 
         cost_from_beginning += step_cost
         cost_to_goal = sum(costs)
@@ -220,9 +226,12 @@ def main():
                 "cum_tot": utt + ptt + ett}
         info.update(times)
 
-    dbgview = plot_path_on_map(~data_l_cspace, label, use_cell, prev_path, next_path, expanded, info)
-    out.write(dbgview)
+    if out is not None:
+        out.write(dbgview)
     if gui:
+        dbgview = plot_path_on_map(~data_l_cspace, label, use_cell, prev_path, next_path, expanded, info)
+        if out is not None:
+            out.write(dbgview)
         cv2.imshow(label + " Planner", dbgview)
         cv2.waitKey(1)
 
@@ -243,20 +252,25 @@ def main():
             "extraction": 0,
             "cum": 0,
             "cum_tot": utt + ptt + ett}
-    if gui:
-        dbgview = plot_path_on_map(~data_l, label, use_cell, prev_path, next_path, expanded, info)
-        cv2.imshow(label + " Planner", dbgview)
-        plt.plot(range(1, len(uts) + 1), uts, label="Update")
-        plt.plot(range(1, len(pts) + 1), pts, label="Planning")
-        plt.plot(range(1, len(ets) + 1), ets, label="Extraction")
-        plt.legend(title='CPU time (ms)')
-        plt.title(label + " runtime analysis")
-        plt.gcf().canvas.set_window_title(label + " runtime analysis")
-        cv2.waitKey(1)
-        plt.show()
 
-    out.write(dbgview)
-    out.release()
+    dbgview = plot_path_on_map(~data_l, label, use_cell, prev_path, next_path, expanded, info)
+    if out is not None:
+        out.write(dbgview)
+    cv2.namedWindow(label + " Planner", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(label + " Planner", 900, 900)
+    cv2.imshow(label + " Planner", dbgview)
+    cv2.waitKey(1)
+    plt.plot(range(1, len(uts)), uts[1:], label="Update")
+    plt.plot(range(1, len(pts)), pts[1:], label="Planning")
+    plt.plot(range(1, len(ets)), ets[1:], label="Extraction")
+    plt.legend(title='CPU time (ms)')
+    plt.title(label + " runtime analysis - First plan: %.2f ms" % pts[0])
+    plt.gcf().canvas.set_window_title(label + " runtime analysis")
+    plt.show()
+
+    if out is not None:
+        out.write(dbgview)
+        out.release()
 
 
 

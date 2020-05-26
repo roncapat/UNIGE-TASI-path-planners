@@ -21,7 +21,7 @@ def plot_path(mapfile, label, use_cell, pathfile, dbgfile):
 
 
 def plot_path_on_map(img, label, use_cell, prevpath=[], nextpath=[], expanded=[], info=None):
-    mult = 21
+    mult = 11
 
     width = int(img.shape[1] * mult) + 1
     height = int(img.shape[0] * mult) + 1
@@ -123,15 +123,15 @@ def plot_path_on_map(img, label, use_cell, prevpath=[], nextpath=[], expanded=[]
 
         font = ImageFont.truetype(fontpath, 20)
 
-        for n in range(0, img.shape[1]):
-            img_main = Image.new("RGB", (36, 20), (255, 255, 255))
-            draw = ImageDraw.Draw(img_main)
-            draw.text((0, 0), str(n), font=font, fill=(0, 0, 0))
-            t = img_main.rotate(90, expand=1)
-            img_pil.paste(t, (36 + n * 21, line_height * 5 + (vmargin * 2)))
-        for n in range(0, img.shape[1]):
-            draw = ImageDraw.Draw(img_pil)
-            draw.text((0, line_height * 5 + (vmargin * 2) + 36 + 21 * n), str(n).rjust(3), font=font, fill=(0, 0, 0))
+        #for n in range(0, img.shape[1]):
+        #    img_main = Image.new("RGB", (36, 20), (255, 255, 255))
+        #    draw = ImageDraw.Draw(img_main)
+        #    draw.text((0, 0), str(n), font=font, fill=(0, 0, 0))
+        #    t = img_main.rotate(90, expand=1)
+        #    img_pil.paste(t, (36 + n * 21, line_height * 5 + (vmargin * 2)))
+        #for n in range(0, img.shape[1]):
+        #    draw = ImageDraw.Draw(img_pil)
+        #    draw.text((0, line_height * 5 + (vmargin * 2) + 36 + 21 * n), str(n).rjust(3), font=font, fill=(0, 0, 0))
 
         out_map = numpy.array(img_pil)
     return out_map

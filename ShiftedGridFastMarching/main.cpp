@@ -14,17 +14,21 @@ int main(int _argc, char **_argv) {
         std::cerr << "Usage:" << std::endl;
         std::cerr << "\t" << _argv[0]
                   << " <mapfile.bmp> <from_x> <from_y> <to_x> <to_y>"
-                     " lookahead cspace optimiziation_lvl <fifo_in> <fifo_out> <gui> <outpath>"
+                     " publish_expanded cspace optimiziation_lvl <fifo_in> <fifo_out> <gui> <outpath>"
                   << std::endl;
         return 1;
     }
 
+    bool pub_exp = (bool)std::stoi(_argv[6]);
+
     Position next_point, goal;
     float next_step_cost = 0;
-    auto res = std::system((std::string("python3 -m simulator.run_simulator ") +
-                            _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " +
-                            _argv[12] + " 'SG-DFM V"+_argv[8]+"' n &").data());
-    (void) res;
+    auto command = std::string("python3 -u -m simulator.run_simulator ") +
+        _argv[1] + " " + _argv[7] + " " + _argv[10] + " " + _argv[9] + " " + _argv[11] + " " +
+        _argv[12] + " 'SG-DFM V"+_argv[8]+"' n " + _argv[6] + " &";
+    std::cout << command << std::endl;
+    //auto res = std::system(command.data());
+    //(void) res;
 
     cpu_set_t cset;
     CPU_ZERO( &cset);
@@ -125,20 +129,23 @@ int main(int _argc, char **_argv) {
         out_fifo.write((char *) &(extractor.e_time), 4);
         out_fifo.flush();
 
-        ack = 4;
-        out_fifo.write((char *) &ack, 1);
-        auto expanded_size = (long long) planner.map.size();
-        out_fifo.write((char *) &expanded_size, 8);
-        for (const auto &expanded : planner.map) {
-            const Node &exp = expanded.first;
-            auto[g, rhs, _] = expanded.second;
-            (void) _;
-            out_fifo.write((char *) &(exp.x), 4);
-            out_fifo.write((char *) &(exp.y), 4);
-            out_fifo.write((char *) &(g), 4);
-            out_fifo.write((char *) &(rhs), 4);
+        if (pub_exp){
+            std::cout << "PUBLISHING EXPANDED" << std::endl;
+            ack = 4;
+            out_fifo.write((char *) &ack, 1);
+            auto expanded_size = (long long) planner.map.size();
+            out_fifo.write((char *) &expanded_size, 8);
+            for (const auto &expanded : planner.map) {
+                const Node &exp = expanded.first;
+                auto[g, rhs, _] = expanded.second;
+                (void) _;
+                out_fifo.write((char *) &(exp.x), 4);
+                out_fifo.write((char *) &(exp.y), 4);
+                out_fifo.write((char *) &(g), 4);
+                out_fifo.write((char *) &(rhs), 4);
+                out_fifo.flush();
+            }
         }
-        out_fifo.flush();
         next_point = {extractor.path_[1].x, extractor.path_[1].y};
         next_step_cost = extractor.cost_.front();
         if (next_point == goal)
