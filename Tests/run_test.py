@@ -24,20 +24,24 @@ gui = 1
 tof = 0
 outpath = "Results"
 
-kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (cspace, cspace))
+upscale = 1
+
+kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (cspace*upscale, cspace*upscale))
 
 # TODO loop over inputs maps
-mapfile = "Tests/gradient.bmp"
+mapfile = "Tests/000_gradient.bmp"
 results = {}
-height = width = 0
 
 mapname = os.path.basename(mapfile)
 mappath = os.path.abspath(mapfile)
 img_h = cv2.imread(mappath, cv2.IMREAD_GRAYSCALE)
+[height, width] = img_h.shape
+img_h = img_h.repeat(upscale, axis=0).repeat(upscale, axis=1)
+[height, width] = img_h.shape
 
 for planner in planners:
     label = planner
-    args = [planners[planner]["path"], mapfile, 100, 100, 900, 900, 1, pipe_out, pipe_in, 1, 0, outpath]
+    args = [planners[planner]["path"], mapfile, 100, 100, 1000*upscale-100, 1000*upscale-100, 1, pipe_out, pipe_in, 1, 0, outpath]
     str_args = [str(x) for x in args]
     subprocess.Popen(str_args)
 
@@ -50,7 +54,6 @@ for planner in planners:
     (data_l, data_h) = simulation_data(img_h, filter_radius=1, low_res_penalty=20)
     data_l_cspace = cv2.dilate(data_l, kernel)
     min_cost = cv2.minMaxLoc(data_l_cspace)[0]
-    [height, width] = data_l_cspace.shape
     send_map(p_out, data_l_cspace)
     send_int(p_out, int(min_cost))
 
@@ -68,7 +71,7 @@ for planner in planners:
         pos_x, pos_y, step_cost = receive_traversal_update(p_in)
         prev_path.append([pos_x, pos_y])
         center = (int(round(pos_y)), int(round(pos_x)))
-        (data_l, p_data, p_pos, p_ranges) = round_patch_update(data_l, data_h, center, radius=5)
+        (data_l, p_data, p_pos, p_ranges) = round_patch_update(data_l, data_h, center, radius=5*upscale)
 
         data_l_cspace = cv2.dilate(data_l, kernel)
         p_data_cspace = data_l_cspace[p_ranges[0], p_ranges[1]]
@@ -156,15 +159,16 @@ plt.gcf().canvas.set_window_title("Path projection on slope map")
 ax = plt.gca()
 handles = []
 for planner, idx in zip(planners, range(len(planners))):
-    points = [[y, x] for x, y in results[planner]["cur_path"][-1]]
+    points = [[y, height-x] for x, y in results[planner]["cur_path"][-1]]
     path = Path(points)
     patch = patches.PathPatch(path, facecolor='none', lw=2, edgecolor=cmap.colors[idx], label=planner)
     handles.append(patch)
     ax.add_patch(patch)
 plt.legend(handles=handles)
-im = plt.imread(mappath)
-ax.imshow(im)
+plt.imshow(~img_h, cmap='viridis_r', extent=[0,1000,0,1000])
+plt.colorbar()
 ax.set_xlim(0, width)
 ax.set_ylim(0, height)
+plt.savefig("Results/executed_paths.png", quality=100)
 
 plt.show()

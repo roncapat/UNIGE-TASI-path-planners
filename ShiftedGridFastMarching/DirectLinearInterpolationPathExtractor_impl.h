@@ -24,7 +24,7 @@ void DirectLinearInterpolationPathExtractor<T>::extract_path() {
 
     int curr_step = 0;
     // TODO do something better than this sh*t
-    int max_steps = 2000;
+    int max_steps = 20000;
 
     float step_cost, step_dist;
     path_.push_back(grid.start_pos_);
