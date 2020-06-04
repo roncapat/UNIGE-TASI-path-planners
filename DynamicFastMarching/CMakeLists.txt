@@ -1,19 +1,24 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if (NOT DEFINED OPT_LVL)
+    set(OPT_LVL 1)
+endif ()
+add_definitions(-DOPT_LVL=${OPT_LVL})
 
 include_directories(SYSTEM ../RobinHoodHashMap/src/include)
 include_directories(include)
 include_directories(../ProjectToolkit/include)
-add_executable(dfm_planner
-        DynamicFastMarching_impl.h
+add_executable(dfm_planner_${OPT_LVL}
+               DynamicFastMarching_impl.h
                main.cpp)
 
-target_link_libraries(dfm_planner gcov)
-target_link_libraries(dfm_planner pthread)
-target_link_libraries(dfm_planner ProjectToolkit)
-target_link_libraries(dfm_planner robin_hood)
+target_link_libraries(dfm_planner_${OPT_LVL} gcov)
+target_link_libraries(dfm_planner_${OPT_LVL} pthread)
+target_link_libraries(dfm_planner_${OPT_LVL} ProjectToolkit)
+target_link_libraries(dfm_planner_${OPT_LVL} robin_hood)
 
-add_custom_command(TARGET dfm_planner
-        POST_BUILD
-        COMMAND sudo setcap 'cap_sys_nice=eip' "${CMAKE_CURRENT_BINARY_DIR}/dfm_planner")
+add_custom_command(TARGET dfm_planner_${OPT_LVL}
+                   POST_BUILD
+                   COMMAND sudo setcap 'cap_sys_nice=ep' "${CMAKE_CURRENT_BINARY_DIR}/dfm_planner_${OPT_LVL}")

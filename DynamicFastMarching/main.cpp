@@ -8,6 +8,14 @@
 #include "DirectLinearInterpolationPathExtractorCells.h"
 #include "Graph.h"
 
+#ifndef OPT_LVL
+#define OPT_LVL 1
+#endif
+
+//#define STR(x) #x
+//#define XSTR(x) STR(x)
+//#pragma message "Opt level " XSTR(OPT_LVL)
+
 int main(int _argc, char **_argv) {
     if (_argc < 12) {
         std::cerr << "Missing required argument." << std::endl;
@@ -32,6 +40,7 @@ int main(int _argc, char **_argv) {
 
     Position next_point, goal;
     float next_step_cost = 0;
+    /*
     auto command = std::string("python3 -u -m simulator.run_simulator ") +
         map_name + " " +
         "'MS-DFM'" + " " +
@@ -45,6 +54,7 @@ int main(int _argc, char **_argv) {
     std::cout << command << std::endl;
     auto res = std::system(command.data());
     (void) res;
+    */
 
     cpu_set_t cset;
     CPU_ZERO( &cset);
@@ -87,7 +97,7 @@ int main(int _argc, char **_argv) {
     goal.x = to_x;
     goal.y = to_y;
 
-    DFMPlanner<1> planner{};
+    DFMPlanner<OPT_LVL> planner{};
     DirectLinearInterpolationPathExtractorCells extractor(planner.get_expanded_map(), planner.get_grid());
     planner.reset();
     planner.set_occupancy_threshold(1);
@@ -163,8 +173,13 @@ int main(int _argc, char **_argv) {
             }
             out_fifo.flush();
         }
-        next_point = {extractor.path_[1].x, extractor.path_[1].y};
-        next_step_cost = extractor.cost_.front();
+        auto prev_point = next_point;
+        for (int i = 1; i < extractor.path_.size(); i++){
+            next_point = {extractor.path_[i].x, extractor.path_[i].y};
+            next_step_cost = extractor.cost_[i-1];
+            if (Cell(next_point) != Cell(prev_point))
+                break;
+        }
         if (next_point == goal)
             break; //Goal reached
         planner.set_start(next_point);

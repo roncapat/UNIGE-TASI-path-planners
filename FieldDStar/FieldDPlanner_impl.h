@@ -108,12 +108,13 @@ void FieldDPlanner<1>::plan() {
 
 template<int O>
 void FieldDPlanner<O>::update() {
+    #ifndef NO_HEURISTIC
     Queue new_queue;
     for (const auto &elem: priority_queue)
         // Only heuristic changes, so either G or RHS is kept the same
         new_queue.insert(elem.elem, calculateKey(elem.elem, elem.key.second));
     priority_queue.swap(new_queue);
-
+    #endif
     robin_hood::unordered_flat_set<Node> to_update;
     std::vector<Node> updates;
     // construct a set of all updated nodes
@@ -165,8 +166,12 @@ typename FieldDPlanner<O>::Key FieldDPlanner<O>::calculateKey(const Node &s, con
 
 template<int O>
 typename FieldDPlanner<O>::Key FieldDPlanner<O>::calculateKey(const Node &s, const float cost_so_far) {
+#ifdef NO_HEURISTIC
+    return {cost_so_far, cost_so_far};
+#else
     auto dist = grid.start_pos_.distance(s);
     return {cost_so_far + this->heuristic_multiplier * dist, cost_so_far};
+#endif
 }
 
 template<>
