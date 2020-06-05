@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import struct, sys, os, subprocess, cv2
+import struct, sys, os, subprocess, cv2, shutil
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import matplotlib.patches as patches
@@ -24,9 +24,9 @@ gui = 1
 tof = 0
 outpath = "Results"
 
-upscale = 1
+upscale = 5
 
-kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (cspace*upscale, cspace*upscale))
+kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (cspace * upscale, cspace * upscale))
 
 # TODO loop over inputs maps
 mapfile = "Tests/000_gradient.bmp"
@@ -41,9 +41,11 @@ img_h = img_h.repeat(upscale, axis=0).repeat(upscale, axis=1)
 
 for planner in planners:
     label = planner
-    args = [planners[planner]["path"], mapfile, 100, 100, 1000*upscale-100, 1000*upscale-100, 1, pipe_out, pipe_in, 1, 0, outpath]
+    args = ["sudo", "perf", "record", "--call-graph", "dwarf", "-o", "/mnt/sdb/"+planner+".perf.data", planners[planner]["path"], mapfile, 100, 100, 1000 * upscale - 100, 1000 * upscale - 100, 1, pipe_out, pipe_in, 1, 0, outpath]
+    #args = [planners[planner]["path"], mapfile, 100, 100, 1000*upscale-100, 1000*upscale-100, 1, pipe_out, pipe_in, 1, 0, outpath]
     str_args = [str(x) for x in args]
-    subprocess.Popen(str_args)
+    print(' '.join(str_args))
+    process = subprocess.Popen(str_args)
 
     p_out = open(pipe_out, 'wb')
     p_in = open(pipe_in, 'rb')
@@ -71,7 +73,7 @@ for planner in planners:
         pos_x, pos_y, step_cost = receive_traversal_update(p_in)
         prev_path.append([pos_x, pos_y])
         center = (int(round(pos_y)), int(round(pos_x)))
-        (data_l, p_data, p_pos, p_ranges) = round_patch_update(data_l, data_h, center, radius=5*upscale)
+        (data_l, p_data, p_pos, p_ranges) = round_patch_update(data_l, data_h, center, radius=5 * upscale)
 
         data_l_cspace = cv2.dilate(data_l, kernel)
         p_data_cspace = data_l_cspace[p_ranges[0], p_ranges[1]]
@@ -108,6 +110,7 @@ for planner in planners:
     send_byte(p_out, 2)
     p_out.close()
     p_in.close()
+    process.wait()
 
 plt.figure(1)
 plt.title("Replanning time analysis")
@@ -159,13 +162,13 @@ plt.gcf().canvas.set_window_title("Path projection on slope map")
 ax = plt.gca()
 handles = []
 for planner, idx in zip(planners, range(len(planners))):
-    points = [[y, height-x] for x, y in results[planner]["cur_path"][-1]]
+    points = [[y, height - x] for x, y in results[planner]["cur_path"][-1]]
     path = Path(points)
     patch = patches.PathPatch(path, facecolor='none', lw=2, edgecolor=cmap.colors[idx], label=planner)
     handles.append(patch)
     ax.add_patch(patch)
 plt.legend(handles=handles)
-plt.imshow(~img_h, cmap='viridis_r', extent=[0,1000,0,1000])
+plt.imshow(~img_h, cmap='viridis_r', extent=[0, height, 0, width])
 plt.colorbar()
 ax.set_xlim(0, width)
 ax.set_ylim(0, height)

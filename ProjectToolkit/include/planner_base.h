@@ -43,9 +43,10 @@ public:
         if (initialize_search or new_goal_) {
             num_nodes_updated = 0;
             num_nodes_expanded = 0;
-            map.clear();
             priority_queue.clear();
             grid.updated_cells_.clear();
+            map.clear();
+            map.init(grid.width_, grid.length_, 8);
             init();
         } else if (new_start) {
             new_start = false;

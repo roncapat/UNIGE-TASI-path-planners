@@ -21,4 +21,4 @@ target_link_libraries(dfm_planner_${OPT_LVL} robin_hood)
 
 add_custom_command(TARGET dfm_planner_${OPT_LVL}
                    POST_BUILD
-                   COMMAND sudo setcap 'cap_sys_nice=ep' "${CMAKE_CURRENT_BINARY_DIR}/dfm_planner_${OPT_LVL}")
+                   COMMAND sudo setcap 'cap_sys_nice=eip' "${CMAKE_CURRENT_BINARY_DIR}/dfm_planner_${OPT_LVL}")

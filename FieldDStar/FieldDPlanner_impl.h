@@ -33,8 +33,9 @@ void FieldDPlanner<0>::plan() {
         ++expanded;
 
         // Get reference to the node
-        auto s_it = map.find(s);
-        assert(s_it != map.end());
+        auto s_it_opt = map.find(s);
+        assert(s_it_opt.has_value());
+        auto s_it = s_it_opt.value();
 
         if (G(s_it) > RHS(s_it)) { // Overconsistent
             G(s_it) = RHS(s_it);
@@ -72,8 +73,9 @@ void FieldDPlanner<1>::plan() {
         Node s = priority_queue.topValue();
         ++expanded;
 
-        auto s_it = map.find(s);
-        assert(s_it != map.end());
+        auto s_it_opt = map.find(s);
+        assert(s_it_opt.has_value());
+        auto s_it = s_it_opt.value();
 
         if (G(s_it) > RHS(s_it)) {
             G(s_it) = RHS(s_it);
@@ -90,8 +92,9 @@ void FieldDPlanner<1>::plan() {
         } else {
             G(s_it) = INFINITY;
             for (Node &sp : grid.neighbors_8(s)) {
-                auto sp_it = map.find(sp);
-                assert(sp_it != map.end());
+                auto sp_it_opt = map.find(sp);
+                assert(sp_it_opt.has_value());
+                auto sp_it = sp_it_opt.value();
                 if (INFO(sp_it) == s or INFO(sp_it) == grid.clockwiseNeighbor(sp, s)) {
                     RHS(sp_it) = minRHS(sp, bptr);
                     if (RHS(sp_it) < INFINITY) //TODO understand theese are necessary

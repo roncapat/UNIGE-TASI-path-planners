@@ -9,7 +9,8 @@ out_dir="$script_dir/Results"
 rm -rf "$build_dir"
 mkdir "$build_dir"
 cd "$build_dir"
-cmake -G "Unix Makefiles" "$src_dir" | tee build.log
+#cmake -G "Unix Makefiles" "$src_dir" -DCMAKE_BUILD_TYPE=Debug | tee build.log
+cmake -G "Unix Makefiles" "$src_dir" -DCMAKE_BUILD_TYPE=Release | tee build.log
 make -j8 | tee -a build.log
 
 export PYTHONPATH="$build_dir/Simulator/build/lib"

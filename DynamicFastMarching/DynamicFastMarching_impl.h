@@ -28,8 +28,9 @@ void DFMPlanner<0>::plan() {
         ++expanded;
 
         // Get reference to the node
-        auto s_it = map.find(s);
-        assert(s_it != map.end());
+        auto s_it_opt = map.find(s);
+        assert(s_it_opt.has_value());
+        auto s_it = s_it_opt.value();
 
         if (G(s_it) > RHS(s_it)) { // Overconsistent
             G(s_it) = RHS(s_it);
@@ -68,8 +69,9 @@ void DFMPlanner<1>::plan() {
         ++expanded;
 
         // Get reference to the node
-        auto s_it = map.find(s);
-        assert(s_it != map.end());
+        auto s_it_opt = map.find(s);
+        assert(s_it_opt.has_value());
+        auto s_it = s_it_opt.value();
 
         if (G(s_it) > RHS(s_it)) { // Overconsistent
             G(s_it) = RHS(s_it);
@@ -88,8 +90,9 @@ void DFMPlanner<1>::plan() {
         } else { // Underconsistent
             G(s_it) = INFINITY;
             for (const Cell &nbr : grid.neighbors_8(s)) {
-                auto nbr_it = map.find(nbr);
-                assert(nbr_it != map.end());
+                auto nbr_it_opt = map.find(nbr);
+                assert(nbr_it_opt.has_value());
+                auto nbr_it = nbr_it_opt.value();
                 if (INFO(nbr_it).first == s or INFO(nbr_it).second == s){
                     if (nbr != grid.goal_cell_) //TODO understand why these checks are not necessary in FD*
                         RHS(nbr_it) = minRHS(nbr, INFO(nbr_it));

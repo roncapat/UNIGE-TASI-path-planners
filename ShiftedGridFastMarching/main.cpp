@@ -157,14 +157,16 @@ int main(int _argc, char **_argv) {
             out_fifo.write((char *) &ack, 1);
             auto expanded_size = (long long) planner.map.size();
             out_fifo.write((char *) &expanded_size, 8);
-            for (const auto &expanded : planner.map) {
-                const Node &exp = expanded.first;
-                auto[g, rhs, _] = expanded.second;
-                (void) _;
-                out_fifo.write((char *) &(exp.x), 4);
-                out_fifo.write((char *) &(exp.y), 4);
-                out_fifo.write((char *) &(g), 4);
-                out_fifo.write((char *) &(rhs), 4);
+            for (auto b: planner.map.buckets){
+                for (const auto &expanded : b) {
+                    const Node &exp = expanded.first;
+                    auto[g, rhs, _] = expanded.second;
+                    (void) _;
+                    out_fifo.write((char *) &(exp.x), 4);
+                    out_fifo.write((char *) &(exp.y), 4);
+                    out_fifo.write((char *) &(g), 4);
+                    out_fifo.write((char *) &(rhs), 4);
+                }
                 out_fifo.flush();
             }
         }
