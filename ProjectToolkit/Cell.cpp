@@ -31,37 +31,37 @@ bool Cell::operator==(const Cell &other) const {
 
 bool Cell::operator!=(const Cell &other) const { return not(*this == other); }
 
-Cell Cell::topCell() const { return {x - 1, y}; }
+Cell Cell::top_cell() const { return {x - 1, y}; }
 
-Cell Cell::topLeftCell() const { return {x - 1, y - 1}; }
+Cell Cell::top_left_cell() const { return {x - 1, y - 1}; }
 
-Cell Cell::topRightCell() const { return {x - 1, y + 1}; }
+Cell Cell::top_right_cell() const { return {x - 1, y + 1}; }
 
-Cell Cell::bottomCell() const { return {x + 1, y}; }
+Cell Cell::bottom_cell() const { return {x + 1, y}; }
 
-Cell Cell::bottomLeftCell() const { return {x + 1, y - 1}; }
+Cell Cell::bottom_left_cell() const { return {x + 1, y - 1}; }
 
-Cell Cell::bottomRightCell() const { return {x + 1, y + 1}; }
+Cell Cell::bottom_right_cell() const { return {x + 1, y + 1}; }
 
-Cell Cell::leftCell() const { return {x, y - 1}; }
+Cell Cell::left_cell() const { return {x, y - 1}; }
 
-Cell Cell::rightCell() const { return {x, y + 1}; }
+Cell Cell::right_cell() const { return {x, y + 1}; }
 
-Node Cell::topLeftNode() const { return {x, y}; }
+Node Cell::top_left_node() const { return {x, y}; }
 
-Node Cell::topRightNode() const { return {x + 1, y}; }
+Node Cell::top_right_node() const { return {x + 1, y}; }
 
-Node Cell::bottomLeftNode() const { return {x, y + 1}; }
+Node Cell::bottom_left_node() const { return {x, y + 1}; }
 
-Node Cell::bottomRightNode() const { return {x + 1, y + 1}; }
+Node Cell::bottom_right_node() const { return {x + 1, y + 1}; }
 
-Position Cell::centerPosition() const { return Position((float)x + 0.5f, (float)y + 0.5f); }
+Position Cell::center() const { return {(float)x + 0.5f, (float)y + 0.5f}; }
 
-std::vector<Node> Cell::cornerNodes() const {
-    return {topLeftNode(), topRightNode(), bottomLeftNode(), bottomRightNode()};
+std::vector<Node> Cell::corners() const {
+    return {top_left_node(), top_right_node(), bottom_left_node(), bottom_right_node()};
 }
 
-bool Cell::hasNode(const Node &n) const {
+bool Cell::has_node(const Node &n) const {
     return (((n.x == x) or (n.x == (x + 1)))
             and ((n.y == y) or (n.y == (y + 1))));
 }

@@ -30,20 +30,20 @@ class Graph {
 
   int occupancy_threshold_uchar_ = 254;
 
-  void setStart(const Position &start);
-  void setGoal(const Position &goal);
+  void set_start(const Position &start);
+  void set_goal(const Position &goal);
 
-  void setOccupancyThreshold(float occupancy_threshold);
+  void set_occupancy_threshold(float occupancy_threshold);
 
-  void initializeGraph(std::shared_ptr<uint8_t[]> image, int width, int length);
-  void updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h);
+  void init(std::shared_ptr<uint8_t[]> image, int width, int length);
+  void update(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h);
 
-  float getCost(const Cell &ind) const;
+  float get_cost(const Cell &ind) const;
 
-  bool isValid(const Node &s)const;
-  bool isValid(const Position &p)const;
-  bool isValid(const Cell &c)const;
-  bool isValidVertex(const Position &p) const;
+  bool is_valid(const Node &s) const;
+  bool is_valid(const Position &p) const;
+  bool is_valid(const Cell &c) const;
+  bool is_valid_vertex(const Position &p) const;
 
   std::vector<Node> neighbors_8(const Node &s, bool include_invalid = false) const;
   std::vector<Cell> neighbors_8(const Cell &s, bool include_invalid = false) const;
@@ -51,17 +51,15 @@ class Graph {
   std::vector<Cell> neighbors_4(const Cell &s, bool include_invalid = false) const;
   std::vector<Node> neighbors_diag_4(const Node &s, bool include_invalid = false) const;
 
-  std::vector<Edge> consecutiveNeighbors(const Position &p) const;
-  std::vector<Edge> consecutiveNeighbors(const Node &s) const;
+  std::vector<Edge> consecutive_neighbors(const Position &p) const;
+  std::vector<Edge> consecutive_neighbors(const Node &s) const;
 
-  Node counterClockwiseNeighbor(const Node &s, const Node &s_prime) const;
-  Node clockwiseNeighbor(const Node &s, const Node &s_prime) const;
+  Node ccw_neighbor(const Node &s, const Node &s_prime) const;
+  Node cw_neighbor(const Node &s, const Node &s_prime) const;
 
-  static Cell getCell(const Node &a, const Node &b, const Node &c);
-  static std::vector<Position> getGridBoundariesTraversals(const Position &a, const Position &b);
+  static Cell get_cell(const Node &a, const Node &b, const Node &c);
+  static std::vector<Position> get_grid_boundaries_traversals(const Position &a, const Position &b);
   uint8_t &get(int x, int y);
-
-
 
 };
 

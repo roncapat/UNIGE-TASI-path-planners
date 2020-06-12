@@ -21,8 +21,6 @@ void LinearInterpolationPathExtractor<T>::extract_path() {
     path_additions pa;
 
     int curr_step = 0;
-    // TODO do something better than this sh*t
-    int max_steps = 20000;
 
     float step_cost, step_dist;
     path_.push_back(grid.start_pos_);
@@ -51,8 +49,8 @@ void LinearInterpolationPathExtractor<T>::extract_path() {
         std::cerr << "[Extraction] No valid path exists" << std::endl;
         path_.clear();
     } else if (curr_step >= max_steps) {
-        std::cerr << "[Extraction] Maximum step number reached" << std::endl;
-        path_.clear();
+        //std::cerr << "[Extraction] Maximum step number reached" << std::endl;
+        //path_.clear();
     }
     auto end = std::chrono::steady_clock::now();
     e_time = std::chrono::duration<float, std::milli>(end - begin).count();
@@ -64,7 +62,7 @@ path_additions LinearInterpolationPathExtractor<T>::traversalFromCorner(const Po
                                                   const Node &p_a,
                                                   const Node &p_b,
                                                   float &step_cost) {
-    assert(grid.isValidVertex(p));
+    assert(grid.is_valid_vertex(p));
 
     TraversalParams cell{};
     cell.p0 = p;
@@ -75,9 +73,9 @@ path_additions LinearInterpolationPathExtractor<T>::traversalFromCorner(const Po
     assert(cell.p0.aligned(cell.p1));
     assert(not cell.p0.aligned(cell.p2));
 
-    cell.g1 = map.getRHS(cell.p1);
-    cell.g2 = map.getRHS(cell.p2);
-    getBC(cell);
+    cell.g1 = map.get_rhs(cell.p1);
+    cell.g2 = map.get_rhs(cell.p2);
+    fill_traversal_costs(cell);
 
     return InterpolatedTraversal::traversalFromCorner(cell, step_cost);
 }
@@ -96,9 +94,9 @@ path_additions LinearInterpolationPathExtractor<T>::traversalFromContiguousEdge(
     assert(cell1.p0.aligned(cell1.p1));
     assert(not cell1.p0.aligned(cell1.p2));
 
-    cell1.g1 = map.getRHS(Node(cell1.p1));
-    cell1.g2 = map.getRHS(Node(cell1.p2));
-    getBC(cell1);
+    cell1.g1 = map.get_rhs(Node(cell1.p1));
+    cell1.g2 = map.get_rhs(Node(cell1.p2));
+    fill_traversal_costs(cell1);
     cell1.q = 1 - std::abs(cell1.p1.y - p.y) - std::abs(cell1.p1.x - p.x);
 
     return InterpolatedTraversal::traversalFromContiguousEdge(cell1, step_cost);
@@ -114,7 +112,7 @@ path_additions LinearInterpolationPathExtractor<T>::traversalFromOppositeEdge(co
     cell1.p1 = cell2.p2 = p_a;
     cell1.p2 = cell2.p1 = p_b;
 
-    // align p with p_1 and p_2 before getBC();
+    // align p with p_1 and p_2 before fill_traversal_costs();
     // vertical edge, p must move up or down
     // horizontal edge, p must move left or right
 
@@ -128,10 +126,10 @@ path_additions LinearInterpolationPathExtractor<T>::traversalFromOppositeEdge(co
         cell2.p0.x = p_b.x;
     }
 
-    cell1.g1 = cell2.g2 = map.getRHS(p_a);
-    cell1.g2 = cell2.g1 = map.getRHS(p_b);
-    getBC(cell1);
-    getBC(cell2);
+    cell1.g1 = cell2.g2 = map.get_rhs(p_a);
+    cell1.g2 = cell2.g1 = map.get_rhs(p_b);
+    fill_traversal_costs(cell1);
+    fill_traversal_costs(cell2);
     cell1.p = std::abs(p.y - cell1.p0.y) + std::abs(p.x - cell1.p0.x);
     cell2.p = 1 - cell1.p;
 
@@ -144,7 +142,7 @@ path_additions LinearInterpolationPathExtractor<T>::traversalFromEdge(const Posi
                                                 const Node &p_b,
                                                 float &step_cost) {
 
-    assert(!grid.isValidVertex(p));
+    assert(!grid.is_valid_vertex(p));
 
     bool cond_1 = (p.x == p_a.x || p.y == p_a.y);
     bool cond_2 = (p.x == p_b.x || p.y == p_b.y);
@@ -171,10 +169,10 @@ path_additions LinearInterpolationPathExtractor<T>::getPathAdditions(const Posit
               << (isVertex(p) ? " (Corner)" : " (Edge)") << std::endl << std::endl;
 #endif
 
-    for (const auto &[p_a, p_b] : grid.consecutiveNeighbors(p)) {
+    for (const auto &[p_a, p_b] : grid.consecutive_neighbors(p)) {
         float cur_step_cost = INFINITY;
 
-        if (grid.isValidVertex(p))
+        if (grid.is_valid_vertex(p))
             temp_pa = traversalFromCorner(p, p_a, p_b, cur_step_cost);
         else
             temp_pa = traversalFromEdge(p, p_a, p_b, cur_step_cost);
@@ -182,9 +180,9 @@ path_additions LinearInterpolationPathExtractor<T>::getPathAdditions(const Posit
 #ifdef VERBOSE_EXTRACTION
         if (lookahead and not do_lookahead) std::cout << "\t";
         std::cout << "X:" << p_a.x << ", Y:" << p_a.y
-                  << ", G:" << expanded_map.getG(p_a.castToNode()) << ", RHS:" << expanded_map.getRHS(p_a.castToNode()) << " | "
+                  << ", G:" << expanded_map.get_g(p_a.castToNode()) << ", RHS:" << expanded_map.get_rhs(p_a.castToNode()) << " | "
                   << "X:" << p_b.x << ", Y:" << p_b.y
-                  << ", G:" << expanded_map.getG(p_b.castToNode()) << ", RHS:" << expanded_map.getRHS(p_b.castToNode())
+                  << ", G:" << expanded_map.get_g(p_b.castToNode()) << ", RHS:" << expanded_map.get_rhs(p_b.castToNode())
                   << " || cost: " << temp_pa.cost_to_goal << std::endl;
         for (auto addition: temp_pa.steps) {
             if (lookahead and not do_lookahead) std::cout << "\t";
@@ -199,7 +197,7 @@ path_additions LinearInterpolationPathExtractor<T>::getPathAdditions(const Posit
         // Field D* path-finding on weighted triangulated and tetrahedral meshes (Perkins et al. 2013), Section 3
         // Only needed if next point is on edge
         float dummy;
-        if (do_lookahead and not grid.isValidVertex(temp_pa.steps.back())) {
+        if (do_lookahead and not grid.is_valid_vertex(temp_pa.steps.back())) {
             lookahead_cost = getPathAdditions(temp_pa.steps.back(), false, dummy).cost_to_goal;
             if (lookahead_cost > temp_pa.cost_to_goal) { // Lookahead test failed
 #ifdef VERBOSE_EXTRACTION
@@ -235,19 +233,19 @@ bool LinearInterpolationPathExtractor<T>::goalReached(const Position &p) {
 
 // p must be aligned with p_1, p_1 aligned with p_2, p and P_2 diagonal neighbors
 template <typename T>
-void LinearInterpolationPathExtractor<T>::getBC(TraversalParams &t) {
+void LinearInterpolationPathExtractor<T>::fill_traversal_costs(TraversalParams &t) {
     Cell cell_ind_b, cell_ind_c;
 
     if (t.p0.x == t.p1.x) {
-        cell_ind_b = t.p1.neighborCell(t.p2.x > t.p1.x, t.p0.y > t.p1.y);
-        cell_ind_c = t.p1.neighborCell(t.p2.x < t.p1.x, t.p0.y > t.p1.y);
+        cell_ind_b = t.p1.neighbor_cell(t.p2.x > t.p1.x, t.p0.y > t.p1.y);
+        cell_ind_c = t.p1.neighbor_cell(t.p2.x < t.p1.x, t.p0.y > t.p1.y);
     } else {
-        cell_ind_b = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y < t.p1.y);
-        cell_ind_c = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y > t.p1.y);
+        cell_ind_b = t.p1.neighbor_cell(t.p0.x < t.p1.x, t.p2.y < t.p1.y);
+        cell_ind_c = t.p1.neighbor_cell(t.p0.x < t.p1.x, t.p2.y > t.p1.y);
     }
 
-    t.b = grid.getCost(cell_ind_b);
-    t.c = grid.getCost(cell_ind_c);
+    t.b = grid.get_cost(cell_ind_b);
+    t.c = grid.get_cost(cell_ind_c);
 }
 
 

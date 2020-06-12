@@ -36,35 +36,35 @@ public:
 
     [[nodiscard]] bool operator!=(const Cell &other) const;
 
-    [[nodiscard]] Cell topCell() const;
+    [[nodiscard]] Cell top_cell() const;
 
-    [[nodiscard]] Cell topLeftCell() const;
+    [[nodiscard]] Cell top_left_cell() const;
 
-    [[nodiscard]] Cell topRightCell() const;
+    [[nodiscard]] Cell top_right_cell() const;
 
-    [[nodiscard]] Cell bottomCell() const;
+    [[nodiscard]] Cell bottom_cell() const;
 
-    [[nodiscard]] Cell bottomLeftCell() const;
+    [[nodiscard]] Cell bottom_left_cell() const;
 
-    [[nodiscard]] Cell bottomRightCell() const;
+    [[nodiscard]] Cell bottom_right_cell() const;
 
-    [[nodiscard]] Cell leftCell() const;
+    [[nodiscard]] Cell left_cell() const;
 
-    [[nodiscard]] Cell rightCell() const;
+    [[nodiscard]] Cell right_cell() const;
 
-    [[nodiscard]] Node topLeftNode() const;
+    [[nodiscard]] Node top_left_node() const;
 
-    [[nodiscard]] Node topRightNode() const;
+    [[nodiscard]] Node top_right_node() const;
 
-    [[nodiscard]] Node bottomLeftNode() const;
+    [[nodiscard]] Node bottom_left_node() const;
 
-    [[nodiscard]] Node bottomRightNode() const;
+    [[nodiscard]] Node bottom_right_node() const;
 
-    [[nodiscard]] Position centerPosition() const;
+    [[nodiscard]] Position center() const;
 
-    [[nodiscard]] std::vector<Node> cornerNodes() const;
+    [[nodiscard]] std::vector<Node> corners() const;
 
-    [[nodiscard]] bool hasNode(const Node &n) const;;
+    [[nodiscard]] bool has_node(const Node &n) const;;
 
     [[nodiscard]] float distance(const Cell &n) const;
 };

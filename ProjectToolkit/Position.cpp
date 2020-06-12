@@ -14,7 +14,7 @@ Position::Position(const Node &n) {
     this->y = static_cast<float>(n.y);
 }
 Position::Position(const std::pair<float, float> &other) : x(other.first), y(other.second) {}
-Position::Position(const Cell &n) : Position(n.centerPosition()) {}
+Position::Position(const Cell &n) : Position(n.center()) {}
 
 Position &Position::operator=(const Position &other) = default;
 Position &Position::operator=(Position &&other) noexcept= default;

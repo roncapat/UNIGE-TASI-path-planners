@@ -22,35 +22,16 @@ int main(int _argc, char **_argv) {
         return 1;
     }
 
-    auto map_name = _argv[1];
     auto from_x = std::stof(_argv[2]);
     auto from_y = std::stof(_argv[3]);
     auto to_x = std::stof(_argv[4]);
     auto to_y = std::stof(_argv[5]);
-    int cspace = std::stoi(_argv[6]);
     auto fifo_in = _argv[7];
     auto fifo_out = _argv[8];
-    bool gui = bool(std::stoi(_argv[9]));
     bool tof = bool(std::stoi(_argv[10]));
-    auto out_path = _argv[11];
 
     Position next_point, goal;
     float next_step_cost = 0;
-    /*
-    auto command = std::string("python3 -u -m simulator.run_simulator ") +
-        map_name + " " +
-        "'FD*'" + " " +
-        "n" + " " +
-        std::to_string(cspace) + " " +
-        fifo_out + " " +
-        fifo_in + " " +
-        std::to_string(gui) + " " +
-        std::to_string(tof) + " " +
-        out_path + " &";
-    std::cout << command << std::endl;
-    auto res = std::system(command.data());
-    (void) res;
-    */
 
     cpu_set_t cset;
     CPU_ZERO( &cset);
@@ -171,10 +152,10 @@ int main(int _argc, char **_argv) {
             }
         }
         auto prev_point = next_point;
-        for (int i = 1; i < extractor.path_.size(); i++){
+        for (unsigned int i = 1; i < extractor.path_.size(); i++){
             next_point = {extractor.path_[i].x, extractor.path_[i].y};
             next_step_cost = extractor.cost_[i-1];
-            if (Cell(next_point) != Cell(prev_point))
+            if (Cell(next_point).distance(Cell(prev_point))>5)
                 break;
         }
         if (next_point == goal)

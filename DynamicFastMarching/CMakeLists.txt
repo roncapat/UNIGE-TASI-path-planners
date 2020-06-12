@@ -6,7 +6,7 @@ if (NOT DEFINED OPT_LVL)
     set(OPT_LVL 1)
 endif ()
 add_definitions(-DOPT_LVL=${OPT_LVL})
-
+#add_compile_options(-DVERBOSE_EXTRACTION)
 include_directories(SYSTEM ../RobinHoodHashMap/src/include)
 include_directories(include)
 include_directories(../ProjectToolkit/include)

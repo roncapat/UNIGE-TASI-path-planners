@@ -13,7 +13,7 @@
 #include "ExpandedMap.h"
 #include "PriorityQueue.h"
 #include "LinearTraversalCostInterpolation.h"
-#include "planner_base.h"
+#include "ReplannerBase.h"
 
 template<int OptimizationLevel>
 class DFMPlanner : public ReplannerBase<DFMPlanner<OptimizationLevel>, Cell, std::pair<Cell, Cell>, float> {
@@ -38,50 +38,46 @@ protected:
 
     void plan();
 
-    Key calculateKey(const Cell &s, float g, float rhs);
+    Key calculate_key(const Cell &s, float g, float rhs);
 
 private:
     std::vector<Cell> start_nodes;
 
-    float minRHS(const Cell &c);
+    float min_rhs(const Cell &c);
 
-    float minRHS(const Cell &p, std::pair<Cell, Cell> &bptrs);
+    float min_rhs(const Cell &p, std::pair<Cell, Cell> &bptrs);
 
     bool end_condition();
 
-    Key calculateKey(const Cell &s);
+    Key calculate_key(const Cell &s);
 
-    Key calculateKey(const Cell &s, float cost_so_far);
+    Key calculate_key(const Cell &s, float cost_so_far);
 
-    void updateCell(const Cell &cell);
+    void update_cell(const Cell &cell);
 
     unsigned long computeShortestPath();
 
-    unsigned long updateCells();
+    unsigned long update_cells();
 
-    std::pair<Cell, float> minCost(const Cell &a, const Cell &b);
+    std::pair<Cell, float> best_cell(const Cell &a, const Cell &b);
 
-    void getBC(TraversalParams &t);
-
-    void updateCellDecreasedNeighbor(const Cell &cell, const Cell &nbr);
-
-    float minRHSDecreasedNeighbor(const Cell &c, const Cell &nbr, std::pair<Cell, Cell> &bptrs);
+    float min_rhs_decreased_neighbor(const Cell &c, const Cell &nbr, std::pair<Cell, Cell> &bptrs);
 
     std::pair<float, std::pair<Cell, Cell>>
-    computeOptimalCost(Cell &ca1, Cell &cb1, float ga1, float gb1, float tau, float h);
+    compute_optimal_cost(Cell &ca1, Cell &cb1, float ga1, float gb1, float tau, float h);
 };
 
 template<>
 void DFMPlanner<0>::plan();
 
 template<>
-float DFMPlanner<0>::minRHS(const Cell &);
+float DFMPlanner<0>::min_rhs(const Cell &);
 
 template<>
 void DFMPlanner<1>::plan();
 
 template<>
-float DFMPlanner<1>::minRHS(const Cell &, std::pair<Cell, Cell> &bptrs);
+float DFMPlanner<1>::min_rhs(const Cell &, std::pair<Cell, Cell> &bptrs);
 
 #include "DynamicFastMarching_impl.h"
 

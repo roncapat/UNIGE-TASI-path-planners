@@ -1,9 +1,9 @@
 #ifndef RONCAPAT_GLOBAL_PLANNERS_MACROS_H
 #define RONCAPAT_GLOBAL_PLANNERS_MACROS_H
 extern const float SQRT2;
-#define SQUARE(x) ((x)*(x))
-#define CATH(x, y) std::sqrt(SQUARE((x))- SQUARE((y)))
-#define HYPOT(x, y) (float)std::hypot(x,y)
+#define SQUARE(x) (float(x)*float(x))
+#define CATH(x, y) std::sqrt(float(SQUARE((x))- SQUARE((y))))
+#define HYPOT(x, y) (float)std::hypotf(x,y)
 #define INTERP_1(from, to, delta) ((from) + ((to)-(from))*(delta))
 #define INTERP_ABS(from, to, delta) ((from) + ((to)-(from))*(delta))
 #ifdef NDEBUG

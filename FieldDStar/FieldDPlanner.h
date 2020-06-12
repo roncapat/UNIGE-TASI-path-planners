@@ -13,7 +13,7 @@
 #include "ExpandedMap.h"
 #include "PriorityQueue.h"
 #include "LinearTraversalCostInterpolation.h"
-#include "planner_base.h"
+#include "ReplannerBase.h"
 
 template<int OptimizationLevel>
 class FieldDPlanner : public ReplannerBase<FieldDPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>> {
@@ -38,47 +38,47 @@ protected:
 
     void plan();
 
-    Key calculateKey(const Node &s, float g, float rhs);
+    Key calculate_key(const Node &s, float g, float rhs);
 
 
 private:
     std::vector<Node> start_nodes;
 
-    float computeOptimalCost(const Node &n, const Node &p_a, const Node &p_b, float ga, float gb);
+    float compute_optimal_cost(const Node &n, const Node &p_a, const Node &p_b, float ga, float gb);
 
-    float computeOptimalCost(const Node &n, const Node &p_a, const Node &p_b);
+    float compute_optimal_cost(const Node &n, const Node &p_a, const Node &p_b);
 
     bool end_condition();
 
-    Key calculateKey(const Node &s);
+    Key calculate_key(const Node &s);
 
-    Key calculateKey(const Node &s, float cost_so_far);
+    Key calculate_key(const Node &s, float cost_so_far);
 
-    float minRHS(const Node &s);
+    float min_rhs(const Node &s);
 
-    float minRHS(const Node &s, Node &bptr);
+    float min_rhs(const Node &s, Node &bptr);
 
-    float minRHSDecreasedNeighbor(const Node &sp, const Node &s, Node &bptr);
+    float min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr);
 
-    void getBC(TraversalParams &t);
+    void fill_traversal_costs(TraversalParams &t);
 
-    void updateNode(const Node &node);
+    void update_node(const Node &node);
 };
 
 template<>
 void FieldDPlanner<0>::plan();
 
 template<>
-float FieldDPlanner<0>::minRHS(const Node &);
+float FieldDPlanner<0>::min_rhs(const Node &);
 
 template<>
 void FieldDPlanner<1>::plan();
 
 template<>
-float FieldDPlanner<1>::minRHS(const Node &, Node &bptr);
+float FieldDPlanner<1>::min_rhs(const Node &, Node &bptr);
 
 template<>
-float FieldDPlanner<1>::minRHSDecreasedNeighbor(const Node &sp, const Node &s, Node &bptr);
+float FieldDPlanner<1>::min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr);
 
 #include "FieldDPlanner_impl.h"
 

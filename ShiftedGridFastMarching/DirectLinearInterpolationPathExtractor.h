@@ -21,6 +21,7 @@ public:
     float total_cost = 0;
     float total_dist = 0;
     bool lookahead = true;
+    int max_steps = 20;
     float e_time = 0;
 private:
     const ExpandedMap<Node, T> &map;

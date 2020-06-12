@@ -1,30 +1,33 @@
 #!/usr/bin/python3
-import struct, sys, os, subprocess, cv2, shutil
-import matplotlib.pyplot as plt
-from matplotlib.path import Path
-import matplotlib.patches as patches
-import numpy as np
-from simulator.run_simulator import *  # TODO reorganize code
+import subprocess
 from operator import add
+import numpy as np
+from matplotlib import patches
+from matplotlib import cm
+from matplotlib.path import Path
+from noise import pnoise2
+
+from simulator.run_simulator import *  # TODO reorganize code
 
 planners = {
-    # "FD_0": {"path": "build/FD_0_no_heur/field_d_planner_0_no_heur", "type": "n"},
+    "FD_0": {"path": "build/FD_0_no_heur/field_d_planner_0_no_heur", "type": "n"},
     "FD_1": {"path": "build/FD_1_no_heur/field_d_planner_1_no_heur", "type": "n"},
-    # "SGDFM_0": {"path": "build/SGDFM_0_no_heur/shifted_grid_planner_0_no_heur", "type": "n"},
-    # "SGDFM_1": {"path": "build/SGDFM_1_no_heur/shifted_grid_planner_1_no_heur", "type": "n"},
+    "SGDFM_0": {"path": "build/SGDFM_0_no_heur/shifted_grid_planner_0_no_heur", "type": "n"},
+    "SGDFM_1": {"path": "build/SGDFM_1_no_heur/shifted_grid_planner_1_no_heur", "type": "n"},
     "SGDFM_2": {"path": "build/SGDFM_2_no_heur/shifted_grid_planner_2_no_heur", "type": "n"},
-    # "DFM_0": {"path": "build/DFM_0/dfm_planner_0", "type": "c"},
-    "DFM_1": {"path": "build/DFM_1/dfm_planner_1", "type": "c"}
+    "DFM_0": {"path": "build/DFM_0/dfm_planner_0", "type": "c"},
+    "DFM_1": {"path": "build/DFM_1/dfm_planner_1", "type": "c"},
 }
 
-cspace = 1
+cspace = 1  # TODO penalyse FD* and SGDFM by 1 (since DFM interpolation yelds INFINITY on the border of obstacles)
 pipe_in = os.path.abspath("build/pipe_1")
 pipe_out = os.path.abspath("build/pipe_2")
 gui = 1
 tof = 0
 outpath = "Results"
-
 upscale = 5
+use_heuristic = False
+cmap = cm.winter
 
 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (cspace * upscale, cspace * upscale))
 
@@ -35,15 +38,49 @@ results = {}
 mapname = os.path.basename(mapfile)
 mappath = os.path.abspath(mapfile)
 img_h = cv2.imread(mappath, cv2.IMREAD_GRAYSCALE)
-[height, width] = img_h.shape
 img_h = img_h.repeat(upscale, axis=0).repeat(upscale, axis=1)
 [height, width] = img_h.shape
 
+print("[SIMULATOR] Begin noisemap generation")
+randBytes = os.urandom(3)
+rand1 = int.from_bytes(randBytes, byteorder='big') % 98
+randBytes = os.urandom(3)
+rand2 = int.from_bytes(randBytes, byteorder='big') % 99
+randBytes = os.urandom(3)
+rand3 = int.from_bytes(randBytes, byteorder='big') % 100
+
+out_image = np.zeros((height, width), np.float32)
+for y in range(height):
+    for x in range(width):
+        a = pnoise2(x / 157.17, y / 157.17, octaves=4, lacunarity=2.5, repeatx=width, repeaty=height, base=rand1)
+        b = pnoise2((y + x) / 79.31, (y - x) / 79.31, octaves=3, lacunarity=2.4, repeatx=width, repeaty=height,
+                    base=rand2)
+        c = pnoise2(y / 53.13, x / 53.13, octaves=2, lacunarity=2.3, repeatx=width, repeaty=height, base=rand3)
+        a = (a + 1) / 2
+        b = (b + 1) / 2
+        c = (c + 1) / 2
+        a = a * a * a
+        b = b * b
+        c = c * c
+        out_image[y][x] = (a + b + c)
+
+[cmin, cmax] = np.percentile(out_image, [20, 90])
+out_image = (np.clip(out_image, cmin, cmax) - cmin) / (cmax - cmin)
+rock_aboundance_h = np.uint8(out_image * 255)
+k = np.ones((7, 7), np.uint8)
+rock_aboundance_h = cv2.erode(rock_aboundance_h, k, iterations=3)
+rock_aboundance_h = cv2.dilate(rock_aboundance_h, k, iterations=1)
+cv2.imwrite("rocks.tiff", rock_aboundance_h)
+print("[SIMULATOR] End noisemap generation")
+
 for planner in planners:
+    print("[SIMULATOR] Launching %s planner" % planner)
     label = planner
-    args = ["sudo", "perf", "record", "--call-graph", "dwarf", "-o", "/mnt/sdb/"+planner+".perf.data", planners[planner]["path"], mapfile, 100, 100, 1000 * upscale - 100, 1000 * upscale - 100, 1, pipe_out, pipe_in, 1, 0, outpath]
-    #args = [planners[planner]["path"], mapfile, 100, 100, 1000*upscale-100, 1000*upscale-100, 1, pipe_out, pipe_in, 1, 0, outpath]
-    str_args = [str(x) for x in args]
+    perf_args = ["sudo", "perf", "record", "--call-graph", "dwarf", "-o", "/mnt/sdb/perf_" + planner + ".data"]
+    prog_args = [planners[planner]["path"], mapfile, 100, 100, 1000 * upscale - 100, 1000 * upscale - 100, 1, pipe_out,
+                 pipe_in, 1, 0, outpath]
+    perf_args.extend(prog_args)
+    str_args = [str(x) for x in perf_args]
     print(' '.join(str_args))
     process = subprocess.Popen(str_args)
 
@@ -53,10 +90,11 @@ for planner in planners:
     wait_byte(p_in, 0)
     send_byte(p_out, 0)
 
-    (data_l, data_h) = simulation_data(img_h, filter_radius=1, low_res_penalty=20)
-    data_l_cspace = cv2.dilate(data_l, kernel)
-    min_cost = cv2.minMaxLoc(data_l_cspace)[0]
-    send_map(p_out, data_l_cspace)
+    (data_l, data_h) = simulation_data(img_h, filter_radius=3, low_res_penalty=10)
+    rock_aboundance_l = np.zeros((height, width), np.uint8)
+    cspace = cv2.dilate(data_l, kernel)  # FIXME dilate only patch?
+    min_cost = cv2.minMaxLoc(cspace)[0]
+    send_map(p_out, cspace)
     send_int(p_out, int(min_cost))
 
     prev_path = []
@@ -68,16 +106,29 @@ for planner in planners:
     uts = []
     pts = []
     ets = []
+    prev_pos_x = None
+    prev_pos_y = None
 
     while get_byte(p_in) == 1:
         pos_x, pos_y, step_cost = receive_traversal_update(p_in)
+        if prev_pos_x and prev_pos_y:
+            if pos_x == prev_pos_x and pos_y == prev_pos_y:
+                print("[SIMULATOR] Warning: %s planner got stuck" % planner)
+                process.kill()
+                break
+        prev_pos_x = pos_x
+        prev_pos_y = pos_y
         prev_path.append([pos_x, pos_y])
         center = (int(round(pos_y)), int(round(pos_x)))
         (data_l, p_data, p_pos, p_ranges) = round_patch_update(data_l, data_h, center, radius=5 * upscale)
+        (rock_aboundance_l, _, _, _) = round_patch_update(rock_aboundance_l, rock_aboundance_h, center,
+                                                          radius=5 * upscale)
 
-        data_l_cspace = cv2.dilate(data_l, kernel)
-        p_data_cspace = data_l_cspace[p_ranges[0], p_ranges[1]]
-        min_cost = cv2.minMaxLoc(data_l_cspace)[0]
+        cspace = cv2.dilate(np.maximum(data_l, rock_aboundance_l), kernel)
+        p_data_cspace = cspace[p_ranges[0], p_ranges[1]]
+
+        if use_heuristic:
+            min_cost = cv2.minMaxLoc(cspace)[0]
 
         send_byte(p_out, 1)
         send_patch(p_out, p_data_cspace, p_pos)
@@ -121,7 +172,7 @@ for planner in planners:
     runtime = list(map(add, results[planner]["uts"][1:], results[planner]["pts"][1:]))
     plt.plot(range(1, len(runtime) + 1), runtime, label=planner)
 
-plt.figure(2)
+figure = plt.figure(2)
 plt.title("First plan time analysis")
 plt.gcf().canvas.set_window_title("First plan time analysis")
 plt.xlabel("Steps")
@@ -135,9 +186,10 @@ for planner in planners:
 pos = range(len(labels))
 plt.bar(pos, times, color=cmap.colors)
 plt.xticks(pos, labels, rotation='vertical')
-plt.savefig("Results/first_run_time.png", quality=100)
+figure.set_size_inches(19.2, 10.8)
+plt.savefig("Results/first_run_time.png", quality=100, dpi=100)
 
-plt.figure(3)
+figure = plt.figure(3)
 plt.title("Replanning time analysis - mean value and standard deviation")
 plt.gcf().canvas.set_window_title("Replanning time analysis - mean value and standard deviation")
 plt.xlabel("Steps")
@@ -154,9 +206,10 @@ for planner in planners:
 pos = range(len(labels))
 plt.bar(pos, avgs, color=cmap.colors, yerr=stdevs, capsize=5)
 plt.xticks(pos, labels, rotation='vertical')
-plt.savefig("Results/replan_time.png", quality=100)
+figure.set_size_inches(19.2, 10.8)
+plt.savefig("Results/replan_time.png", quality=100, dpi=100)
 
-plt.figure(4)
+figure = plt.figure(4)
 plt.title("Path projection on slope map")
 plt.gcf().canvas.set_window_title("Path projection on slope map")
 ax = plt.gca()
@@ -169,9 +222,31 @@ for planner, idx in zip(planners, range(len(planners))):
     ax.add_patch(patch)
 plt.legend(handles=handles)
 plt.imshow(~img_h, cmap='viridis_r', extent=[0, height, 0, width])
-plt.colorbar()
+bar = plt.colorbar(ticks=[0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 255])
+bar.ax.set_yticklabels(['0', '25', '50', '75', '100', '125', '150', '175', '200', '225', '250', 'obstacle'])
 ax.set_xlim(0, width)
 ax.set_ylim(0, height)
-plt.savefig("Results/executed_paths.png", quality=100)
+figure.set_size_inches(19.2, 10.8)
+plt.savefig("Results/executed_paths.png", quality=100, dpi=100)
+
+figure = plt.figure(5)
+plt.title("Path projection on risk map")
+plt.gcf().canvas.set_window_title("Path projection on risk map")
+ax = plt.gca()
+handles = []
+for planner, idx in zip(planners, range(len(planners))):
+    points = [[y, height - x] for x, y in results[planner]["cur_path"][-1]]
+    path = Path(points)
+    patch = patches.PathPatch(path, facecolor='none', lw=2, edgecolor=cmap.colors[idx], label=planner)
+    handles.append(patch)
+    ax.add_patch(patch)
+plt.legend(handles=handles)
+plt.imshow(np.maximum(data_h, rock_aboundance_h), cmap='viridis_r', extent=[0, height, 0, width])
+bar = plt.colorbar(ticks=[0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 255])
+bar.ax.set_yticklabels(['0', '25', '50', '75', '100', '125', '150', '175', '200', '225', '250', 'obstacle'])
+ax.set_xlim(0, width)
+ax.set_ylim(0, height)
+figure.set_size_inches(19.2, 10.8)
+plt.savefig("Results/executed_paths_noise.png", quality=100, dpi=100)
 
 plt.show()

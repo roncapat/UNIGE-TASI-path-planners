@@ -33,41 +33,41 @@ bool Node::operator==(const Node &other) const {
 
 bool Node::operator!=(const Node &other) const { return not(*this == other); }
 
-bool Node::isValid() const { return valid; }
+bool Node::is_valid() const { return valid; }
 
-Node Node::topNode() const { return {x - 1, y}; }
+Node Node::top_node() const { return {x - 1, y}; }
 
-Node Node::topLeftNode() const { return {x - 1, y - 1}; }
+Node Node::top_left_node() const { return {x - 1, y - 1}; }
 
-Node Node::topRightNode() const { return {x - 1, y + 1}; }
+Node Node::top_right_node() const { return {x - 1, y + 1}; }
 
-Node Node::bottomNode() const { return {x + 1, y}; }
+Node Node::bottom_node() const { return {x + 1, y}; }
 
-Node Node::bottomLeftNode() const { return {x + 1, y - 1}; }
+Node Node::bottom_left_node() const { return {x + 1, y - 1}; }
 
-Node Node::bottomRightNode() const { return {x + 1, y + 1}; }
+Node Node::bottom_right_node() const { return {x + 1, y + 1}; }
 
-Node Node::leftNode() const { return {x, y - 1}; }
+Node Node::left_node() const { return {x, y - 1}; }
 
-Node Node::rightNode() const { return {x, y + 1}; }
+Node Node::right_node() const { return {x, y + 1}; }
 
-Cell Node::cellBottomLeft() const { return {x, y - 1}; }
+Cell Node::bottom_left_cell() const { return {x, y - 1}; }
 
-Cell Node::cellBottomRight() const { return {x, y}; }
+Cell Node::bottom_right_cell() const { return {x, y}; }
 
-Cell Node::cellTopLeft() const { return {x - 1, y - 1}; }
+Cell Node::top_left_cell() const { return {x - 1, y - 1}; }
 
-Cell Node::cellTopRight() const { return {x - 1, y}; }
+Cell Node::top_right_cell() const { return {x - 1, y}; }
 
-Cell Node::neighborCell(bool bottom_TOP, bool left_RIGHT) const {
+Cell Node::neighbor_cell(bool bottom_TOP, bool left_RIGHT) const {
     if (bottom_TOP)
-        return left_RIGHT ? cellTopRight() : cellTopLeft();
+        return left_RIGHT ? top_right_cell() : top_left_cell();
     else
-        return left_RIGHT ? cellBottomRight() : cellBottomLeft();
+        return left_RIGHT ? bottom_right_cell() : bottom_left_cell();
 }
 
 std::vector<Cell> Node::cells() const {
-    return {cellTopLeft(), cellTopRight(), cellBottomLeft(), cellBottomRight()};
+    return {top_left_cell(), top_right_cell(), bottom_left_cell(), bottom_right_cell()};
 }
 
 float Node::distance(const Node &n) const {

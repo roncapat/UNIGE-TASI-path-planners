@@ -21,8 +21,6 @@ void DirectLinearInterpolationPathExtractorCells<T>::extract_path() {
     path_additions pa;
 
     int curr_step = 0;
-    // TODO do something better than this sh*t
-    int max_steps = 20000;
 
     float step_cost, step_dist;
     path_.push_back(grid.start_pos_);
@@ -51,7 +49,7 @@ void DirectLinearInterpolationPathExtractorCells<T>::extract_path() {
         std::cerr << "[Extraction] No valid path exists" << std::endl;
         //path_.clear();
     } else if (curr_step >= max_steps) {
-        std::cerr << "[Extraction] Maximum step number reached" << std::endl;
+        //std::cerr << "[Extraction] Maximum step number reached" << std::endl;
         //path_.clear();
     }
     //std::cout << "Found path. Cost: " << total_cost << " Distance: " << total_dist << std::endl;
@@ -64,7 +62,7 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromCorn
                                                                                    const Node &p_a,
                                                                                    const Node &p_b,
                                                                                    float &step_cost) {
-    assert(grid.isValidVertex(p));
+    assert(grid.is_valid_vertex(p));
 
     TraversalParams cell{};
     cell.p0 = p;
@@ -74,9 +72,11 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromCorn
 
     assert(cell.p0.aligned(cell.p1));
     assert(not cell.p0.aligned(cell.p2));
-    cell.g1 = map.getRHS(Cell(cell.p1));
-    cell.g2 = map.getRHS(Cell(cell.p2));
-    getBC(cell);
+    //cell.g1 = map.get_rhs(Cell(cell.p1));
+    //cell.g2 = map.get_rhs(Cell(cell.p2));
+    cell.g1 = map.get_interp_rhs(cell.p1);
+    cell.g2 = map.get_interp_rhs(cell.p2);
+    fill_traversal_costs(cell);
 
     return InterpolatedTraversal::traversalFromCorner(cell, step_cost);
 }
@@ -95,9 +95,11 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromCont
     assert(cell1.p0.aligned(cell1.p1));
     assert(not cell1.p0.aligned(cell1.p2));
 
-    cell1.g1 = map.getRHS(Cell(cell1.p1));
-    cell1.g2 = map.getRHS(Cell(cell1.p2));
-    getBC(cell1);
+    //cell.g1 = map.get_rhs(Cell(cell.p1));
+    //cell.g2 = map.get_rhs(Cell(cell.p2));
+    cell1.g1 = map.get_interp_rhs(cell1.p1);
+    cell1.g2 = map.get_interp_rhs(cell1.p2);
+    fill_traversal_costs(cell1);
     cell1.q = 1 - std::abs(cell1.p1.y - p.y) - std::abs(cell1.p1.x - p.x);
 
     return InterpolatedTraversal::traversalFromContiguousEdge(cell1, step_cost);
@@ -113,7 +115,7 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromOppo
     cell1.p1 = cell2.p2 = p_a;
     cell1.p2 = cell2.p1 = p_b;
 
-    // align p with p_1 and p_2 before getBC();
+    // align p with p_1 and p_2 before fill_traversal_costs();
     // vertical edge, p must move up or down
     // horizontal edge, p must move left or right
 
@@ -127,11 +129,13 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromOppo
         cell2.p0.x = p_b.x;
     }
 
-    cell1.g1 = cell2.g2 = map.getRHS(Cell(cell1.p1));
-    cell1.g2 = cell2.g1 = map.getRHS(Cell(cell1.p2));
+    //cell1.g1 = cell2.g2 = map.get_rhs(Cell(cell1.p1));
+    //cell1.g2 = cell2.g1 = map.get_rhs(Cell(cell1.p2));
+    cell1.g1 = cell2.g2 = map.get_interp_rhs(cell1.p1);
+    cell1.g2 = cell2.g1 = map.get_interp_rhs(cell1.p2);
 
-    getBC(cell1);
-    getBC(cell2);
+    fill_traversal_costs(cell1);
+    fill_traversal_costs(cell2);
 
     cell1.p = std::abs(p.y - cell1.p0.y) + std::abs(p.x - cell1.p0.x);
     cell2.p = 1 - cell1.p;
@@ -145,7 +149,7 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromEdge
                                                                                  const Node &p_b,
                                                                                  float &step_cost) {
 
-    assert(!grid.isValidVertex(p));
+    assert(!grid.is_valid_vertex(p));
 
     bool cond_1 = p.aligned(p_a);
     bool cond_2 = p.aligned(p_b);
@@ -166,16 +170,19 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::getPathAdditions(
     path_additions temp_pa;
     float lookahead_cost;
 #ifdef VERBOSE_EXTRACTION
-    if (lookahead and not do_lookahead)
-        std::cout << "\t";
+    if (lookahead and not do_lookahead){
+        std::cout << "\n\t";
         std::cout << "p     " << std::to_string(p.x) << ", " << std::to_string(p.y)
-              << (isVertex(p) ? " (Corner)" : " (Edge)") << std::endl << std::endl;
+              << (grid.is_valid_vertex(p) ? " (Corner)" : " (Edge)") << std::endl;
+        if (grid.is_valid_vertex(p))
+            std::cout << "\tCorner has RHS=" << map.get_interp_rhs(Node(p)) << std::endl<< std::endl;
+    }
 #endif
 
-    for (const auto &[p_a, p_b] : grid.consecutiveNeighbors(p)) {
+    for (const auto &[p_a, p_b] : grid.consecutive_neighbors(p)) {
         float cur_step_cost = INFINITY;
 
-        if (grid.isValidVertex(p))
+        if (grid.is_valid_vertex(p))
             temp_pa = traversalFromCorner(p, p_a, p_b, cur_step_cost);
         else
             temp_pa = traversalFromEdge(p, p_a, p_b, cur_step_cost);
@@ -183,10 +190,10 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::getPathAdditions(
 #ifdef VERBOSE_EXTRACTION
         if (lookahead and not do_lookahead) std::cout << "\t";
         std::cout << "X:" << p_a.x << ", Y:" << p_a.y
-                  << ", G:" << expanded_map.getG(p_a.castToNode()) << ", RHS:" << expanded_map.getRHS(p_a.castToNode()) << " | "
+                  << ", RHS:" << map.get_interp_rhs(p_a) << " | "
                   << "X:" << p_b.x << ", Y:" << p_b.y
-                  << ", G:" << expanded_map.getG(p_b.castToNode()) << ", RHS:" << expanded_map.getRHS(p_b.castToNode())
-                  << " || cost: " << temp_pa.cost_to_goal << std::endl;
+                  << ", RHS:" << map.get_interp_rhs(p_b)
+                  << " || cost: " << temp_pa.cost_to_goal << " (" << cur_step_cost << ")" << std::endl;
         for (auto addition: temp_pa.steps) {
             if (lookahead and not do_lookahead) std::cout << "\t";
             std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl;
@@ -200,8 +207,9 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::getPathAdditions(
         // Field D* path-finding on weighted triangulated and tetrahedral meshes (Perkins et al. 2013), Section 3
         // Only needed if next point is on edge
         float dummy;
-        if (do_lookahead and not grid.isValidVertex(temp_pa.steps.back())) {
+        if (do_lookahead and not grid.is_valid_vertex(temp_pa.steps.back())) {
             lookahead_cost = getPathAdditions(temp_pa.steps.back(), false, dummy).cost_to_goal;
+            //std::cout << "Lookahead cost: " << lookahead_cost << std::endl;
             if (lookahead_cost > temp_pa.cost_to_goal) { // Lookahead test failed
 #ifdef VERBOSE_EXTRACTION
                 std::cout << "Lookahead test failed" << std::endl;
@@ -219,7 +227,7 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::getPathAdditions(
 #ifdef VERBOSE_EXTRACTION
     if (lookahead and not do_lookahead) std::cout << "\t";
     std::cout << "Final choice for X:" << std::to_string(p.x) << ", Y:" << std::to_string(p.y)
-              << " || cost: " << std::to_string(min_pa.cost_to_goal) << std::endl;
+              << " || cost: " << std::to_string(min_pa.cost_to_goal) << " (" << step_cost << ")" << std::endl;
     for (auto addition: min_pa.steps) {
         if (lookahead and not do_lookahead) std::cout << "\t";
         std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl
@@ -235,25 +243,28 @@ bool DirectLinearInterpolationPathExtractorCells<T>::goalReached(const Position 
 }
 
 template <typename T>
-void DirectLinearInterpolationPathExtractorCells<T>::getBC(TraversalParams &t) {
+void DirectLinearInterpolationPathExtractorCells<T>::fill_traversal_costs(TraversalParams &t) {
     Cell cb, cc;
 
     if (t.p0.x == t.p1.x) {
-        cb = t.p1.neighborCell(t.p2.x > t.p1.x, t.p0.y > t.p1.y);
-        cc = t.p1.neighborCell(t.p2.x < t.p1.x, t.p0.y > t.p1.y);
+        cb = t.p1.neighbor_cell(t.p2.x > t.p1.x, t.p0.y > t.p1.y);
+        cc = t.p1.neighbor_cell(t.p2.x < t.p1.x, t.p0.y > t.p1.y);
     } else {
-        cb = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y < t.p1.y);
-        cc = t.p1.neighborCell(t.p0.x < t.p1.x, t.p2.y > t.p1.y);
+        cb = t.p1.neighbor_cell(t.p0.x < t.p1.x, t.p2.y < t.p1.y);
+        cc = t.p1.neighbor_cell(t.p0.x < t.p1.x, t.p2.y > t.p1.y);
     }
-
-    std::vector b{grid.getCost(cb), grid.getCost(cb.rightCell()), grid.getCost(cb.bottomCell()),
-                  grid.getCost(cb.bottomRightCell())};
-    std::vector c{grid.getCost(cc), grid.getCost(cc.rightCell()), grid.getCost(cc.bottomCell()),
-                  grid.getCost(cc.bottomRightCell())};
+/*
+    std::vector b{grid.get_cost(cb), grid.get_cost(cb.right_cell()), grid.get_cost(cb.bottom_cell()),
+                  grid.get_cost(cb.bottom_right_cell())};
+    std::vector c{grid.get_cost(cc), grid.get_cost(cc.right_cell()), grid.get_cost(cc.bottom_cell()),
+                  grid.get_cost(cc.bottom_right_cell())};
 
     t.b = *std::min_element(b.begin(), b.end());
     t.c = *std::min_element(c.begin(), c.end());
-}
+*/
+    t.b = grid.get_cost(cb);
+    t.c = grid.get_cost(cc);
+ }
 
 
 #endif //RONCAPAT_GLOBAL_PLANNERS_DIRECTLINEARINTERPOLATIONPATHEXTRACTOR_IMPL_H

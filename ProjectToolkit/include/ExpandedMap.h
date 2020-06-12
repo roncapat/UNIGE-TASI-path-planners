@@ -11,32 +11,22 @@ class ExpandedMap {
  public:
   typedef ElemType_ ElemType;
   typedef InfoType_ InfoType;
-  /*
-  struct ElemRef {
-    unsigned char bucket_idx;
-    typename hashmap_<ElemType_, InfoType_>::iterator it;
-  };
-  struct ConstElemRef {
-    unsigned char bucket_idx;
-    typename hashmap_<ElemType_, InfoType_>::const_iterator it;
-  };
-   */
   using iterator = typename hashmap_<ElemType_, InfoType_>::iterator;
   using const_iterator = typename hashmap_<ElemType_, InfoType_>::const_iterator;
+
   ExpandedMap() = default;
-  ExpandedMap(const unsigned int x,
-              const unsigned int y,
-              const unsigned char bits /* tile size: 2^bits * 2^bits */);
+  ExpandedMap(unsigned int x,
+              unsigned int y,
+              unsigned char bits /* tile size: 2^bits * 2^bits */);
   std::vector<hashmap_<ElemType_, InfoType_>> buckets;
  private:
   inline int get_bucket_idx(const ElemType &s) const {
-      if (s.x<0 or s.y<0) return -1;
-      //std::cout << s.x << " " << (s.x >> bits) << " " << s.y << " " << (s.y >> bits) << std::endl;
+      if (s.x < 0 or s.y < 0) return -1;
       return (s.y >> bits) * dim_x + (s.x >> bits);
   }
   unsigned char bits; /* tile size: 2^bits * 2^bits */
   unsigned char dim_x, dim_y;
- public:
+
   const InfoType NULLINFO = InfoType{};
 
   iterator find_or_init(const ElemType &n);
@@ -50,16 +40,12 @@ class ExpandedMap {
   void init(unsigned int x, unsigned int y, unsigned char bits);
   void clear() noexcept;
 
-  float getG(const ElemType &s) const;
+  float get_g(const ElemType &s) const;
+  float get_rhs(const ElemType &s) const;
+  float get_interp_rhs(const Node &s) const;
+  std::pair<float, float> get_g_rhs(const ElemType &s) const;
 
-  float getRHS(const ElemType &s) const;
-
-  std::pair<float, float> getGandRHS(const ElemType &s) const;
-
-  bool consistent(const Node &s) {
-      auto[g, rhs] = getGandRHS(s);
-      return g == rhs;
-  }
+  bool consistent(const ElemType &s);
 };
 
 template<typename IT>

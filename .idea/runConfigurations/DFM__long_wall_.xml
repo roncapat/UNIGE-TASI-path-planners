@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="DFM (long wall)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$ProjectFileDir$/Tests/Tests/wall-c_45_4_4_4_.bmp 45 4 4 4 5 ../pipe_1 ../pipe_2 1 0 ../../" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="roncapat_global_planners" TARGET_NAME="dfm_planner" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="roncapat_global_planners" RUN_TARGET_NAME="dfm_planner">
+  <configuration default="false" name="DFM (long wall)" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$ProjectFileDir$/Tests/Tests/wall-c_45_4_4_4_.bmp 45 4 4 4 5 ../pipe_1 ../pipe_2 1 0 ../../" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="roncapat_global_planners" TARGET_NAME="dfm_planner_1" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="roncapat_global_planners" RUN_TARGET_NAME="dfm_planner_1">
     <envs>
       <env name="PYTHONPATH" value="../Simulator/build/lib" />
     </envs>

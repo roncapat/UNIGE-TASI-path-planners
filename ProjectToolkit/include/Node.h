@@ -41,33 +41,33 @@ public:
 
     [[nodiscard]] bool operator!=(const Node &other) const;
 
-    [[nodiscard]] bool isValid() const;
+    [[nodiscard]] bool is_valid() const;
 
-    [[nodiscard]] Node topNode() const;
+    [[nodiscard]] Node top_node() const;
 
-    [[nodiscard]] Node topLeftNode() const;
+    [[nodiscard]] Node top_left_node() const;
 
-    [[nodiscard]] Node topRightNode() const;
+    [[nodiscard]] Node top_right_node() const;
 
-    [[nodiscard]] Node bottomNode() const;
+    [[nodiscard]] Node bottom_node() const;
 
-    [[nodiscard]] Node bottomLeftNode() const;
+    [[nodiscard]] Node bottom_left_node() const;
 
-    [[nodiscard]] Node bottomRightNode() const;
+    [[nodiscard]] Node bottom_right_node() const;
 
-    [[nodiscard]] Node leftNode() const;
+    [[nodiscard]] Node left_node() const;
 
-    [[nodiscard]] Node rightNode() const;
+    [[nodiscard]] Node right_node() const;
 
-    [[nodiscard]] Cell cellBottomLeft() const;
+    [[nodiscard]] Cell bottom_left_cell() const;
 
-    [[nodiscard]] Cell cellBottomRight() const;
+    [[nodiscard]] Cell bottom_right_cell() const;
 
-    [[nodiscard]] Cell cellTopLeft() const;
+    [[nodiscard]] Cell top_left_cell() const;
 
-    [[nodiscard]] Cell cellTopRight() const;
+    [[nodiscard]] Cell top_right_cell() const;
 
-    [[nodiscard]] Cell neighborCell(bool bottom_TOP, bool left_RIGHT) const;
+    [[nodiscard]] Cell neighbor_cell(bool bottom_TOP, bool left_RIGHT) const;
 
     [[nodiscard]] std::vector<Cell> cells() const;
 

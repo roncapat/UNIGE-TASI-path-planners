@@ -21,6 +21,7 @@ public:
     float total_cost = 0;
     float total_dist = 0;
     bool lookahead = true;
+    int max_steps = 20;
     float e_time = 0;
 private:
     const ExpandedMap<Cell, T> &map;
@@ -38,7 +39,7 @@ private:
 
     bool goalReached(const Position &p);
 
-    void getBC(TraversalParams &t);
+    void fill_traversal_costs(TraversalParams &t);
 
 };
 

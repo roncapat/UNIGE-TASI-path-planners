@@ -3,24 +3,23 @@
 #include <utility>
 #include <algorithm>
 
-//TODO should be parameter of type Pos (most generic)
-void Graph::setStart(const Position &start) {
+void Graph::set_start(const Position &start) {
     start_pos_ = start;
     start_cell_ = Cell(start);
     start_node_ = Node(start);
 }
 
-void Graph::setGoal(const Position &goal) {
+void Graph::set_goal(const Position &goal) {
     goal_pos_ = goal;
     goal_cell_ = Cell(goal);
     goal_node_ = Node(goal);
 }
 
-void Graph::setOccupancyThreshold(float occupancy_threshold) {
+void Graph::set_occupancy_threshold(float occupancy_threshold) {
     occupancy_threshold_uchar_ = occupancy_threshold * 255.0f;
 }
 
-void Graph::initializeGraph(std::shared_ptr<uint8_t[]> image, int width, int length) {
+void Graph::init(std::shared_ptr<uint8_t[]> image, int width, int length) {
     length_ = length;
     width_ = width;
     flength_ = static_cast<float>(length);
@@ -33,7 +32,7 @@ uint8_t &Graph::get(int x, int y) {
     return map_.get()[x * width_ + y];
 }
 
-void Graph::updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h) {
+void Graph::update(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h) {
     updated_cells_.clear();
     assert(x >= 0);
     assert(y >= 0);
@@ -50,35 +49,35 @@ void Graph::updateGraph(const std::shared_ptr<uint8_t[]> &patch, int x, int y, i
     }
 }
 
-bool Graph::isValid(const Node &s) const {
+bool Graph::is_valid(const Node &s) const {
     return (s.x <= length_) && (s.y <= width_) && (s.x >= 0) && (s.y >= 0);
 }
 
-bool Graph::isValid(const Position &p) const{
+bool Graph::is_valid(const Position &p) const{
     return (p.x >= 0.0f) && (p.x <= flength_) && (p.y >= 0.0f) && (p.y <= fwidth_);
 }
 
-bool Graph::isValid(const Cell &c) const{
+bool Graph::is_valid(const Cell &c) const{
     return (c.x >= 0) && (c.x < length_) && (c.y >= 0) && (c.y < width_);
 }
 
-bool Graph::isValidVertex(const Position &p) const {
+bool Graph::is_valid_vertex(const Position &p) const {
     bool is_vertex = (ceilf(p.x) == p.x) && (ceilf(p.y) == p.y);
-    bool satisfies_bounds = isValid(p);
+    bool satisfies_bounds = is_valid(p);
     return is_vertex && satisfies_bounds;
 }
 
 
 std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) const{
     std::vector<Node> neighbors{
-        s.topNode(), s.topLeftNode(), s.leftNode(), s.bottomLeftNode(),
-        s.bottomNode(), s.bottomRightNode(), s.rightNode(), s.topRightNode()
+        s.top_node(), s.top_left_node(), s.left_node(), s.bottom_left_node(),
+        s.bottom_node(), s.bottom_right_node(), s.right_node(), s.top_right_node()
     };
 
     if (not include_invalid)
         neighbors.erase(
             std::remove_if(neighbors.begin(), neighbors.end(),
-                           [&](Node const &p) { return not isValid(p); }),
+                           [&](Node const &p) { return not is_valid(p); }),
             neighbors.end()
         );
 
@@ -87,14 +86,14 @@ std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) const{
 
 std::vector<Node> Graph::neighbors_4(const Node &s, bool include_invalid) const{
     std::vector<Node> neighbors{
-            s.topNode(), s.leftNode(),
-            s.bottomNode(), s.rightNode()
+            s.top_node(), s.left_node(),
+            s.bottom_node(), s.right_node()
     };
 
     if (not include_invalid)
         neighbors.erase(
                 std::remove_if(neighbors.begin(), neighbors.end(),
-                               [&](Node const &p) { return not isValid(p); }),
+                               [&](Node const &p) { return not is_valid(p); }),
                 neighbors.end()
         );
 
@@ -103,14 +102,14 @@ std::vector<Node> Graph::neighbors_4(const Node &s, bool include_invalid) const{
 
 std::vector<Node> Graph::neighbors_diag_4(const Node &s, bool include_invalid) const{
     std::vector<Node> neighbors{
-            s.topLeftNode(), s.bottomLeftNode(),
-            s.topRightNode(), s.bottomRightNode()
+            s.top_left_node(), s.bottom_left_node(),
+            s.top_right_node(), s.bottom_right_node()
     };
 
     if (not include_invalid)
         neighbors.erase(
                 std::remove_if(neighbors.begin(), neighbors.end(),
-                               [&](Node const &p) { return not isValid(p); }),
+                               [&](Node const &p) { return not is_valid(p); }),
                 neighbors.end()
         );
 
@@ -119,14 +118,14 @@ std::vector<Node> Graph::neighbors_diag_4(const Node &s, bool include_invalid) c
 
 std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) const{
     std::vector<Cell> neighbors{
-        s.topCell(), s.topLeftCell(), s.leftCell(), s.bottomLeftCell(),
-        s.bottomCell(), s.bottomRightCell(), s.rightCell(), s.topRightCell()
+        s.top_cell(), s.top_left_cell(), s.left_cell(), s.bottom_left_cell(),
+        s.bottom_cell(), s.bottom_right_cell(), s.right_cell(), s.top_right_cell()
     };
 
     if (not include_invalid)
         neighbors.erase(
             std::remove_if(neighbors.begin(), neighbors.end(),
-                           [&](Cell const &p) { return not isValid(p); }),
+                           [&](Cell const &p) { return not is_valid(p); }),
             neighbors.end()
         );
 
@@ -135,21 +134,21 @@ std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) const{
 
 std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) const{
     std::vector<Cell> neighbors{
-        s.topCell(), s.leftCell(),
-        s.bottomCell(), s.rightCell()
+        s.top_cell(), s.left_cell(),
+        s.bottom_cell(), s.right_cell()
     };
 
     if (not include_invalid)
         neighbors.erase(
             std::remove_if(neighbors.begin(), neighbors.end(),
-                           [&](Cell const &p) { return not isValid(p); }),
+                           [&](Cell const &p) { return not is_valid(p); }),
             neighbors.end()
         );
 
     return neighbors;
 }
 
-std::vector<Edge> Graph::consecutiveNeighbors(const Position &p) const{
+std::vector<Edge> Graph::consecutive_neighbors(const Position &p) const{
     std::vector<Node> neighbors;
     std::vector<Edge> consecutive_neighbors;
 
@@ -188,8 +187,8 @@ std::vector<Edge> Graph::consecutiveNeighbors(const Position &p) const{
     }
 
     for (size_t i = 0; i < neighbors.size(); ++i) {
-        if (isValid(neighbors[i])) {
-            if (isValid(neighbors[(i + 1) % neighbors.size()])) {
+        if (is_valid(neighbors[i])) {
+            if (is_valid(neighbors[(i + 1) % neighbors.size()])) {
                 consecutive_neighbors.emplace_back(neighbors[i], neighbors[(i + 1) % neighbors.size()]);
             } else {
                 ++i; //next edge is also invalid, skip
@@ -200,7 +199,7 @@ std::vector<Edge> Graph::consecutiveNeighbors(const Position &p) const{
     return consecutive_neighbors;
 }
 
-std::vector<Edge> Graph::consecutiveNeighbors(const Node &s) const{
+std::vector<Edge> Graph::consecutive_neighbors(const Node &s) const{
     std::vector<Node> neighbors;
     std::vector<Edge> consecutive_neighbors;
     neighbors.reserve(8);
@@ -218,8 +217,8 @@ std::vector<Edge> Graph::consecutiveNeighbors(const Node &s) const{
     neighbors.emplace_back(intpartx + 1, intparty - 1);  // bottom right
 
     for (size_t i = 0; i < neighbors.size(); ++i) {
-        if (isValid(neighbors[i])) {
-            if (isValid(neighbors[(i + 1) % neighbors.size()])) {
+        if (is_valid(neighbors[i])) {
+            if (is_valid(neighbors[(i + 1) % neighbors.size()])) {
                 consecutive_neighbors.emplace_back(neighbors[i], neighbors[(i + 1) % neighbors.size()]);
             } else {
                 ++i; //next edge is also invalid, skip
@@ -230,7 +229,7 @@ std::vector<Edge> Graph::consecutiveNeighbors(const Node &s) const{
     return consecutive_neighbors;
 }
 
-Node Graph::counterClockwiseNeighbor(const Node &s, const Node &sp) const{
+Node Graph::ccw_neighbor(const Node &s, const Node &sp) const{
     int delta_x = sp.x - s.x + 1;
     int delta_y = sp.y - s.y + 1;
 
@@ -240,11 +239,11 @@ Node Graph::counterClockwiseNeighbor(const Node &s, const Node &sp) const{
     int new_x = s.x + lut_x_ccw[delta_x][delta_y];
     int new_y = s.y + lut_y_ccw[delta_x][delta_y];
 
-    Node cc_neighbor(new_x, new_y);
-    return isValid(cc_neighbor) ? cc_neighbor : Node{false};
+    Node ccw_neighbor(new_x, new_y);
+    return is_valid(ccw_neighbor) ? ccw_neighbor : Node{false};
 }
 
-Node Graph::clockwiseNeighbor(const Node &s, const Node &sp) const{
+Node Graph::cw_neighbor(const Node &s, const Node &sp) const{
     int delta_x = sp.x - s.x + 1;
     int delta_y = sp.y - s.y + 1;
 
@@ -255,30 +254,28 @@ Node Graph::clockwiseNeighbor(const Node &s, const Node &sp) const{
     int new_y = s.y + lut_y_cw[delta_x][delta_y];
 
     Node c_neighbor(new_x, new_y);
-    return isValid(c_neighbor) ? c_neighbor : Node{false};
+    return is_valid(c_neighbor) ? c_neighbor : Node{false};
 }
 
-float Graph::getCost(const Cell &ind) const{
-    if (!isValid(ind))
+float Graph::get_cost(const Cell &ind) const{
+    if (!is_valid(ind))
         return INFINITY;
     auto cost = map_[ind.x * width_ + ind.y];
     return (cost >= occupancy_threshold_uchar_) ? INFINITY : (float) cost;
 }
 
-Cell Graph::getCell(const Node &a, const Node &b, const Node &c) {
+Cell Graph::get_cell(const Node &a, const Node &b, const Node &c) {
     //Given 3 nodes around a cell, cell coords are min(xs) min(ys)
     int x = std::min(a.x, std::min(b.x, c.x));
     int y = std::min(a.y, std::min(b.y, c.y));
     Cell cell(x, y);
-    assert(cell.hasNode(a));
-    assert(cell.hasNode(b));
-    assert(cell.hasNode(c));
+    assert(cell.has_node(a));
+    assert(cell.has_node(b));
+    assert(cell.has_node(c));
     return cell;
 }
 
-//TODO refactor as vsplit(); loop(hsplit());
-//TODO validate
-std::vector<Position> Graph::getGridBoundariesTraversals(const Position &a, const Position &b) {
+std::vector<Position> Graph::get_grid_boundaries_traversals(const Position &a, const Position &b) {
     std::vector<Position> xsplit;
     const Position &low_x = a.x < b.x ? a : b;
     const Position &high_x = a.x < b.x ? b : a;

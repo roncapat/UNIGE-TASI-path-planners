@@ -1,3 +1,6 @@
 build*/
 build/
 Results/
+*.tiff
+*.data
+*.old

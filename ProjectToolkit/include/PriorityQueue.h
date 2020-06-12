@@ -35,8 +35,8 @@ class PriorityQueue {
   typedef boost::heap::compare<comparator> CompareOption;
   typedef boost::heap::mutable_<true> MutableOption;
   typedef boost::heap::fibonacci_heap<ElemType, CompareOption, MutableOption> QueueType;
-  QueueType __queue;
-  robin_hood::unordered_node_map<Value, typename QueueType::handle_type> __handles;
+  QueueType queue;
+  robin_hood::unordered_node_map<Value, typename QueueType::handle_type> handles;
 
  public:
   typedef typename QueueType::handle_type HandleType;
@@ -45,10 +45,10 @@ class PriorityQueue {
   PriorityQueue() = default;
 
   IteratorType begin() {
-      return __queue.begin();
+      return queue.begin();
   };
   IteratorType end() {
-      return __queue.end();
+      return queue.end();
   };
 
   void swap(PriorityQueue &other);
@@ -57,8 +57,8 @@ class PriorityQueue {
   void insert(const Value &n, const Key &k);
   void clear();
   void pop();
-  const Key& topKey();
-  const Value& topValue();
+  const Key& top_key();
+  const Value& top_value();
   int size();
   bool empty();
 };
