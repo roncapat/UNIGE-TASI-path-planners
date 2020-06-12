@@ -11,26 +11,26 @@ https://www.ri.cmu.edu/pub_files/pub4/ferguson_david_2005_3/ferguson_david_2005_
 
 The "Level 0" algorithm implements the basic D* Lite implementation of the original paper.
 
-The "Level 1" algorithm keeps backpointers from each node to the edge minimizing the cost, 
+The "Level 1" algorithm keeps backpointers from each node to the edge minimizing the cost,
 and use them to reduce the replanning load. Whenever a node is overconsistent, it recomputes
 only the quadrants of the neighbors affected by lowering G to RHS.
 Refer to "initial optimizations" version of the original Field D* paper for more details.
 
-When the robot moves and updates the map, keys are recalculated w.r.t. the new position 
+When the robot moves and updates the map, keys are recalculated w.r.t. the new position
 (if heuristic is used) and the minimum traversability of the map at the current state.
 This is a novel approach, different to heuristics suggested in various other works.
 
-The interpolation algorithm has been redesigned to fix a suboptimal minimization 
+The interpolation algorithm has been redesigned to fix a suboptimal minimization
 of the traversal cost by the origianl authors. More detail in <THESIS CHAP 2>.
 
 
 ## Multistencil Dynamic Fast Marching
 This repository contains a generic implementation of Dynamic Fast Marching,
 [originally proposed by Clement Petres et al.](
-https://ieeexplore.ieee.org/document/4154833). 
+https://ieeexplore.ieee.org/document/4154833).
 
 The algorithm has been tuned to leverage both orthogonal and diagonal neighbors
-of a cell, adding a "diagonal stencil". This technique was inspired by this 
+of a cell, adding a "diagonal stencil". This technique was inspired by this
 [paper](https://ieeexplore.ieee.org/document/6970475).
 
 ## Marching Field D*
@@ -43,22 +43,32 @@ perspective allows to reinterpret it as a simpler _subset_ of Field D*.
 
 
 ## Path extraction
-The path extractors feature a custom path extraction technique, inspired by 
+The path extractors feature a custom path extraction technique, inspired by
 ([Michael W. Otte and Greg Grudic](https://ieeexplore.ieee.org/document/5354775)).
 
+## Repository content
+The repository holds implementations for the 3 planners, as long as a support library.
+
+Relevant files are in folders [FieldDStar](FieldDStar), [DynamicFastMarching](DynamicFastMarching),
+[ShiftedGridFastMarching](ShiftedGridFastMarching), [ProjectToolkit](ProjectToolkit).
+
+In particular, in each planner folder reside a rought implementation of a path extractor. The three
+implementations are pretty similar, and a future refactor will bring a unified version outside of the planner folders.
+
+The planner folders also host a demo application the works in conjunction with a test procedure in development.
 
 ## Build and run
 To build the demo and run tests:
 ```
 cd Tests
-chmod +x run_test__field_d_star.sh
-./run_test__field_d_star.sh
+chmod +x run_test.sh
+./run_test.sh
 ```
 The test files can be found in [Tests/Tests](Tests/Tests).
 
 The logs and the results can be found in [Tests/Results](Tests/Results) after a successful run of the above commands.
 
 ## Python 3 requirements
-opencv-python
-Pillow
-setuptools
+* opencv-python
+* Pillow
+* setuptools
