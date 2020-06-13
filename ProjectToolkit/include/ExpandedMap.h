@@ -26,7 +26,7 @@ class ExpandedMap {
   }
   unsigned char bits; /* tile size: 2^bits * 2^bits */
   unsigned char dim_x, dim_y;
-
+ public:
   const InfoType NULLINFO = InfoType{};
 
   iterator find_or_init(const ElemType &n);
