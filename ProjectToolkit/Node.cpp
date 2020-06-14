@@ -1,7 +1,3 @@
-//
-// Created by patrick on 07/05/20.
-//
-
 #include "Node.h"
 #include "Position.h"
 #include "Cell.h"
