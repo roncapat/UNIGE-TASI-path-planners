@@ -24,6 +24,10 @@ class ExpandedMap {
       if (s.x < 0 or s.y < 0) return -1;
       return (s.y >> bits) * dim_x + (s.x >> bits);
   }
+
+  inline bool check_bucket_existence(int id) const {
+      return (id >= 0 and id < (signed)buckets.size());
+  }
   unsigned char bits; /* tile size: 2^bits * 2^bits */
   unsigned char dim_x, dim_y;
  public:

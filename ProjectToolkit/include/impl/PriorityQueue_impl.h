@@ -3,8 +3,7 @@
 
 template<typename K, typename T>
 void PriorityQueue<K,T>::insert(const Value &n, const Key &k) {
-    HandleType handle = queue.emplace(n, k);
-    handles[n] = handle;
+    handles[n] = queue.emplace(n, k);
 }
 
 template<typename K, typename T>

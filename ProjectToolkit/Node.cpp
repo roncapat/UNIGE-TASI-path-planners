@@ -6,8 +6,6 @@
 #include "Position.h"
 #include "Cell.h"
 
-Node::Node(bool valid) : valid(valid) {}
-
 Node::Node(int x, int y) : x(x), y(y) {}
 
 Node::Node(const Node &other) = default;
@@ -24,16 +22,12 @@ Node::Node(const Position &n) {
 Node &Node::operator=(const Node &other) = default;
 Node &Node::operator=(Node &&other) noexcept = default;
 
-void Node::setValidity(bool is_valid) { this->valid = is_valid; }
-
 bool Node::operator==(const Node &other) const {
     if (this == &other) return true;
     return (x == other.x) and (y == other.y);
 }
 
 bool Node::operator!=(const Node &other) const { return not(*this == other); }
-
-bool Node::is_valid() const { return valid; }
 
 Node Node::top_node() const { return {x - 1, y}; }
 

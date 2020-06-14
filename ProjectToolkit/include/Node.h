@@ -35,13 +35,9 @@ public:
 
     Node &operator=(Node &&other) noexcept;
 
-    void setValidity(bool is_valid);
-
     [[nodiscard]] bool operator==(const Node &other) const;
 
     [[nodiscard]] bool operator!=(const Node &other) const;
-
-    [[nodiscard]] bool is_valid() const;
 
     [[nodiscard]] Node top_node() const;
 
@@ -76,9 +72,6 @@ public:
     [[nodiscard]] float distance(const Position &n) const;
 
     [[nodiscard]] bool aligned(const Node &p) const;
-
-private:
-    bool valid = true;
 };
 
 namespace robin_hood {

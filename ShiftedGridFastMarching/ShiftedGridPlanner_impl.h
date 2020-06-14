@@ -1,7 +1,7 @@
 #include <cmath>
 
 template<int O>
-void ShiftedGridPlanner<O>::set_start(const Position &pos){
+void ShiftedGridPlanner<O>::set_start(const Position &pos) {
     Base::set_start(pos);
     start_nodes = grid.start_cell_.corners();
 }
@@ -33,7 +33,7 @@ void ShiftedGridPlanner<0>::plan() {
 
         if (G(s_it) > RHS(s_it)) { // Overconsistent
             G(s_it) = RHS(s_it);
-            for (const Node &nbr : grid.neighbors_8(s)){
+            for (const Node &nbr : grid.neighbors_8(s)) {
                 auto nbr_it = map.find_or_init(nbr);
                 if (nbr != grid.goal_node_)
                     RHS(nbr_it) = min_rhs(nbr);
@@ -41,7 +41,7 @@ void ShiftedGridPlanner<0>::plan() {
             }
         } else { // Underconsistent
             G(s_it) = INFINITY;
-            for (const Node &nbr : grid.neighbors_8(s)){
+            for (const Node &nbr : grid.neighbors_8(s)) {
                 auto nbr_it = map.find_or_init(nbr);
                 if (nbr != grid.goal_node_)
                     RHS(nbr_it) = min_rhs(nbr);
@@ -160,7 +160,6 @@ void ShiftedGridPlanner<2>::plan() {
     //std::cout << num_nodes_expanded << " nodes expanded" << std::endl;
 }
 
-
 template<int O>
 void ShiftedGridPlanner<O>::update() {
     #ifndef NO_HEURISTIC
@@ -229,15 +228,17 @@ typename ShiftedGridPlanner<O>::Key ShiftedGridPlanner<O>::calculate_key(const N
 }
 
 template<int O>
-typename ShiftedGridPlanner<O>::Key ShiftedGridPlanner<O>::calculate_key(const Node &s, const float g, const float rhs) {
+typename ShiftedGridPlanner<O>::Key ShiftedGridPlanner<O>::calculate_key(const Node &s,
+                                                                         const float g,
+                                                                         const float rhs) {
     return calculate_key(s, std::min(g, rhs));
 }
 
 template<int O>
 typename ShiftedGridPlanner<O>::Key ShiftedGridPlanner<O>::calculate_key(const Node &s, const float cost_so_far) {
-    (void)s;
+    (void) s;
     #ifdef NO_HEURISTIC
-     return {cost_so_far, cost_so_far};
+    return {cost_so_far, cost_so_far};
     #else
     auto dist = grid.start_pos_.distance(s);
     return {cost_so_far + this->heuristic_multiplier * dist, cost_so_far};
@@ -257,8 +258,8 @@ float ShiftedGridPlanner<1>::min_rhs(const Node &s, Node &bptr) {
     float rhs = INFINITY, cost;
     for (const auto &sp : grid.neighbors_8(s)) {
         auto ccn = grid.ccw_neighbor(s, sp);
-        if (ccn.is_valid()) {
-            rhs = std::min(rhs, cost = compute_optimal_cost(s, sp, ccn));
+        if (ccn.has_value()) {
+            rhs = std::min(rhs, cost = compute_optimal_cost(s, sp, ccn.value()));
             if (rhs == cost)
                 bptr = sp;
         }
@@ -272,77 +273,74 @@ float ShiftedGridPlanner<2>::min_rhs(const Node &s, Node &bptr) {
     for (const auto &sp : grid.neighbors_diag_4(s)) {
         auto ccn = grid.ccw_neighbor(s, sp);
         auto cn = grid.cw_neighbor(s, sp);
-        float ccn_g = map.get_g(ccn);
-        float cn_g = map.get_g(cn);
+        bool valid1 = ccn.has_value();
+        bool valid2 = cn.has_value();
+        float ccn_g = valid1 ? map.get_g(ccn.value()) : INFINITY;
+        float cn_g = valid2 ? map.get_g(cn.value()) : INFINITY;
         float sp_g = map.get_g(sp);
-        bool valid1 = ccn.is_valid();
-        bool valid2 = cn.is_valid();
 
         if (valid1 and ((not valid2) or (ccn_g <= cn_g))) {
-            rhs = std::min(rhs, cost = compute_optimal_cost(s, sp, ccn, sp_g, ccn_g));
+            rhs = std::min(rhs, cost = compute_optimal_cost(s, sp, ccn.value(), sp_g, ccn_g));
             if (rhs == cost)
                 bptr = sp;
         } else if (valid2 and ((not valid1) or (ccn_g > cn_g))) {
-            rhs = std::min(rhs, cost = compute_optimal_cost(s, sp, cn, sp_g, cn_g));
+            rhs = std::min(rhs, cost = compute_optimal_cost(s, sp, cn.value(), sp_g, cn_g));
             if (rhs == cost)
-                bptr = cn;
+                bptr = cn.value();
         }
     }
     return rhs;
 }
 
-template <>
-float ShiftedGridPlanner<1>::min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr){
+template<>
+float ShiftedGridPlanner<1>::min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr) {
     auto ccn = grid.ccw_neighbor(sp, s);
     auto cn = grid.cw_neighbor(sp, s);
-    float cost1 = ccn.is_valid() ? compute_optimal_cost(sp, s, ccn) : INFINITY;
-    float cost2 = cn.is_valid() ? compute_optimal_cost(sp, cn, s) : INFINITY;
-    if (cost1<=cost2){
+    float cost1 = ccn.has_value() ? compute_optimal_cost(sp, s, ccn.value()) : INFINITY;
+    float cost2 = cn.has_value() ? compute_optimal_cost(sp, cn.value(), s) : INFINITY;
+    if (cost1 <= cost2) {
         bptr = s;
         return cost1;
     } else {
-        bptr = cn;
+        bptr = cn.value();
         return cost2;
     }
 }
 
-template <>
-float ShiftedGridPlanner<2>::min_rhs_decreased_ortho_neigbor(const Node &sp, const Node &s, Node &bptr){
+template<>
+float ShiftedGridPlanner<2>::min_rhs_decreased_ortho_neigbor(const Node &sp, const Node &s, Node &bptr) {
     auto ccn = grid.ccw_neighbor(sp, s);
     auto cn = grid.cw_neighbor(sp, s);
-    float cost1 = ccn.is_valid() ? compute_optimal_cost(sp, s, ccn) : INFINITY;
-    float cost2 = cn.is_valid() ? compute_optimal_cost(sp, cn, s) : INFINITY;
-    if (cost1<=cost2){
+    float cost1 = ccn.has_value() ? compute_optimal_cost(sp, s, ccn.value()) : INFINITY;
+    float cost2 = cn.has_value() ? compute_optimal_cost(sp, cn.value(), s) : INFINITY;
+    if (cost1 <= cost2) {
         bptr = s;
         return cost1;
     } else {
-        bptr = cn;
+        bptr = cn.value();
         return cost2;
     }
 }
 
-
-template <>
-float ShiftedGridPlanner<2>::min_rhs_decreased_diag_neighbor(const Node &sp, const Node &s, Node &bptr){
+template<>
+float ShiftedGridPlanner<2>::min_rhs_decreased_diag_neighbor(const Node &sp, const Node &s, Node &bptr) {
     auto ccn = grid.ccw_neighbor(sp, s);
     auto cn = grid.cw_neighbor(sp, s);
-    auto g_ccn = map.get_g(ccn);
-    auto g_cn = map.get_g(cn);
+    auto valid1 = ccn.has_value();
+    auto valid2 = cn.has_value();
+    auto g_ccn = valid1 ? map.get_g(ccn.value()) : INFINITY;
+    auto g_cn = valid2 ? map.get_g(cn.value()) : INFINITY;
     auto g_s = map.get_g(s);
-    auto valid1 = ccn.is_valid();
-    auto valid2 = cn.is_valid();
 
     if (valid1 and ((not valid2) or (g_ccn <= g_cn))) {
         bptr = s;
-        return compute_optimal_cost(sp, s, ccn, g_s, g_ccn);
+        return compute_optimal_cost(sp, s, ccn.value(), g_s, g_ccn);
     } else if (valid2 and ((not valid1) or (g_ccn > g_cn))) {
-        bptr = cn;
-        return compute_optimal_cost(sp, s, cn, g_s, g_cn);
+        bptr = cn.value();
+        return compute_optimal_cost(sp, s, cn.value(), g_s, g_cn);
     }
     return INFINITY;
 }
-
-
 
 template<int O>
 bool ShiftedGridPlanner<O>::end_condition() {
@@ -371,10 +369,10 @@ bool ShiftedGridPlanner<O>::end_condition() {
     return max_start_key <= top_key; //Start node surpassed
 }
 
-template <int O>
+template<int O>
 float ShiftedGridPlanner<O>::compute_optimal_cost(const Node &n,
-                                             const Node &p_a,
-                                             const Node &p_b) {
+                                                  const Node &p_a,
+                                                  const Node &p_b) {
     float ga, gb;
     ga = map.get_g(p_a);
     gb = map.get_g(p_b);
@@ -382,10 +380,10 @@ float ShiftedGridPlanner<O>::compute_optimal_cost(const Node &n,
     return compute_optimal_cost(n, p_a, p_b, ga, gb);
 }
 
-template <int O>
+template<int O>
 float ShiftedGridPlanner<O>::compute_optimal_cost(const Node &n,
-                                             const Node &p_a,
-                                             const Node &p_b, float ga, float gb) {
+                                                  const Node &p_a,
+                                                  const Node &p_b, float ga, float gb) {
 
     Position p(n);
     std::vector<Position> positions;
@@ -423,7 +421,7 @@ float ShiftedGridPlanner<O>::compute_optimal_cost(const Node &n,
 }
 
 // p must be aligned with p_1, p_1 aligned with p_2, p and P_2 diagonal neighbors
-template <int O>
+template<int O>
 void ShiftedGridPlanner<O>::fill_traversal_costs(TraversalParams &t) {
     Cell cell_ind_c;
 

@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 #include <memory>
+#include <optional>
 #include "Node.h"
 #include "Position.h"
 #include "Cell.h"
@@ -54,8 +55,8 @@ class Graph {
   std::vector<Edge> consecutive_neighbors(const Position &p) const;
   std::vector<Edge> consecutive_neighbors(const Node &s) const;
 
-  Node ccw_neighbor(const Node &s, const Node &s_prime) const;
-  Node cw_neighbor(const Node &s, const Node &s_prime) const;
+  std::optional<Node> ccw_neighbor(const Node &s, const Node &s_prime) const;
+  std::optional<Node> cw_neighbor(const Node &s, const Node &s_prime) const;
 
   static Cell get_cell(const Node &a, const Node &b, const Node &c);
   static std::vector<Position> get_grid_boundaries_traversals(const Position &a, const Position &b);

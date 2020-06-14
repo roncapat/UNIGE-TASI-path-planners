@@ -95,7 +95,7 @@ void FieldDPlanner<1>::plan() {
                 auto sp_it_opt = map.find(sp);
                 assert(sp_it_opt.has_value());
                 auto sp_it = sp_it_opt.value();
-                if (INFO(sp_it) == s or INFO(sp_it) == grid.cw_neighbor(sp, s)) {
+                if (INFO(sp_it) == s or INFO(sp_it) == grid.cw_neighbor(sp, s).value_or(Node{-1,-1})) {
                     RHS(sp_it) = min_rhs(sp, bptr);
                     if (RHS(sp_it) < INFINITY) //TODO understand theese are necessary
                         INFO(sp_it) = bptr;
@@ -191,8 +191,8 @@ float FieldDPlanner<1>::min_rhs(const Node &s, Node &bptr) {
     float rhs = INFINITY, cost;
     for (const auto &sp : grid.neighbors_8(s)) {
         auto ccn = grid.ccw_neighbor(s, sp);
-        if (ccn.is_valid()) {
-            rhs = std::min(rhs, cost = compute_optimal_cost(s, sp, ccn));
+        if (ccn.has_value()) { //TODO use std::optional in ccw_neighbor() and remove "valid" field and getters/setters
+            rhs = std::min(rhs, cost = compute_optimal_cost(s, sp, ccn.value()));
             if (rhs == cost)
                 bptr = sp;
         }
@@ -204,13 +204,13 @@ template <>
 float FieldDPlanner<1>::min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr){
     auto ccn = grid.ccw_neighbor(sp, s);
     auto cn = grid.cw_neighbor(sp, s);
-    float cost1 = ccn.is_valid() ? compute_optimal_cost(sp, s, ccn) : INFINITY;
-    float cost2 = cn.is_valid() ? compute_optimal_cost(sp, cn, s) : INFINITY;
+    float cost1 = ccn.has_value() ? compute_optimal_cost(sp, s, ccn.value()) : INFINITY;
+    float cost2 = cn.has_value() ? compute_optimal_cost(sp, cn.value(), s) : INFINITY;
     if (cost1<=cost2){
         bptr = s;
         return cost1;
     } else {
-        bptr = cn;
+        bptr = cn.value();
         return cost2;
     }
 }

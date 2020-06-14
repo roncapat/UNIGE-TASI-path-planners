@@ -2,6 +2,7 @@
 #include <cmath>
 #include <utility>
 #include <algorithm>
+#include <optional>
 
 void Graph::set_start(const Position &start) {
     start_pos_ = start;
@@ -53,11 +54,11 @@ bool Graph::is_valid(const Node &s) const {
     return (s.x <= length_) && (s.y <= width_) && (s.x >= 0) && (s.y >= 0);
 }
 
-bool Graph::is_valid(const Position &p) const{
+bool Graph::is_valid(const Position &p) const {
     return (p.x >= 0.0f) && (p.x <= flength_) && (p.y >= 0.0f) && (p.y <= fwidth_);
 }
 
-bool Graph::is_valid(const Cell &c) const{
+bool Graph::is_valid(const Cell &c) const {
     return (c.x >= 0) && (c.x < length_) && (c.y >= 0) && (c.y < width_);
 }
 
@@ -67,8 +68,7 @@ bool Graph::is_valid_vertex(const Position &p) const {
     return is_vertex && satisfies_bounds;
 }
 
-
-std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) const{
+std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) const {
     std::vector<Node> neighbors{
         s.top_node(), s.top_left_node(), s.left_node(), s.bottom_left_node(),
         s.bottom_node(), s.bottom_right_node(), s.right_node(), s.top_right_node()
@@ -84,39 +84,39 @@ std::vector<Node> Graph::neighbors_8(const Node &s, bool include_invalid) const{
     return neighbors;
 }
 
-std::vector<Node> Graph::neighbors_4(const Node &s, bool include_invalid) const{
+std::vector<Node> Graph::neighbors_4(const Node &s, bool include_invalid) const {
     std::vector<Node> neighbors{
-            s.top_node(), s.left_node(),
-            s.bottom_node(), s.right_node()
+        s.top_node(), s.left_node(),
+        s.bottom_node(), s.right_node()
     };
 
     if (not include_invalid)
         neighbors.erase(
-                std::remove_if(neighbors.begin(), neighbors.end(),
-                               [&](Node const &p) { return not is_valid(p); }),
-                neighbors.end()
+            std::remove_if(neighbors.begin(), neighbors.end(),
+                           [&](Node const &p) { return not is_valid(p); }),
+            neighbors.end()
         );
 
     return neighbors;
 }
 
-std::vector<Node> Graph::neighbors_diag_4(const Node &s, bool include_invalid) const{
+std::vector<Node> Graph::neighbors_diag_4(const Node &s, bool include_invalid) const {
     std::vector<Node> neighbors{
-            s.top_left_node(), s.bottom_left_node(),
-            s.top_right_node(), s.bottom_right_node()
+        s.top_left_node(), s.bottom_left_node(),
+        s.top_right_node(), s.bottom_right_node()
     };
 
     if (not include_invalid)
         neighbors.erase(
-                std::remove_if(neighbors.begin(), neighbors.end(),
-                               [&](Node const &p) { return not is_valid(p); }),
-                neighbors.end()
+            std::remove_if(neighbors.begin(), neighbors.end(),
+                           [&](Node const &p) { return not is_valid(p); }),
+            neighbors.end()
         );
 
     return neighbors;
 }
 
-std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) const{
+std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) const {
     std::vector<Cell> neighbors{
         s.top_cell(), s.top_left_cell(), s.left_cell(), s.bottom_left_cell(),
         s.bottom_cell(), s.bottom_right_cell(), s.right_cell(), s.top_right_cell()
@@ -132,7 +132,7 @@ std::vector<Cell> Graph::neighbors_8(const Cell &s, bool include_invalid) const{
     return neighbors;
 }
 
-std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) const{
+std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) const {
     std::vector<Cell> neighbors{
         s.top_cell(), s.left_cell(),
         s.bottom_cell(), s.right_cell()
@@ -148,31 +148,31 @@ std::vector<Cell> Graph::neighbors_4(const Cell &s, bool include_invalid) const{
     return neighbors;
 }
 
-std::vector<Edge> Graph::consecutive_neighbors(const Position &p) const{
+std::vector<Edge> Graph::consecutive_neighbors(const Position &p) const {
     std::vector<Node> neighbors;
     std::vector<Edge> consecutive_neighbors;
 
     float intpartx, intparty, decpartx, decparty;
     decpartx = std::modf(p.x, &intpartx);
     decparty = std::modf(p.y, &intparty);
-    if (0 < decpartx and decpartx < 1) { //non-integer, lies on horizontal edge - 6 neighbors (2 cells)
+    if (0.0f < decpartx and decpartx < 1.0f) { //non-integer, lies on horizontal edge - 6 neighbors (2 cells)
         neighbors.reserve(6);
         consecutive_neighbors.reserve(6);
-        neighbors.emplace_back(std::floor(p.x), intparty);   // left
-        neighbors.emplace_back(std::floor(p.x), intparty - 1);  // bottom left
-        neighbors.emplace_back(std::ceil(p.x), intparty - 1); // bottom right
-        neighbors.emplace_back(std::ceil(p.x), intparty);  // right
-        neighbors.emplace_back(std::ceil(p.x), intparty + 1);         // top right
-        neighbors.emplace_back(std::floor(p.x), intparty + 1);  // top left
-    } else if (0 < decparty and decparty < 1) { //non-integer, lies on vertical edge - 6 neighbors (2 cells)
+        neighbors.emplace_back(intpartx, intparty);   // left
+        neighbors.emplace_back(intpartx, intparty - 1.0f);  // bottom left
+        neighbors.emplace_back(intpartx + 1.0f, intparty - 1.0f); // bottom right
+        neighbors.emplace_back(intpartx + 1.0f, intparty);  // right
+        neighbors.emplace_back(intpartx + 1.0f, intparty + 1.0f); // top right
+        neighbors.emplace_back(intpartx, intparty + 1.0f);  // top left
+    } else if (0.0f < decparty and decparty < 1.0f) { //non-integer, lies on vertical edge - 6 neighbors (2 cells)
         neighbors.reserve(6);
         consecutive_neighbors.reserve(6);
-        neighbors.emplace_back(intpartx, std::floor(p.y));   // bottom
-        neighbors.emplace_back(intpartx + 1, std::floor(p.y));  // bottom right
-        neighbors.emplace_back(intpartx + 1, std::ceil(p.y)); // top right
-        neighbors.emplace_back(intpartx, std::ceil(p.y));  // top
-        neighbors.emplace_back(intpartx - 1, std::ceil(p.y));         // top left
-        neighbors.emplace_back(intpartx - 1, std::floor(p.y));  // bottom left
+        neighbors.emplace_back(intpartx, intparty);   // bottom
+        neighbors.emplace_back(intpartx + 1.0f, intparty);  // bottom right
+        neighbors.emplace_back(intpartx + 1.0f, intparty+1.0f); // top right
+        neighbors.emplace_back(intpartx, intparty+1.0f);  // top
+        neighbors.emplace_back(intpartx - 1.0f, intparty+1.0f);         // top left
+        neighbors.emplace_back(intpartx - 1.0f, intparty);  // bottom left
     } else { // 8 neighbors (4 cells)
         neighbors.reserve(8);
         consecutive_neighbors.reserve(8);
@@ -199,7 +199,7 @@ std::vector<Edge> Graph::consecutive_neighbors(const Position &p) const{
     return consecutive_neighbors;
 }
 
-std::vector<Edge> Graph::consecutive_neighbors(const Node &s) const{
+std::vector<Edge> Graph::consecutive_neighbors(const Node &s) const {
     std::vector<Node> neighbors;
     std::vector<Edge> consecutive_neighbors;
     neighbors.reserve(8);
@@ -229,9 +229,9 @@ std::vector<Edge> Graph::consecutive_neighbors(const Node &s) const{
     return consecutive_neighbors;
 }
 
-Node Graph::ccw_neighbor(const Node &s, const Node &sp) const{
-    int delta_x = sp.x - s.x + 1;
-    int delta_y = sp.y - s.y + 1;
+std::optional<Node> Graph::ccw_neighbor(const Node &s, const Node &s_prime) const {
+    int delta_x = s_prime.x - s.x + 1;
+    int delta_y = s_prime.y - s.y + 1;
 
     static const int8_t lut_x_ccw[3][3] = {{-1, -1, 0}, {-1, 0, 1}, {0, 1, 1}};
     static const int8_t lut_y_ccw[3][3] = {{0, 1, 1}, {-1, 0, 1}, {-1, -1, 0}};
@@ -240,12 +240,13 @@ Node Graph::ccw_neighbor(const Node &s, const Node &sp) const{
     int new_y = s.y + lut_y_ccw[delta_x][delta_y];
 
     Node ccw_neighbor(new_x, new_y);
-    return is_valid(ccw_neighbor) ? ccw_neighbor : Node{false};
+    if (is_valid(ccw_neighbor)) return ccw_neighbor;
+    else return std::nullopt;
 }
 
-Node Graph::cw_neighbor(const Node &s, const Node &sp) const{
-    int delta_x = sp.x - s.x + 1;
-    int delta_y = sp.y - s.y + 1;
+std::optional<Node> Graph::cw_neighbor(const Node &s, const Node &s_prime) const {
+    int delta_x = s_prime.x - s.x + 1;
+    int delta_y = s_prime.y - s.y + 1;
 
     static const int8_t lut_x_cw[3][3] = {{0, -1, -1}, {1, 0, -1}, {1, 1, 0}};
     static const int8_t lut_y_cw[3][3] = {{-1, -1, 0}, {-1, 0, 1}, {0, 1, 1}};
@@ -253,11 +254,12 @@ Node Graph::cw_neighbor(const Node &s, const Node &sp) const{
     int new_x = s.x + lut_x_cw[delta_x][delta_y];
     int new_y = s.y + lut_y_cw[delta_x][delta_y];
 
-    Node c_neighbor(new_x, new_y);
-    return is_valid(c_neighbor) ? c_neighbor : Node{false};
+    Node cw_neighbor(new_x, new_y);
+    if (is_valid(cw_neighbor)) return cw_neighbor;
+    else return std::nullopt;
 }
 
-float Graph::get_cost(const Cell &ind) const{
+float Graph::get_cost(const Cell &ind) const {
     if (!is_valid(ind))
         return INFINITY;
     auto cost = map_[ind.x * width_ + ind.y];
