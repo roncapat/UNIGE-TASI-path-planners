@@ -78,7 +78,7 @@ template<typename iterator, std::enable_if_t<is_const_iterator<iterator>::value,
 static inline const auto &INFO(const iterator &map_it);
 
 template<class iterator>
-static inline bool &CONSISTENT(const iterator &map_it);
+static inline bool CONSISTENT(const iterator &map_it);
 
 #include "impl/ExpandedMap_impl.h"
 

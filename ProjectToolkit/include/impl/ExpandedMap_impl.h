@@ -139,4 +139,4 @@ template<typename iterator, std::enable_if_t<is_const_iterator<iterator>::value,
 const auto &INFO(const iterator &map_it) { return std::get<2>((map_it)->second); }
 
 template<typename iterator>
-bool &CONSISTENT(const iterator &map_it) { return G(map_it) == RHS(map_it); }
+bool CONSISTENT(const iterator &map_it) { return G(map_it) == RHS(map_it); }

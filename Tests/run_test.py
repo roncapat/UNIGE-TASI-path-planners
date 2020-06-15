@@ -19,17 +19,15 @@ planners = {
     "DFM_1": {"path": "build/DFM_1/dfm_planner_1", "type": "c"},
 }
 
-cspace = 1  # TODO penalyse FD* and SGDFM by 1 (since DFM interpolation yelds INFINITY on the border of obstacles)
+cspace_diam = 1
 pipe_in = os.path.abspath("build/pipe_1")
 pipe_out = os.path.abspath("build/pipe_2")
 gui = 1
 tof = 0
 outpath = "Results"
-upscale = 5
+upscale = 3
 use_heuristic = False
 cmap = cm.winter
-
-kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (cspace * upscale, cspace * upscale))
 
 # TODO loop over inputs maps
 mapfile = "Tests/000_gradient.bmp"
@@ -89,6 +87,14 @@ for planner in planners:
 
     wait_byte(p_in, 0)
     send_byte(p_out, 0)
+
+    kernel = None
+    if planners[planner]['type'] == 'n':
+        # penalyse FD* and SGDFM by 1 (in radius) (since DFM interpolation yelds INFINITY on the border of obstacles)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,
+                                           (cspace_diam * upscale + 2, cspace_diam * upscale + 2))
+    else:
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (cspace_diam * upscale, cspace_diam * upscale))
 
     (data_l, data_h) = simulation_data(img_h, filter_radius=3, low_res_penalty=10)
     rock_aboundance_l = np.zeros((height, width), np.uint8)
@@ -162,6 +168,7 @@ for planner in planners:
     p_out.close()
     p_in.close()
     process.wait()
+    os.chmod("/mnt/sdb/perf_" + planner + ".data", 0666)
 
 plt.figure(1)
 plt.title("Replanning time analysis")

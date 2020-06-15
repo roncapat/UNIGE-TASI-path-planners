@@ -1,3 +1,4 @@
+#include <cmath>
 #include "Node.h"
 #include "Position.h"
 #include "Cell.h"
@@ -19,8 +20,7 @@ Node &Node::operator=(const Node &other) = default;
 Node &Node::operator=(Node &&other) noexcept = default;
 
 bool Node::operator==(const Node &other) const {
-    if (this == &other) return true;
-    return (x == other.x) and (y == other.y);
+    return (this == &other) or ((x == other.x) and (y == other.y));
 }
 
 bool Node::operator!=(const Node &other) const { return not(*this == other); }

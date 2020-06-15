@@ -297,8 +297,8 @@ float DFMPlanner<O>::min_rhs_decreased_neighbor(const Cell &c, const Cell &nbr, 
 template<int O>
 bool DFMPlanner<O>::end_condition() {
     auto top_key = priority_queue.top_key();
-    auto[g, rhs] = map.get_g_rhs(grid.start_cell_);
-    return ((top_key >= calculate_key(grid.start_cell_, g, rhs)) and (rhs == g));
+    auto[g, rhs] = map.get_g_rhs(grid.start_cell_); //TODO avoid finding cell in map, cache hashmap node iterator
+    return ((rhs == g) and (top_key >= calculate_key(grid.start_cell_, g, rhs)));
 }
 
 

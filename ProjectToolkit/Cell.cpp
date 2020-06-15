@@ -25,8 +25,7 @@ Cell &Cell::operator=(const Cell &other) = default;
 Cell &Cell::operator=(Cell &&other) noexcept = default;
 
 bool Cell::operator==(const Cell &other) const {
-    if (this == &other) return true;
-    return (x == other.x) and (y == other.y);
+    return (this == &other) or ((x == other.x) and (y == other.y));
 }
 
 bool Cell::operator!=(const Cell &other) const { return not(*this == other); }

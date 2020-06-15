@@ -102,7 +102,7 @@ public:
     }
 
     void enqueue_if_inconsistent(typename Map::iterator it) {
-        if (G(it) != RHS(it))
+        if (not CONSISTENT(it))
             priority_queue.insert_or_update(ELEM(it), calculate_key(ELEM(it), G(it), RHS(it)));
         else
             priority_queue.remove_if_present(ELEM(it));

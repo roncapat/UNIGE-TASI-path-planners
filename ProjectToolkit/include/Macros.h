@@ -1,6 +1,6 @@
 /** @file */
 #ifndef RONCAPAT_PLANNER_TOOLKIT_MACROS_H
-#define RONCAPAT_GLOBAL_PLANNERS_MACROS_H
+#define RONCAPAT_PLANNER_TOOLKIT_MACROS_H
 /** Approximation of the squared root of 2 */
 extern const float SQRT2;
 

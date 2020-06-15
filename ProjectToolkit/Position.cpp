@@ -2,6 +2,7 @@
 // Created by patrick on 07/05/20.
 //
 
+#include <cmath>
 #include "Position.h"
 #include "Node.h"
 #include "Cell.h"
@@ -20,8 +21,7 @@ Position &Position::operator=(const Position &other) = default;
 Position &Position::operator=(Position &&other) noexcept= default;
 
 bool Position::operator==(const Position &other) const {
-    if (this == &other) return true;
-    return (x == other.x) and (y == other.y);
+    return (this == &other) or ((x == other.x) and (y == other.y));
 }
 
 bool Position::operator!=(const Position &other) const {return not (*this == other);}
