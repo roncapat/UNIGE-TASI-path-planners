@@ -1,25 +1,45 @@
-//
-// Created by patrick on 06/04/20.
-//
+#ifndef RONCAPAT_PLANNER_TOOLKIT_INTERP_TRAVERSAL_H
+#define RONCAPAT_PLANNER_TOOLKIT_INTERP_TRAVERSAL_H
 
 #include "Graph.h"
 #include "Macros.h"
-#ifndef RONCAPAT_GLOBAL_PLANNERS_TRAVERSAL_INTERPOLATION_H
-#define RONCAPAT_GLOBAL_PLANNERS_TRAVERSAL_INTERPOLATION_H
 
+/**
+ * Contains parameters needed for linear interpolation of cell traversal cost.
+ * Refer to the original Field D* paper for reference of the labels.
+ */
 struct TraversalParams {
+  /** Point aligned with p1, but not p2 */
   Position p0;
+  /** Nodes of the edge to traverse */
   Node p1, p2;
-  float b, c, f, g1, g2, p, q;
+  /** Traversal cost of the current cell */
+  float b;
+  /** Traversal cost of the adjacent cell */
+  float c;
+  /** g(p1) - g(p2) */
+  float f;
+  /** The costs of the two nodes of the considered edge */
+  float g1, g2;
+  /** Offsets of the starting point inside the cell (cell has unitary size) */
+  float p, q;
 };
 
-class path_additions {
- public:
+/**
+ * A piece of trajectory. Encapsulates spatial steps, their cost and the remaining
+ * cost to goal.
+ */
+struct PathAdditions {
+  /** A sequence of Positions that describe a piece of path */
   std::vector<Position> steps;
+  /** Each step has an associated cost */
   std::vector<float> stepcosts;
+  /** Remaining cost to goal */
   float cost_to_goal;
 };
 
+
+//TODO use CRPT to define classes with these functions as interface
 namespace TraversalTypeI {
 namespace Corner {
 bool cond(TraversalParams &t);
@@ -161,22 +181,23 @@ std::vector<Position> additions(TraversalParams &t);
 }
 }
 
+//TODO move output parameter step_cost in PathAdditions
 namespace InterpolatedTraversal {
-path_additions traversalFromCorner(TraversalParams &cell,
-                                   float &step_cost);
-path_additions traversalFromContiguousEdge(TraversalParams &cell1,
-                                           float &step_cost);
-path_additions traversalFromOppositeEdge(TraversalParams &cell1,
-                                         TraversalParams &cell2,
-                                         float &step_cost);
+PathAdditions traversalFromCorner(TraversalParams &cell,
+                                  float &step_cost);
+PathAdditions traversalFromContiguousEdge(TraversalParams &cell1,
+                                          float &step_cost);
+PathAdditions traversalFromOppositeEdge(TraversalParams &cell1,
+                                        TraversalParams &cell2,
+                                        float &step_cost);
 
-path_additions directTraversalFromCorner(TraversalParams &cell,
-                                   float &step_cost);
-path_additions directTraversalFromContiguousEdge(TraversalParams &cell1,
-                                           float &step_cost);
-path_additions directTraversalFromOppositeEdge(TraversalParams &cell1,
-                                         TraversalParams &cell2,
-                                         float &step_cost);
+PathAdditions directTraversalFromCorner(TraversalParams &cell,
+                                        float &step_cost);
+PathAdditions directTraversalFromContiguousEdge(TraversalParams &cell1,
+                                                float &step_cost);
+PathAdditions directTraversalFromOppositeEdge(TraversalParams &cell1,
+                                              TraversalParams &cell2,
+                                              float &step_cost);
 }
 
-#endif //RONCAPAT_GLOBAL_PLANNERS_TRAVERSAL_INTERPOLATION_H
+#endif //RONCAPAT_PLANNER_TOOLKIT_INTERP_TRAVERSAL_H

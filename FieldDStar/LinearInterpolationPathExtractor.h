@@ -27,15 +27,15 @@ private:
     const ExpandedMap<Node, T> &map;
     const Graph &grid;
 
-    path_additions getPathAdditions(const Position &p, const bool &do_lookahead, float &step_cost);
+    PathAdditions getPathAdditions(const Position &p, const bool &do_lookahead, float &step_cost);
 
-    path_additions traversalFromEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
+    PathAdditions traversalFromEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
 
-    path_additions traversalFromOppositeEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
+    PathAdditions traversalFromOppositeEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
 
-    path_additions traversalFromContiguousEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
+    PathAdditions traversalFromContiguousEdge(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
 
-    path_additions traversalFromCorner(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
+    PathAdditions traversalFromCorner(const Position &p, const Node &p_a, const Node &p_b, float &step_cost);
 
     bool goalReached(const Position &p);
 

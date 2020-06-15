@@ -18,7 +18,7 @@ void DirectLinearInterpolationPathExtractorCells<T>::extract_path() {
     total_dist = 0;
 
     float min_cost;
-    path_additions pa;
+    PathAdditions pa;
 
     int curr_step = 0;
 
@@ -58,10 +58,10 @@ void DirectLinearInterpolationPathExtractorCells<T>::extract_path() {
 }
 
 template<typename T>
-path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromCorner(const Position &p,
-                                                                                   const Node &p_a,
-                                                                                   const Node &p_b,
-                                                                                   float &step_cost) {
+PathAdditions DirectLinearInterpolationPathExtractorCells<T>::traversalFromCorner(const Position &p,
+                                                                                  const Node &p_a,
+                                                                                  const Node &p_b,
+                                                                                  float &step_cost) {
     assert(grid.is_valid_vertex(p));
 
     TraversalParams cell{};
@@ -82,10 +82,10 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromCorn
 }
 
 template<typename T>
-path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromContiguousEdge(const Position &p,
-                                                                                           const Node &p_a,
-                                                                                           const Node &p_b,
-                                                                                           float &step_cost) {
+PathAdditions DirectLinearInterpolationPathExtractorCells<T>::traversalFromContiguousEdge(const Position &p,
+                                                                                          const Node &p_a,
+                                                                                          const Node &p_b,
+                                                                                          float &step_cost) {
     TraversalParams cell1{};
     bool cond = p.aligned(p_a);
     cell1.p0 = p;
@@ -106,10 +106,10 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromCont
 }
 
 template<typename T>
-path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromOppositeEdge(const Position &p,
-                                                                                         const Node &p_a,
-                                                                                         const Node &p_b,
-                                                                                         float &step_cost) {
+PathAdditions DirectLinearInterpolationPathExtractorCells<T>::traversalFromOppositeEdge(const Position &p,
+                                                                                        const Node &p_a,
+                                                                                        const Node &p_b,
+                                                                                        float &step_cost) {
 
     TraversalParams cell1{}, cell2{};
     cell1.p1 = cell2.p2 = p_a;
@@ -144,10 +144,10 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromOppo
 }
 
 template<typename T>
-path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromEdge(const Position &p,
-                                                                                 const Node &p_a,
-                                                                                 const Node &p_b,
-                                                                                 float &step_cost) {
+PathAdditions DirectLinearInterpolationPathExtractorCells<T>::traversalFromEdge(const Position &p,
+                                                                                const Node &p_a,
+                                                                                const Node &p_b,
+                                                                                float &step_cost) {
 
     assert(!grid.is_valid_vertex(p));
 
@@ -162,12 +162,12 @@ path_additions DirectLinearInterpolationPathExtractorCells<T>::traversalFromEdge
 }
 
 template<typename T>
-path_additions DirectLinearInterpolationPathExtractorCells<T>::getPathAdditions(const Position &p,
-                                                                                const bool &do_lookahead,
-                                                                                float &step_cost) {
+PathAdditions DirectLinearInterpolationPathExtractorCells<T>::getPathAdditions(const Position &p,
+                                                                               const bool &do_lookahead,
+                                                                               float &step_cost) {
     float min_cost = INFINITY;
-    path_additions min_pa = {};
-    path_additions temp_pa;
+    PathAdditions min_pa = {};
+    PathAdditions temp_pa;
     float lookahead_cost;
 #ifdef VERBOSE_EXTRACTION
     if (lookahead and not do_lookahead){

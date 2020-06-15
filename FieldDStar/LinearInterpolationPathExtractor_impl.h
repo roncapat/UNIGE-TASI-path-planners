@@ -18,7 +18,7 @@ void LinearInterpolationPathExtractor<T>::extract_path() {
     total_dist = 0;
 
     float min_cost;
-    path_additions pa;
+    PathAdditions pa;
 
     int curr_step = 0;
 
@@ -58,10 +58,10 @@ void LinearInterpolationPathExtractor<T>::extract_path() {
 }
 
 template<typename T>
-path_additions LinearInterpolationPathExtractor<T>::traversalFromCorner(const Position &p,
-                                                  const Node &p_a,
-                                                  const Node &p_b,
-                                                  float &step_cost) {
+PathAdditions LinearInterpolationPathExtractor<T>::traversalFromCorner(const Position &p,
+                                                                       const Node &p_a,
+                                                                       const Node &p_b,
+                                                                       float &step_cost) {
     assert(grid.is_valid_vertex(p));
 
     TraversalParams cell{};
@@ -81,10 +81,10 @@ path_additions LinearInterpolationPathExtractor<T>::traversalFromCorner(const Po
 }
 
 template<typename T>
-path_additions LinearInterpolationPathExtractor<T>::traversalFromContiguousEdge(const Position &p,
-                                                          const Node &p_a,
-                                                          const Node &p_b,
-                                                          float &step_cost) {
+PathAdditions LinearInterpolationPathExtractor<T>::traversalFromContiguousEdge(const Position &p,
+                                                                               const Node &p_a,
+                                                                               const Node &p_b,
+                                                                               float &step_cost) {
     TraversalParams cell1{};
     bool cond = p.aligned(p_a);
     cell1.p0 = p;
@@ -103,10 +103,10 @@ path_additions LinearInterpolationPathExtractor<T>::traversalFromContiguousEdge(
 }
 
 template<typename T>
-path_additions LinearInterpolationPathExtractor<T>::traversalFromOppositeEdge(const Position &p,
-                                                        const Node &p_a,
-                                                        const Node &p_b,
-                                                        float &step_cost) {
+PathAdditions LinearInterpolationPathExtractor<T>::traversalFromOppositeEdge(const Position &p,
+                                                                             const Node &p_a,
+                                                                             const Node &p_b,
+                                                                             float &step_cost) {
 
     TraversalParams cell1{}, cell2{};
     cell1.p1 = cell2.p2 = p_a;
@@ -137,10 +137,10 @@ path_additions LinearInterpolationPathExtractor<T>::traversalFromOppositeEdge(co
 }
 
 template<typename T>
-path_additions LinearInterpolationPathExtractor<T>::traversalFromEdge(const Position &p,
-                                                const Node &p_a,
-                                                const Node &p_b,
-                                                float &step_cost) {
+PathAdditions LinearInterpolationPathExtractor<T>::traversalFromEdge(const Position &p,
+                                                                     const Node &p_a,
+                                                                     const Node &p_b,
+                                                                     float &step_cost) {
 
     assert(!grid.is_valid_vertex(p));
 
@@ -155,12 +155,12 @@ path_additions LinearInterpolationPathExtractor<T>::traversalFromEdge(const Posi
 }
 
 template<typename T>
-path_additions LinearInterpolationPathExtractor<T>::getPathAdditions(const Position &p,
-                                               const bool &do_lookahead,
-                                               float &step_cost) {
+PathAdditions LinearInterpolationPathExtractor<T>::getPathAdditions(const Position &p,
+                                                                    const bool &do_lookahead,
+                                                                    float &step_cost) {
     float min_cost = INFINITY;
-    path_additions min_pa = {};
-    path_additions temp_pa;
+    PathAdditions min_pa = {};
+    PathAdditions temp_pa;
     float lookahead_cost;
 #ifdef VERBOSE_EXTRACTION
     if (lookahead and not do_lookahead)

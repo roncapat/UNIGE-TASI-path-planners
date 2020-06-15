@@ -12,7 +12,7 @@
 #include "Graph.h"
 #include "ExpandedMap.h"
 #include "PriorityQueue.h"
-#include "LinearTraversalCostInterpolation.h"
+#include "InterpolatedTraversal.h"
 #include "ReplannerBase.h"
 
 template<int OptimizationLevel>

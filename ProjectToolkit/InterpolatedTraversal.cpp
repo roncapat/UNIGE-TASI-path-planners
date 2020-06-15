@@ -5,7 +5,7 @@
 #include <numeric>
 #include <algorithm>
 #include "Graph.h"
-#include "LinearTraversalCostInterpolation.h"
+#include "InterpolatedTraversal.h"
 
 namespace TraversalTypeI {
 namespace Corner {
@@ -483,7 +483,7 @@ std::vector<Position> additions(TraversalParams &t) {
 
 namespace InterpolatedTraversal {
 
-path_additions traversalFromCorner(TraversalParams &cell, float &step_cost) {
+PathAdditions traversalFromCorner(TraversalParams &cell, float &step_cost) {
     if (cell.g1 == INFINITY && cell.g2 == INFINITY)
         return {{/*EMPTY*/}, {/*EMPTY*/}, INFINITY};
     if (cell.c == INFINITY)
@@ -543,7 +543,7 @@ path_additions traversalFromCorner(TraversalParams &cell, float &step_cost) {
     step_cost = std::accumulate(step_costs.begin(), step_costs.end(), .0f);
     return {positions, step_costs, min_cost};
 }
-path_additions traversalFromContiguousEdge(TraversalParams &cell1, float &step_cost) {
+PathAdditions traversalFromContiguousEdge(TraversalParams &cell1, float &step_cost) {
     if (cell1.g1 == INFINITY && cell1.g2 == INFINITY)
         return {{/*EMPTY*/}, {/*EMPTY*/}, INFINITY};
     if (cell1.c == INFINITY)
@@ -589,7 +589,7 @@ path_additions traversalFromContiguousEdge(TraversalParams &cell1, float &step_c
     step_cost = std::accumulate(step_costs.begin(), step_costs.end(), .0f);
     return {positions, step_costs, min_cost};
 }
-path_additions traversalFromOppositeEdge(TraversalParams &cell1, TraversalParams &cell2, float &step_cost) {
+PathAdditions traversalFromOppositeEdge(TraversalParams &cell1, TraversalParams &cell2, float &step_cost) {
     // FOR EXTRACTION IN SEPARATE LIBRARY
     if (cell1.g1 == INFINITY && cell2.g2 == INFINITY)
         return {{/*EMPTY*/}, {/*EMPTY*/}, INFINITY};
@@ -654,7 +654,7 @@ path_additions traversalFromOppositeEdge(TraversalParams &cell1, TraversalParams
     return {positions, step_costs, min_cost};
 }
 
-path_additions directTraversalFromCorner(TraversalParams &cell, float &step_cost) {
+PathAdditions directTraversalFromCorner(TraversalParams &cell, float &step_cost) {
     if (cell.g1 == INFINITY && cell.g2 == INFINITY)
         return {{/*EMPTY*/}, {/*EMPTY*/}, INFINITY};
     if (cell.c == INFINITY)
@@ -693,7 +693,7 @@ path_additions directTraversalFromCorner(TraversalParams &cell, float &step_cost
     return {positions, step_costs, min_cost};
 }
 
-path_additions directTraversalFromContiguousEdge(TraversalParams &cell1, float &step_cost) {
+PathAdditions directTraversalFromContiguousEdge(TraversalParams &cell1, float &step_cost) {
     if (cell1.g1 == INFINITY && cell1.g2 == INFINITY)
         return {{/*EMPTY*/}, {/*EMPTY*/}, INFINITY};
     if (cell1.c == INFINITY)
@@ -732,7 +732,7 @@ path_additions directTraversalFromContiguousEdge(TraversalParams &cell1, float &
     return {positions, step_costs, min_cost};
 }
 
-path_additions directTraversalFromOppositeEdge(TraversalParams &cell1, TraversalParams &cell2, float &step_cost) {
+PathAdditions directTraversalFromOppositeEdge(TraversalParams &cell1, TraversalParams &cell2, float &step_cost) {
     // FOR EXTRACTION IN SEPARATE LIBRARY
     if (cell1.g1 == INFINITY && cell2.g2 == INFINITY)
         return {{/*EMPTY*/}, {/*EMPTY*/}, INFINITY};
