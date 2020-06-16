@@ -1,6 +1,16 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
+#if __cplusplus > 201703L
+#include <optional>
+using std::optional;
+using std::nullopt;
+#else
+#include <tl/optional.hpp>
+using tl::optional;
+using tl::nullopt;
+#endif
+
 #include <cassert>
 #include <cmath>
 #include <limits>
@@ -9,7 +19,6 @@
 #include <utility>
 #include <vector>
 #include <memory>
-#include <optional>
 #include "Node.h"
 #include "Position.h"
 #include "Cell.h"
@@ -55,8 +64,8 @@ class Graph {
   std::vector<Edge> consecutive_neighbors(const Position &p) const;
   std::vector<Edge> consecutive_neighbors(const Node &s) const;
 
-  std::optional<Node> ccw_neighbor(const Node &s, const Node &s_prime) const;
-  std::optional<Node> cw_neighbor(const Node &s, const Node &s_prime) const;
+  optional<Node> ccw_neighbor(const Node &s, const Node &s_prime) const;
+  optional<Node> cw_neighbor(const Node &s, const Node &s_prime) const;
 
   static Cell get_cell(const Node &a, const Node &b, const Node &c);
   static std::vector<Position> get_grid_boundaries_traversals(const Position &a, const Position &b);

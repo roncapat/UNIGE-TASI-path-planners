@@ -2,7 +2,6 @@
 #include <cmath>
 #include <utility>
 #include <algorithm>
-#include <optional>
 
 void Graph::set_start(const Position &start) {
     start_pos_ = start;
@@ -229,7 +228,7 @@ std::vector<Edge> Graph::consecutive_neighbors(const Node &s) const {
     return consecutive_neighbors;
 }
 
-std::optional<Node> Graph::ccw_neighbor(const Node &s, const Node &s_prime) const {
+optional<Node> Graph::ccw_neighbor(const Node &s, const Node &s_prime) const {
     int delta_x = s_prime.x - s.x + 1;
     int delta_y = s_prime.y - s.y + 1;
 
@@ -241,10 +240,10 @@ std::optional<Node> Graph::ccw_neighbor(const Node &s, const Node &s_prime) cons
 
     Node ccw_neighbor(new_x, new_y);
     if (is_valid(ccw_neighbor)) return ccw_neighbor;
-    else return std::nullopt;
+    else return nullopt;
 }
 
-std::optional<Node> Graph::cw_neighbor(const Node &s, const Node &s_prime) const {
+optional<Node> Graph::cw_neighbor(const Node &s, const Node &s_prime) const {
     int delta_x = s_prime.x - s.x + 1;
     int delta_y = s_prime.y - s.y + 1;
 
@@ -256,7 +255,7 @@ std::optional<Node> Graph::cw_neighbor(const Node &s, const Node &s_prime) const
 
     Node cw_neighbor(new_x, new_y);
     if (is_valid(cw_neighbor)) return cw_neighbor;
-    else return std::nullopt;
+    else return nullopt;
 }
 
 float Graph::get_cost(const Cell &ind) const {

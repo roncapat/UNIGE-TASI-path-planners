@@ -1,3 +1,6 @@
 [submodule "RobinHoodHashMap"]
 	path = RobinHoodHashMap
 	url = https://github.com/martinus/robin-hood-hashing.git
+[submodule "TartanLlamaOptional"]
+	path = TartanLlamaOptional
+	url = https://github.com/TartanLlama/optional.git

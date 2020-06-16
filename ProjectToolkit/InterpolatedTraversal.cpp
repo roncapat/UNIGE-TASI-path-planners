@@ -1,7 +1,3 @@
-//
-// Created by patrick on 06/04/20.
-//
-
 #include <numeric>
 #include <algorithm>
 #include "Graph.h"
