@@ -42,4 +42,14 @@ extern const float SQRT2;
 #define RETURN_CHECK_POSITIVE_LIMITED(x) auto _y = x; assert(_y>0 and _y<INFINITY); return(_y);
 #endif
 
+#if __cplusplus > 201703L // std::optional comes with C++17
+#include <optional>
+using std::optional;
+using std::nullopt;
+#else // use code from P0798R0 proposal (to permit C++11 compilation - eg. RTEMS 5)
+#include <tl/optional.hpp>
+using tl::optional;
+using tl::nullopt;
+#endif
+
 #endif //RONCAPAT_PLANNER_TOOLKIT_MACROS_H

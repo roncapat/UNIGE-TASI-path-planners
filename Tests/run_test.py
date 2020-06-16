@@ -25,7 +25,7 @@ pipe_out = os.path.abspath("build/pipe_2")
 gui = 1
 tof = 0
 outpath = "Results"
-upscale = 3
+upscale = 1
 use_heuristic = False
 cmap = cm.winter
 
@@ -74,7 +74,7 @@ print("[SIMULATOR] End noisemap generation")
 for planner in planners:
     print("[SIMULATOR] Launching %s planner" % planner)
     label = planner
-    perf_args = ["sudo", "perf", "record", "--call-graph", "dwarf", "-o", "/mnt/sdb/perf_" + planner + ".data"]
+    perf_args = ["perf", "record", "--call-graph", "dwarf", "-o", "/mnt/sdb/perf_" + planner + ".data"]
     prog_args = [planners[planner]["path"], mapfile, 100, 100, 1000 * upscale - 100, 1000 * upscale - 100, 1, pipe_out,
                  pipe_in, 1, 0, outpath]
     perf_args.extend(prog_args)
@@ -168,7 +168,7 @@ for planner in planners:
     p_out.close()
     p_in.close()
     process.wait()
-    os.chmod("/mnt/sdb/perf_" + planner + ".data", 0666)
+    os.chmod("/mnt/sdb/perf_" + planner + ".data", 0o666)
 
 plt.figure(1)
 plt.title("Replanning time analysis")

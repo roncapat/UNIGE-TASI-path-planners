@@ -17,16 +17,16 @@
 
 template<int OptimizationLevel>
 class DFMPlanner : public ReplannerBase<DFMPlanner<OptimizationLevel>, Cell, std::pair<Cell, Cell>, float> {
+ public:
     typedef ReplannerBase<DFMPlanner<OptimizationLevel>, Cell, std::pair<Cell, Cell>, float> Base;
     friend Base;
     typedef typename Base::Key Key;
     typedef typename Base::Queue Queue;
     typedef typename Base::Map Map;
-public:
     using Base::grid;
     using Base::priority_queue;
     using Base::map;
-public:
+ public:
     DFMPlanner() = default;
 
     void set_start(const Position &pos);
@@ -54,10 +54,6 @@ private:
     Key calculate_key(const Cell &s, float cost_so_far);
 
     void update_cell(const Cell &cell);
-
-    unsigned long computeShortestPath();
-
-    unsigned long update_cells();
 
     std::pair<Cell, float> best_cell(const Cell &a, const Cell &b);
 

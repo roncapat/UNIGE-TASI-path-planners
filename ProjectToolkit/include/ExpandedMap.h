@@ -2,6 +2,9 @@
 #define RONCAPAT_GLOBAL_PLANNERS_EXPANDEDMAP_H
 
 #include <robin_hood.h>
+#include "Macros.h"
+
+template <typename> struct tag {};
 
 template<typename ElemType_, typename InfoType_>
 using hashmap_ = robin_hood::unordered_node_map<ElemType_, std::tuple<float, float, InfoType_>>;
@@ -37,7 +40,7 @@ class ExpandedMap {
 
   iterator insert_or_assign(const ElemType &s, float g, float rhs);
 
-  std::optional<iterator> find(const ElemType &n);
+  optional<iterator> find(const ElemType &n);
 
   size_t size();
 
@@ -46,10 +49,13 @@ class ExpandedMap {
 
   float get_g(const ElemType &s) const;
   float get_rhs(const ElemType &s) const;
-  float get_interp_rhs(const Node &s) const;
+  float get_interp_rhs(const Node &s) const {return get_interp_rhs(s, tag<ElemType>());};
   std::pair<float, float> get_g_rhs(const ElemType &s) const;
 
   bool consistent(const ElemType &s);
+ private:
+  float get_interp_rhs(const Node &s, tag<Node>) const;
+  float get_interp_rhs(const Node &s, tag<Cell>) const;
 };
 
 template<typename IT>
@@ -57,25 +63,25 @@ using is_const_iterator =
 std::is_const<typename std::remove_reference<typename std::iterator_traits<IT>::reference>::type>;
 
 template<class iterator>
-static inline const auto &ELEM(const iterator &map_it);
+static inline auto ELEM(const iterator &map_it) -> typename std::add_lvalue_reference<const decltype((map_it)->first)>::type;
 
-template<typename iterator, std::enable_if_t<not is_const_iterator<iterator>::value, int> = 0>
+template<typename iterator, typename std::enable_if<not is_const_iterator<iterator>::value, int>::type = 0>
 static inline float &G(const iterator &map_it);
 
-template<typename iterator, std::enable_if_t<is_const_iterator<iterator>::value, int> = 0>
+template<typename iterator, typename std::enable_if<is_const_iterator<iterator>::value, int>::type = 0>
 static inline const float &G(const iterator &map_it);
 
-template<typename iterator, std::enable_if_t<not is_const_iterator<iterator>::value, int> = 0>
+template<typename iterator, typename std::enable_if<not is_const_iterator<iterator>::value, int>::type = 0>
 static inline float &RHS(const iterator &map_it);
 
-template<typename iterator, std::enable_if_t<is_const_iterator<iterator>::value, int> = 0>
+template<typename iterator, typename std::enable_if<is_const_iterator<iterator>::value, int>::type = 0>
 static inline const float &RHS(const iterator &map_it);
 
-template<typename iterator, std::enable_if_t<not is_const_iterator<iterator>::value, int> = 0>
-static inline auto &INFO(const iterator &map_it);
+template<typename iterator, typename std::enable_if<not is_const_iterator<iterator>::value, int>::type = 0>
+static inline auto INFO(const iterator &map_it) -> typename std::add_lvalue_reference<decltype(std::get<2>((map_it)->second))>::type;
 
-template<typename iterator, std::enable_if_t<is_const_iterator<iterator>::value, int> = 0>
-static inline const auto &INFO(const iterator &map_it);
+template<typename iterator, typename std::enable_if<is_const_iterator<iterator>::value, int>::type = 0>
+static inline auto INFO(const iterator &map_it) -> typename std::add_lvalue_reference<const decltype(std::get<2>((map_it)->second))>::type;
 
 template<class iterator>
 static inline bool CONSISTENT(const iterator &map_it);

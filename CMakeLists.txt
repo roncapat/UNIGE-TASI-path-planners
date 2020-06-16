@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(roncapat_global_planners)
-
+set(CMAKE_CXX_STANDARD 11)
 add_compile_options(-W -Wall -Wextra)
 
 # set default build type
@@ -55,7 +55,6 @@ set(NO_HEURISTIC 1)
 add_subdirectory(ShiftedGridFastMarching SGDFM_2_no_heur)
 set(NO_HEURISTIC 0)
 add_subdirectory(ShiftedGridFastMarching SGDFM_2_heur)
-
 
 add_dependencies(ProjectToolkit robin_hood)
 add_dependencies(field_d_planner_0_heur simulator ProjectToolkit)

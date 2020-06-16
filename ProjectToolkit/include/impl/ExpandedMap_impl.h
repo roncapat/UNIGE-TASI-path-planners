@@ -2,6 +2,7 @@
 #include <ExpandedMap.h>
 #include <Interpolation.h>
 
+
 template<typename E, typename I>
 typename ExpandedMap<E, I>::iterator
 ExpandedMap<E, I>::find_or_init(const ElemType &n) {
@@ -67,14 +68,15 @@ float ExpandedMap<E, I>::get_rhs(const ElemType &s) const {
 }
 
 template<typename E, typename I>
-float ExpandedMap<E, I>::get_interp_rhs(const Node &s) const {
-    if constexpr (std::is_same_v<E, Cell>){
-        Cell p(std::floor(s.x - 0.5), std::floor(s.y - 0.5));
-        float a = get_rhs(p.bottom_cell()), b = get_rhs(p), c = get_rhs(p.bottom_right_cell()), d = get_rhs(p.right_cell());
-        return (a+b+c+d)*0.25f;
-    } else if constexpr (std::is_same_v<E,Node>){
-        return get_rhs(s);
-    } else assert(0);
+float ExpandedMap<E, I>::get_interp_rhs(const Node &s, tag<Cell>) const {
+    Cell p(std::floor(s.x - 0.5), std::floor(s.y - 0.5));
+    float a = get_rhs(p.bottom_cell()), b = get_rhs(p), c = get_rhs(p.bottom_right_cell()), d = get_rhs(p.right_cell());
+    return (a+b+c+d)*0.25f;
+}
+
+template<typename E, typename I>
+float ExpandedMap<E, I>::get_interp_rhs(const Node &s, tag<Node>) const {
+    return get_rhs(s);
 }
 
 template<typename ElemType_, typename InfoType_>
@@ -82,7 +84,7 @@ ExpandedMap<ElemType_, InfoType_>::ExpandedMap(const unsigned int x, const unsig
     init(x, y, bits);
 }
 template<typename E, typename I>
-std::optional<typename ExpandedMap<E, I>::iterator> ExpandedMap<E, I>::find(const E &n) {
+optional<typename ExpandedMap<E, I>::iterator> ExpandedMap<E, I>::find(const E &n) {
     auto idx = get_bucket_idx(n);
     if (idx == -1 or idx >= (signed)buckets.size()) return {};
     iterator it = buckets[idx].find(n);
@@ -113,30 +115,34 @@ void ExpandedMap<E, I>::init(unsigned int x, unsigned int y, unsigned char bits)
 }
 template<typename ElemType_, typename InfoType_>
 bool ExpandedMap<ElemType_, InfoType_>::consistent(const ElemType &s) {
-    auto[g, rhs] = get_g_rhs(s);
+    float g, rhs;
+    std::tie(g,rhs)=get_g_rhs(s);
     return g == rhs;
 }
 
 template<typename iterator>
-const auto &ELEM(const iterator &map_it) { return (map_it)->first; }
+auto ELEM(const iterator &map_it)  -> typename std::add_lvalue_reference<const decltype((map_it)->first)>::type { return (map_it)->first; }
+//const auto &ELEM(const iterator &map_it) { return (map_it)->first; } //C++17
 
-template<typename iterator, std::enable_if_t<not is_const_iterator<iterator>::value, int>>
+template<typename iterator, typename std::enable_if<not is_const_iterator<iterator>::value, int>::type>
 float &G(const iterator &map_it) { return std::get<0>((map_it)->second); }
 
-template<typename iterator, std::enable_if_t<is_const_iterator<iterator>::value, int>>
+template<typename iterator, typename std::enable_if<is_const_iterator<iterator>::value, int>::type>
 const float &G(const iterator &map_it) { return std::get<0>((map_it)->second); }
 
-template<typename iterator, std::enable_if_t<not is_const_iterator<iterator>::value, int>>
+template<typename iterator, typename std::enable_if<not is_const_iterator<iterator>::value, int>::type>
 float &RHS(const iterator &map_it) { return std::get<1>((map_it)->second); }
 
-template<typename iterator, std::enable_if_t<is_const_iterator<iterator>::value, int>>
+template<typename iterator, typename std::enable_if<is_const_iterator<iterator>::value, int>::type>
 const float &RHS(const iterator &map_it) { return std::get<1>((map_it)->second); }
 
-template<typename iterator, std::enable_if_t<not is_const_iterator<iterator>::value, int>>
-auto &INFO(const iterator &map_it) { return std::get<2>((map_it)->second); }
+template<typename iterator, typename std::enable_if<not is_const_iterator<iterator>::value, int>::type>
+auto INFO(const iterator &map_it) -> typename std::add_lvalue_reference<decltype(std::get<2>((map_it)->second))>::type { return std::get<2>((map_it)->second); }
+//auto &INFO(const iterator &map_it) { return std::get<2>((map_it)->second); } //C++17
 
-template<typename iterator, std::enable_if_t<is_const_iterator<iterator>::value, int>>
-const auto &INFO(const iterator &map_it) { return std::get<2>((map_it)->second); }
+template<typename iterator, typename std::enable_if<is_const_iterator<iterator>::value, int>::type>
+auto INFO(const iterator &map_it) -> typename std::add_lvalue_reference<const decltype(std::get<2>((map_it)->second))>::type { return std::get<2>((map_it)->second); }
+//const auto &INFO(const iterator &map_it) { return std::get<2>((map_it)->second); } //C++17
 
 template<typename iterator>
 bool CONSISTENT(const iterator &map_it) { return G(map_it) == RHS(map_it); }

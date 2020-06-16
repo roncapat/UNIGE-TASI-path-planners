@@ -169,13 +169,13 @@ PathAdditions LinearInterpolationPathExtractor<T>::getPathAdditions(const Positi
               << (isVertex(p) ? " (Corner)" : " (Edge)") << std::endl << std::endl;
 #endif
 
-    for (const auto &[p_a, p_b] : grid.consecutive_neighbors(p)) {
+    for (const auto &edge : grid.consecutive_neighbors(p)) {
         float cur_step_cost = INFINITY;
 
         if (grid.is_valid_vertex(p))
-            temp_pa = traversalFromCorner(p, p_a, p_b, cur_step_cost);
+            temp_pa = traversalFromCorner(p, edge.first, edge.second, cur_step_cost);
         else
-            temp_pa = traversalFromEdge(p, p_a, p_b, cur_step_cost);
+            temp_pa = traversalFromEdge(p, edge.first, edge.second, cur_step_cost);
 
 #ifdef VERBOSE_EXTRACTION
         if (lookahead and not do_lookahead) std::cout << "\t";

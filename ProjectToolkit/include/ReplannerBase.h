@@ -13,7 +13,11 @@
 #include "PriorityQueue.h"
 #include "ExpandedMap.h"
 
-template<class...> constexpr std::false_type always_false{};
+#if __cplusplus > 201703L // std::optional comes with C++17
+#define CONSTEXPR constexpr
+#else // use code from P0798R0 proposal (to permit C++11 compilation - eg. RTEMS 5)
+#define CONSTEXPR
+#endif
 
 #define LOOP_OK 0
 #define LOOP_FAILURE_NO_GRAPH -1
@@ -26,6 +30,7 @@ template<typename Derived, typename MapElem_, typename MapInfo_, typename QueueK
 class ReplannerBase {
 public:
     typedef QueueKey_ Key;
+    typedef MapInfo_ Info;
     typedef PriorityQueue<Key, MapElem_> Queue;
     typedef ExpandedMap<MapElem_, MapInfo_> Map;
 public:
@@ -92,11 +97,12 @@ public:
     }
 
     void set_goal(const Position &point) {
-        if constexpr(std::is_same_v<MapElem_, Node>)
+        if CONSTEXPR (std::is_same<MapElem_, Node>::value)
             new_goal = grid.goal_node_ != Node(point);
-        else if constexpr(std::is_same_v<MapElem_, Cell>)
+        else if CONSTEXPR(std::is_same<MapElem_, Cell>::value)
             new_goal = grid.goal_cell_ != Cell(point);
-        else static_assert(always_false<Derived>, "A MapElement can only be of type Node or Cell");
+        else static_assert(std::is_same<MapElem_, Node>::value or std::is_same<MapElem_, Cell>::value,
+            "A MapElement can only be of type Node or Cell");
         grid.set_goal(point);
         goal_set = true;
     }

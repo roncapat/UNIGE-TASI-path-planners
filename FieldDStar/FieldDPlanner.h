@@ -17,12 +17,12 @@
 
 template<int OptimizationLevel>
 class FieldDPlanner : public ReplannerBase<FieldDPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>> {
+ public:
     typedef ReplannerBase<FieldDPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>> Base;
     friend Base;
     typedef typename Base::Key Key;
     typedef typename Base::Queue Queue;
     typedef typename Base::Map Map;
-public:
     using Base::grid;
     using Base::priority_queue;
     using Base::map;

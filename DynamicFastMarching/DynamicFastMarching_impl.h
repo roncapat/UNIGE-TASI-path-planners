@@ -137,7 +137,8 @@ void DFMPlanner<1>::update_cell(const Cell &cell) {
 
 template<int O>
 typename DFMPlanner<O>::Key DFMPlanner<O>::calculate_key(const Cell &s) {
-    auto[g, rhs] = map.get_g_rhs(s);
+    float g,rhs;
+    std::tie(g,rhs)=map.get_g_rhs(s);
     return calculate_key(s, g, rhs);
 }
 
@@ -161,8 +162,9 @@ float DFMPlanner<0>::min_rhs(const Cell &c) {
 
     std::pair<Cell, Cell> ortho_bptrs{}, diago_bptrs{};
 
-    auto[ca1, g_a_1] = best_cell(c.top_cell(), c.bottom_cell());
-    auto[cb1, g_b_1] = best_cell(c.left_cell(), c.right_cell());
+    Cell ca1, cb1; float g_a_1, g_b_1;
+    std::tie(ca1, g_a_1) = best_cell(c.top_cell(), c.bottom_cell());
+    std::tie(cb1, g_b_1) = best_cell(c.left_cell(), c.right_cell());
 #ifdef VERBOSE_EXTRACTION
     std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
     std::cout << "X- " << c.top_cell().x << " " << c.top_cell().y << "   cost " << map.get_g(c.top_cell()) << std::endl;
@@ -176,8 +178,9 @@ float DFMPlanner<0>::min_rhs(const Cell &c) {
 #endif
     std::tie(stencil_ortho_cost, ortho_bptrs) = compute_optimal_cost(ca1, cb1, g_a_1, g_b_1, tau, 1);
 
-    auto[cc1, g_c_1] = best_cell(c.top_left_cell(), c.bottom_right_cell());
-    auto[cd1, g_d_1] = best_cell(c.bottom_left_cell(), c.top_right_cell());
+    Cell cc1, cd1; float g_c_1, g_d_1;
+    std::tie(cc1, g_c_1) = best_cell(c.top_left_cell(), c.bottom_right_cell());
+    std::tie(cd1, g_d_1) = best_cell(c.bottom_left_cell(), c.top_right_cell());
 #ifdef VERBOSE_EXTRACTION
     std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
     std::cout << "X-Y- " << c.top_left_cell().x << " " << c.top_left_cell().y << "   cost " << map.get_g(c.top_left_cell()) << std::endl;
@@ -209,8 +212,9 @@ float DFMPlanner<1>::min_rhs(const Cell &c, std::pair<Cell, Cell> &bptrs) {
 
     std::pair<Cell, Cell> ortho_bptrs{}, diago_bptrs{};
 
-    auto[ca1, g_a_1] = best_cell(c.top_cell(), c.bottom_cell());
-    auto[cb1, g_b_1] = best_cell(c.left_cell(), c.right_cell());
+    Cell ca1, cb1; float g_a_1, g_b_1;
+    std::tie(ca1, g_a_1) = best_cell(c.top_cell(), c.bottom_cell());
+    std::tie(cb1, g_b_1) = best_cell(c.left_cell(), c.right_cell());
 #ifdef VERBOSE_EXTRACTION
     std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
     std::cout << "X- " << c.top_cell().x << " " << c.top_cell().y << "   cost " << map.get_g(c.top_cell()) << std::endl;
@@ -224,8 +228,9 @@ float DFMPlanner<1>::min_rhs(const Cell &c, std::pair<Cell, Cell> &bptrs) {
 #endif
     std::tie(stencil_ortho_cost, ortho_bptrs) = compute_optimal_cost(ca1, cb1, g_a_1, g_b_1, tau, 1);
 
-    auto[cc1, g_c_1] = best_cell(c.top_left_cell(), c.bottom_right_cell());
-    auto[cd1, g_d_1] = best_cell(c.bottom_left_cell(), c.top_right_cell());
+    Cell cc1, cd1; float g_c_1, g_d_1;
+    std::tie(cc1, g_c_1) = best_cell(c.top_left_cell(), c.bottom_right_cell());
+    std::tie(cd1, g_d_1) = best_cell(c.bottom_left_cell(), c.top_right_cell());
 #ifdef VERBOSE_EXTRACTION
     std::cout << std::endl << "Expanding " << c.x << " " << c.y << std::endl;
     std::cout << "X-Y- " << c.top_left_cell().x << " " << c.top_left_cell().y << "   cost " << map.get_g(c.top_left_cell()) << std::endl;
@@ -297,7 +302,8 @@ float DFMPlanner<O>::min_rhs_decreased_neighbor(const Cell &c, const Cell &nbr, 
 template<int O>
 bool DFMPlanner<O>::end_condition() {
     auto top_key = priority_queue.top_key();
-    auto[g, rhs] = map.get_g_rhs(grid.start_cell_); //TODO avoid finding cell in map, cache hashmap node iterator
+    float g,rhs;
+    std::tie(g,rhs) = map.get_g_rhs(grid.start_cell_); //TODO avoid finding cell in map, cache hashmap node iterator
     return ((rhs == g) and (top_key >= calculate_key(grid.start_cell_, g, rhs)));
 }
 

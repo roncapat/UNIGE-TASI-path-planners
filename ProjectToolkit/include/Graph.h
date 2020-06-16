@@ -1,15 +1,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#if __cplusplus > 201703L
-#include <optional>
-using std::optional;
-using std::nullopt;
-#else
-#include <tl/optional.hpp>
-using tl::optional;
-using tl::nullopt;
-#endif
 
 #include <cassert>
 #include <cmath>
@@ -19,6 +10,7 @@ using tl::nullopt;
 #include <utility>
 #include <vector>
 #include <memory>
+#include "Macros.h"
 #include "Node.h"
 #include "Position.h"
 #include "Cell.h"

@@ -79,7 +79,7 @@ int main(int _argc, char **_argv) {
     goal.y = to_y;
 
     DFMPlanner<OPT_LVL> planner{};
-    DirectLinearInterpolationPathExtractorCells extractor(planner.get_expanded_map(), planner.get_grid());
+    DirectLinearInterpolationPathExtractorCells<typename DFMPlanner<OPT_LVL>::Base::Info> extractor(planner.get_expanded_map(), planner.get_grid());
     planner.reset();
     planner.set_occupancy_threshold(1);
     planner.set_heuristic_multiplier(min);
@@ -146,8 +146,8 @@ int main(int _argc, char **_argv) {
             for (auto b: planner.map.buckets){
                 for (const auto &expanded : b) {
                     const Cell &exp = expanded.first;
-                    auto[g, rhs, _] = expanded.second;
-                    (void) _;
+                    float g, rhs;
+                    std::tie(g, rhs, std::ignore) = expanded.second;
                     out_fifo.write((char *) &(exp.x), 4);
                     out_fifo.write((char *) &(exp.y), 4);
                     out_fifo.write((char *) &(g), 4);

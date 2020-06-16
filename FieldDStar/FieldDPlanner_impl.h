@@ -158,7 +158,8 @@ void FieldDPlanner<1>::update_node(const Node &node) {
 
 template<int O>
 typename FieldDPlanner<O>::Key FieldDPlanner<O>::calculate_key(const Node &s) {
-    auto[g, rhs] = map.get_g_rhs(s);
+    float g, rhs;
+    std::tie(g, rhs) = map.get_g_rhs(s);
     return calculate_key(s, g, rhs);
 }
 
@@ -181,8 +182,8 @@ typename FieldDPlanner<O>::Key FieldDPlanner<O>::calculate_key(const Node &s, co
 template<>
 float FieldDPlanner<0>::min_rhs(const Node &s) {
     float rhs = INFINITY;
-    for (auto &[nbr1, nbr2] : grid.consecutive_neighbors(s))
-        rhs = std::min(rhs, compute_optimal_cost(s, nbr1, nbr2));
+    for (auto &edge : grid.consecutive_neighbors(s))
+        rhs = std::min(rhs, compute_optimal_cost(s, edge.first, edge.second));
     return rhs;
 }
 
@@ -230,7 +231,8 @@ bool FieldDPlanner<O>::end_condition() {
     }
 */
     for (auto &node: start_nodes) {
-        auto[g, rhs] = map.get_g_rhs(node);
+        float g, rhs;
+        std::tie(g, rhs) = map.get_g_rhs(node);
         auto key = calculate_key(node, g, rhs);
         if (rhs != INFINITY and key.first != INFINITY) {
             max_start_key = std::max(max_start_key, key);
