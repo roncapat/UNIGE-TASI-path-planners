@@ -76,7 +76,11 @@ int main(int _argc, char **_argv) {
     goal.y = to_y;
 
     FieldDPlanner<OPT_LVL> planner{};
-    LinearInterpolationPathExtractor<typename FieldDPlanner<OPT_LVL>::Base::Info> extractor(planner.get_expanded_map(), planner.get_grid());
+    LinearInterpolationPathExtractor<
+        typename FieldDPlanner<OPT_LVL>::Map::ElemType,
+        typename FieldDPlanner<OPT_LVL>::Base::Info>
+        extractor(planner.get_expanded_map(), planner.get_grid());
+    extractor.allow_indirect_traversals = true;
     planner.reset();
     planner.set_occupancy_threshold(1);
     planner.set_heuristic_multiplier(min);

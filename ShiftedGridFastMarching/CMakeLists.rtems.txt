@@ -18,6 +18,7 @@ include_directories(SYSTEM ../RobinHoodHashMap/src/include)
 include_directories(SYSTEM ../TartanLlamaOptional/include)
 include_directories(SYSTEM ../BoostHeap)
 include_directories(include)
+include_directories(../PathExtraction)
 include_directories(../ProjectToolkit/include)
 
 add_executable(shifted_grid_planner_${OPT_LVL}_${HEUR}

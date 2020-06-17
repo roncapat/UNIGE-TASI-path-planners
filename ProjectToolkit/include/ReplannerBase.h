@@ -30,6 +30,7 @@ template<typename Derived, typename MapElem_, typename MapInfo_, typename QueueK
 class ReplannerBase {
 public:
     typedef QueueKey_ Key;
+    typedef MapElem_ Elem;
     typedef MapInfo_ Info;
     typedef PriorityQueue<Key, MapElem_> Queue;
     typedef ExpandedMap<MapElem_, MapInfo_> Map;

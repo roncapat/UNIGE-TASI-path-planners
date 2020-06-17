@@ -6,7 +6,7 @@
 #include <fstream>
 #include <pthread.h>
 #include "DynamicFastMarching.h"
-#include "DirectLinearInterpolationPathExtractorCells.h"
+#include "LinearInterpolationPathExtractor.h"
 #include "Graph.h"
 
 #include <rtems.h>
@@ -34,7 +34,7 @@ rtems_task Init(rtems_task_argument) {
 
     Position next_point, goal;
 
-    // FIXME maybe I compiler RTEMS with no SMP support, so this is not avaiable 
+    // FIXME maybe I compiler RTEMS with no SMP support, so this is not avaiable
     //cpu_set_t cset;
     //CPU_ZERO( &cset);
     //CPU_SET( 0, &cset);
@@ -57,7 +57,7 @@ rtems_task Init(rtems_task_argument) {
     size = width * height;
     std::shared_ptr<uint8_t[]> data(new uint8_t[size], std::default_delete<uint8_t[]>());
     memset(data.get(), 1, size);
-    
+
     next_point.x = 2;
     next_point.y = 2;
 
@@ -65,7 +65,12 @@ rtems_task Init(rtems_task_argument) {
     goal.y = 8;
 
     DFMPlanner<OPT_LVL> planner{};
-    DirectLinearInterpolationPathExtractorCells<typename DFMPlanner<OPT_LVL>::Base::Info> extractor(planner.get_expanded_map(), planner.get_grid());
+    DFMPlanner<OPT_LVL> planner{};
+    LinearInterpolationPathExtractor<
+        typename DFMPlanner<OPT_LVL>::Map::ElemType,
+        typename DFMPlanner<OPT_LVL>::Base::Info>
+        extractor(planner.get_expanded_map(), planner.get_grid());
+    extractor.allow_indirect_traversals = true;
     planner.reset();
     planner.set_occupancy_threshold(1);
     planner.set_heuristic_multiplier(1);
@@ -81,11 +86,11 @@ rtems_task Init(rtems_task_argument) {
     std::cout << "TIME: " << planner.p_time << std::endl;
 
     next_point = {extractor.path_[0].x, extractor.path_[0].y};
-    
+
     planner.set_start(next_point);
 
     std::shared_ptr<uint8_t[]> patch(new uint8_t[4], std::default_delete<uint8_t[]>());
-    memset(data.get(), 10, 4);    
+    memset(data.get(), 10, 4);
     planner.patch_map(patch, 4, 4, 2, 2);
 
     planner.step();

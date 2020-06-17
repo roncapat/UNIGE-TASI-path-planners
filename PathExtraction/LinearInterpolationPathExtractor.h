@@ -1,18 +1,14 @@
-//
-// Created by patrick on 18/05/20.
-//
-
-#ifndef RONCAPAT_GLOBAL_PLANNERS_DIRECTLINEARINTERPOLATIONPATHEXTRACTORCELLS_H
-#define RONCAPAT_GLOBAL_PLANNERS_DIRECTLINEARINTERPOLATIONPATHEXTRACTORCELLS_H
+#ifndef RONCAPAT_GLOBAL_PLANNERS_LINEARINTERPOLATIONPATHEXTRACTOR_H
+#define RONCAPAT_GLOBAL_PLANNERS_LINEARINTERPOLATIONPATHEXTRACTOR_H
 
 #include "Node.h"
 #include "Graph.h"
 #include "ExpandedMap.h"
 
-template<typename T>
-class DirectLinearInterpolationPathExtractorCells {
+template<typename E, typename T>
+class LinearInterpolationPathExtractor {
 public:
-    DirectLinearInterpolationPathExtractorCells(const ExpandedMap<Cell, T> &map, const Graph &grid);
+    LinearInterpolationPathExtractor(const ExpandedMap<E, T> &map, const Graph &grid);
 
     void extract_path();
 
@@ -23,8 +19,9 @@ public:
     bool lookahead = true;
     int max_steps = 20;
     float e_time = 0;
-private:
-    const ExpandedMap<Cell, T> &map;
+    bool allow_indirect_traversals = true;
+ private:
+    const ExpandedMap<E, T> &map;
     const Graph &grid;
 
     PathAdditions getPathAdditions(const Position &p, const bool &do_lookahead, float &step_cost);
@@ -40,9 +37,6 @@ private:
     bool goalReached(const Position &p);
 
     void fill_traversal_costs(TraversalParams &t);
-
 };
-
-#include "DirectLinearInterpolationPathExtractorCells_impl.h"
-
-#endif //RONCAPAT_GLOBAL_PLANNERS_LINEARINTERPOLATIONPATHEXTRACTORCELLS_H
+#include "LinearInterpolationPathExtractor_impl.h"
+#endif //RONCAPAT_GLOBAL_PLANNERS_LINEARINTERPOLATIONPATHEXTRACTOR_H

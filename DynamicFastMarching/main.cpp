@@ -5,7 +5,7 @@
 #include <fstream>
 #include <pthread.h>
 #include "DynamicFastMarching.h"
-#include "DirectLinearInterpolationPathExtractorCells.h"
+#include "LinearInterpolationPathExtractor.h"
 #include "Graph.h"
 
 #ifndef OPT_LVL
@@ -79,7 +79,11 @@ int main(int _argc, char **_argv) {
     goal.y = to_y;
 
     DFMPlanner<OPT_LVL> planner{};
-    DirectLinearInterpolationPathExtractorCells<typename DFMPlanner<OPT_LVL>::Base::Info> extractor(planner.get_expanded_map(), planner.get_grid());
+    LinearInterpolationPathExtractor<
+        typename DFMPlanner<OPT_LVL>::Map::ElemType,
+        typename DFMPlanner<OPT_LVL>::Base::Info>
+        extractor(planner.get_expanded_map(), planner.get_grid());
+    extractor.allow_indirect_traversals = true;
     planner.reset();
     planner.set_occupancy_threshold(1);
     planner.set_heuristic_multiplier(min);

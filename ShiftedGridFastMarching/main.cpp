@@ -5,7 +5,7 @@
 #include <fstream>
 #include <pthread.h>
 #include "ShiftedGridPlanner.h"
-#include "DirectLinearInterpolationPathExtractor.h"
+#include "LinearInterpolationPathExtractor.h"
 #include "Graph.h"
 
 #ifndef OPT_LVL
@@ -49,13 +49,13 @@ int main(int _argc, char **_argv) {
     */
 
     cpu_set_t cset;
-    CPU_ZERO( &cset);
-    CPU_SET( 0, &cset);
+    CPU_ZERO(&cset);
+    CPU_SET(0, &cset);
     auto ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cset);
     if (ret != 0) abort();
 
     struct sched_param priomax;
-    priomax.sched_priority=sched_get_priority_max(SCHED_FIFO);
+    priomax.sched_priority = sched_get_priority_max(SCHED_FIFO);
 
     ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &priomax);
     if (ret != 0)
@@ -90,7 +90,11 @@ int main(int _argc, char **_argv) {
     goal.y = to_y;
 
     ShiftedGridPlanner<OPT_LVL> planner{};
-    DirectLinearInterpolationPathExtractor<typename ShiftedGridPlanner<OPT_LVL>::Base::Info> extractor(planner.get_expanded_map(), planner.get_grid());
+    LinearInterpolationPathExtractor<
+        typename ShiftedGridPlanner<OPT_LVL>::Map::ElemType,
+        typename ShiftedGridPlanner<OPT_LVL>::Base::Info>
+        extractor(planner.get_expanded_map(), planner.get_grid());
+    extractor.allow_indirect_traversals = false;
     planner.reset();
     planner.set_occupancy_threshold(1);
     planner.set_heuristic_multiplier(min);
@@ -147,13 +151,13 @@ int main(int _argc, char **_argv) {
         out_fifo.write((char *) &(extractor.e_time), 4);
         out_fifo.flush();
 
-        if (tof){
+        if (tof) {
             std::cout << "PUBLISHING EXPANDED" << std::endl;
             ack = 4;
             out_fifo.write((char *) &ack, 1);
             auto expanded_size = (long long) planner.map.size();
             out_fifo.write((char *) &expanded_size, 8);
-            for (auto b: planner.map.buckets){
+            for (auto b: planner.map.buckets) {
                 for (const auto &expanded : b) {
                     const Node &exp = expanded.first;
                     float g, rhs;
@@ -167,10 +171,10 @@ int main(int _argc, char **_argv) {
             }
         }
         auto prev_point = next_point;
-        for (unsigned int i = 1; i < extractor.path_.size(); i++){
+        for (unsigned int i = 1; i < extractor.path_.size(); i++) {
             next_point = {extractor.path_[i].x, extractor.path_[i].y};
-            next_step_cost = extractor.cost_[i-1];
-            if (Cell(next_point).distance(Cell(prev_point))>5)
+            next_step_cost = extractor.cost_[i - 1];
+            if (Cell(next_point).distance(Cell(prev_point)) > 5)
                 break;
         }
         if (next_point == goal)
