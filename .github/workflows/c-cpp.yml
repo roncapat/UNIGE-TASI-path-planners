@@ -11,7 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - name: configure
+    - name: Checkout submodules
+      uses: textbook/git-checkout-submodule-action@master
+    - name: Run CMake
       run: mkdir build && cd build && cmake ..
-    - name: build
+    - name: Build
       run: cmake --build build
