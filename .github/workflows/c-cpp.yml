@@ -1,0 +1,25 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Checkout submodules
+      uses: textbook/git-checkout-submodule-action@master
+    - name: Setup Python Environment
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install setuptools 
+        python3 -m pip install Pillow 
+        python3 -m pip install opencv-python
+    - name: Run CMake
+      run: mkdir build && cd build && cmake ..
+    - name: Build
+      run: cmake --build build

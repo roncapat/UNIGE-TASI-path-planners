@@ -1,4 +1,6 @@
 # UNIGE-TASI Path Planners
+![C/C++ CI](https://github.com/roncapat/UNIGE-TASI-path-planners/workflows/C/C++%20CI/badge.svg)
+
 This repository contains three dynamic path planners (replanners):
 * FD* - Field D*
 * MS-DFM - Multistencil Dynamic Fast Marching
