@@ -198,13 +198,13 @@ axs[0].bar(pos, times, color=cmap.colors)
 axs[0].set_xticks(pos)
 axs[0].set_xticklabels(labels, rotation='vertical')
 fig.set_size_inches(19.2, 10.8)
-plt.savefig("Results/first_run_time.png", quality=100, dpi=100)
 
 axs[1].axis('off')
 the_table = axs[1].table(cellText=[["%8.2f" % t] for t in times],
                          rowLabels=labels,
                          colLabels=["time(ms)"],
                          loc='center')
+plt.savefig("Results/first_run_time.png", quality=100, dpi=100)
 
 fig, axs = plt.subplots(1, 2, gridspec_kw={'width_ratios': [5, 1]})
 axs[0].set_title("Replanning time analysis - mean value and standard deviation")
@@ -225,13 +225,13 @@ axs[0].bar(pos, avgs, color=cmap.colors, yerr=stdevs, capsize=5)
 axs[0].set_xticks(pos)
 axs[0].set_xticklabels(labels, rotation='vertical')
 fig.set_size_inches(19.2, 10.8)
-plt.savefig("Results/replan_time.png", quality=100, dpi=100)
 
 axs[1].axis('off')
 the_table = axs[1].table(cellText=[["%8.4f" % t1, "%4.4f" % t2] for t1, t2 in zip(avgs, stdevs)],
                          rowLabels=labels,
                          colLabels=["mean(ms)", "std(ms)"],
                          loc='center')
+plt.savefig("Results/replan_time.png", quality=100, dpi=100)
 
 figure = plt.figure(4)
 plt.title("Path projection on slope map")
