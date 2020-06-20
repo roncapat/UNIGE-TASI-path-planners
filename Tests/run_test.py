@@ -25,7 +25,7 @@ pipe_out = os.path.abspath("build/pipe_2")
 gui = 1
 tof = 0
 outpath = "Results"
-upscale = 3
+upscale = 1
 use_heuristic = False
 cmap = cm.winter
 
@@ -71,7 +71,7 @@ rock_aboundance_h = cv2.dilate(rock_aboundance_h, k, iterations=1)
 cv2.imwrite("rocks.tiff", rock_aboundance_h)
 print("[SIMULATOR] End noisemap generation")
 
-#FIXME remove - this is only a test for not having rocks
+# FIXME remove - this is only a test for not having rocks
 rock_aboundance_h = np.zeros((height, width), np.uint8)
 
 for planner in planners:
@@ -171,22 +171,22 @@ for planner in planners:
     p_out.close()
     p_in.close()
     process.wait()
-    #os.chmod("/mnt/sdb/perf_" + planner + ".data", 0o666) //FIXME need permissions
+    # os.chmod("/mnt/sdb/perf_" + planner + ".data", 0o666) //FIXME need permissions
 
 plt.figure(1)
 plt.title("Replanning time analysis")
 plt.gcf().canvas.set_window_title("Replanning time analysis")
-plt.xlabel("Steps")
-plt.ylabel("Time (ms)")
 for planner in planners:
     runtime = list(map(add, results[planner]["uts"][1:], results[planner]["pts"][1:]))
     plt.plot(range(1, len(runtime) + 1), runtime, label=planner)
-
-figure = plt.figure(2)
-plt.title("First plan time analysis")
-plt.gcf().canvas.set_window_title("First plan time analysis")
 plt.xlabel("Steps")
 plt.ylabel("Time (ms)")
+
+fig, axs = plt.subplots(1, 2, gridspec_kw={'width_ratios': [5, 1]})
+axs[0].set_title("First plan time analysis")
+plt.gcf().canvas.set_window_title("First plan time analysis")
+axs[0].set_xlabel("Steps")
+axs[0].set_ylabel("Time (ms)")
 cmap = plt.get_cmap("tab10")
 labels = []
 times = []
@@ -194,16 +194,23 @@ for planner in planners:
     labels.append(planner)
     times.append(results[planner]["pts"][0])
 pos = range(len(labels))
-plt.bar(pos, times, color=cmap.colors)
-plt.xticks(pos, labels, rotation='vertical')
-figure.set_size_inches(19.2, 10.8)
+axs[0].bar(pos, times, color=cmap.colors)
+axs[0].set_xticks(pos)
+axs[0].set_xticklabels(labels, rotation='vertical')
+fig.set_size_inches(19.2, 10.8)
 plt.savefig("Results/first_run_time.png", quality=100, dpi=100)
 
-figure = plt.figure(3)
-plt.title("Replanning time analysis - mean value and standard deviation")
+axs[1].axis('off')
+the_table = axs[1].table(cellText=[["%8.2f" % t] for t in times],
+                         rowLabels=labels,
+                         colLabels=["time(ms)"],
+                         loc='center')
+
+fig, axs = plt.subplots(1, 2, gridspec_kw={'width_ratios': [5, 1]})
+axs[0].set_title("Replanning time analysis - mean value and standard deviation")
 plt.gcf().canvas.set_window_title("Replanning time analysis - mean value and standard deviation")
-plt.xlabel("Steps")
-plt.ylabel("Time (ms)")
+axs[0].set_xlabel("Steps")
+axs[0].set_ylabel("Time (ms)")
 cmap = plt.get_cmap("tab10")
 labels = []
 avgs = []
@@ -214,10 +221,17 @@ for planner in planners:
     avgs.append(np.mean(runtime))
     stdevs.append(np.std(runtime))
 pos = range(len(labels))
-plt.bar(pos, avgs, color=cmap.colors, yerr=stdevs, capsize=5)
-plt.xticks(pos, labels, rotation='vertical')
-figure.set_size_inches(19.2, 10.8)
+axs[0].bar(pos, avgs, color=cmap.colors, yerr=stdevs, capsize=5)
+axs[0].set_xticks(pos)
+axs[0].set_xticklabels(labels, rotation='vertical')
+fig.set_size_inches(19.2, 10.8)
 plt.savefig("Results/replan_time.png", quality=100, dpi=100)
+
+axs[1].axis('off')
+the_table = axs[1].table(cellText=[["%8.4f" % t1, "%4.4f" % t2] for t1, t2 in zip(avgs, stdevs)],
+                         rowLabels=labels,
+                         colLabels=["mean(ms)", "std(ms)"],
+                         loc='center')
 
 figure = plt.figure(4)
 plt.title("Path projection on slope map")
