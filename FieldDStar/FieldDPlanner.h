@@ -38,29 +38,29 @@ protected:
 
     void plan();
 
-    Key calculate_key(const Node &s, float g, float rhs);
+    Key calculate_key(const Node &s, float g, float rhs) const;
 
 
 private:
     std::vector<Node> start_nodes;
 
-    float compute_optimal_cost(const Node &n, const Node &p_a, const Node &p_b, float ga, float gb);
+    float compute_optimal_cost(const Node &n, const Node &p_a, const Node &p_b, float ga, float gb) const;
 
-    float compute_optimal_cost(const Node &n, const Node &p_a, const Node &p_b);
+    float compute_optimal_cost(const Node &n, const Node &p_a, const Node &p_b) const;
 
-    bool end_condition();
+    bool end_condition() const;
 
-    Key calculate_key(const Node &s);
+    Key calculate_key(const Node &s) const;
 
-    Key calculate_key(const Node &s, float cost_so_far);
+    Key calculate_key(const Node &s, float cost_so_far) const;
 
-    float min_rhs(const Node &s);
+    float min_rhs(const Node &s) const;
 
-    float min_rhs(const Node &s, Node &bptr);
+    float min_rhs(const Node &s, Node &bptr) const;
 
-    float min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr);
+    float min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr) const;
 
-    void fill_traversal_costs(TraversalParams &t);
+    void fill_traversal_costs(TraversalParams &t) const;
 
     void update_node(const Node &node);
 };
@@ -69,16 +69,16 @@ template<>
 void FieldDPlanner<0>::plan();
 
 template<>
-float FieldDPlanner<0>::min_rhs(const Node &);
+float FieldDPlanner<0>::min_rhs(const Node &) const;
 
 template<>
 void FieldDPlanner<1>::plan();
 
 template<>
-float FieldDPlanner<1>::min_rhs(const Node &, Node &bptr);
+float FieldDPlanner<1>::min_rhs(const Node &, Node &bptr) const;
 
 template<>
-float FieldDPlanner<1>::min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr);
+float FieldDPlanner<1>::min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr) const;
 
 #include "FieldDPlanner_impl.h"
 

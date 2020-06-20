@@ -12,10 +12,6 @@
 #define OPT_LVL 1
 #endif
 
-//#define STR(x) #x
-//#define XSTR(x) STR(x)
-//#pragma message "Opt level " XSTR(OPT_LVL)
-
 int main(int _argc, char **_argv) {
     if (_argc < 12) {
         std::cerr << "Missing required argument." << std::endl;

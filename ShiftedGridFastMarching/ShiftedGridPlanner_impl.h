@@ -222,7 +222,7 @@ void ShiftedGridPlanner<2>::update_node(const Node &node) {
 }
 
 template<int O>
-typename ShiftedGridPlanner<O>::Key ShiftedGridPlanner<O>::calculate_key(const Node &s) {
+typename ShiftedGridPlanner<O>::Key ShiftedGridPlanner<O>::calculate_key(const Node &s) const {
     float g, rhs;
     std::tie(g, rhs) = map.get_g_rhs(s);
     return calculate_key(s, g, rhs);
@@ -231,12 +231,12 @@ typename ShiftedGridPlanner<O>::Key ShiftedGridPlanner<O>::calculate_key(const N
 template<int O>
 typename ShiftedGridPlanner<O>::Key ShiftedGridPlanner<O>::calculate_key(const Node &s,
                                                                          const float g,
-                                                                         const float rhs) {
+                                                                         const float rhs) const {
     return calculate_key(s, std::min(g, rhs));
 }
 
 template<int O>
-typename ShiftedGridPlanner<O>::Key ShiftedGridPlanner<O>::calculate_key(const Node &s, const float cost_so_far) {
+typename ShiftedGridPlanner<O>::Key ShiftedGridPlanner<O>::calculate_key(const Node &s, const float cost_so_far) const {
     (void) s;
     #ifdef NO_HEURISTIC
     return {cost_so_far, cost_so_far};
@@ -247,7 +247,7 @@ typename ShiftedGridPlanner<O>::Key ShiftedGridPlanner<O>::calculate_key(const N
 }
 
 template<>
-float ShiftedGridPlanner<0>::min_rhs(const Node &s) {
+float ShiftedGridPlanner<0>::min_rhs(const Node &s) const {
     float rhs = INFINITY;
     for (auto &edge : grid.consecutive_neighbors(s))
         rhs = std::min(rhs, compute_optimal_cost(s, edge.first, edge.second));
@@ -255,7 +255,7 @@ float ShiftedGridPlanner<0>::min_rhs(const Node &s) {
 }
 
 template<>
-float ShiftedGridPlanner<1>::min_rhs(const Node &s, Node &bptr) {
+float ShiftedGridPlanner<1>::min_rhs(const Node &s, Node &bptr) const {
     float rhs = INFINITY, cost;
     for (const auto &sp : grid.neighbors_8(s)) {
         auto ccn = grid.ccw_neighbor(s, sp);
@@ -269,7 +269,7 @@ float ShiftedGridPlanner<1>::min_rhs(const Node &s, Node &bptr) {
 }
 
 template<>
-float ShiftedGridPlanner<2>::min_rhs(const Node &s, Node &bptr) {
+float ShiftedGridPlanner<2>::min_rhs(const Node &s, Node &bptr) const {
     float rhs = INFINITY, cost;
     for (const auto &sp : grid.neighbors_diag_4(s)) {
         auto ccn = grid.ccw_neighbor(s, sp);
@@ -294,7 +294,7 @@ float ShiftedGridPlanner<2>::min_rhs(const Node &s, Node &bptr) {
 }
 
 template<>
-float ShiftedGridPlanner<1>::min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr) {
+float ShiftedGridPlanner<1>::min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr) const {
     auto ccn = grid.ccw_neighbor(sp, s);
     auto cn = grid.cw_neighbor(sp, s);
     float cost1 = ccn.has_value() ? compute_optimal_cost(sp, s, ccn.value()) : INFINITY;
@@ -309,7 +309,7 @@ float ShiftedGridPlanner<1>::min_rhs_decreased_neighbor(const Node &sp, const No
 }
 
 template<>
-float ShiftedGridPlanner<2>::min_rhs_decreased_ortho_neigbor(const Node &sp, const Node &s, Node &bptr) {
+float ShiftedGridPlanner<2>::min_rhs_decreased_ortho_neigbor(const Node &sp, const Node &s, Node &bptr) const {
     auto ccn = grid.ccw_neighbor(sp, s);
     auto cn = grid.cw_neighbor(sp, s);
     float cost1 = ccn.has_value() ? compute_optimal_cost(sp, s, ccn.value()) : INFINITY;
@@ -324,7 +324,7 @@ float ShiftedGridPlanner<2>::min_rhs_decreased_ortho_neigbor(const Node &sp, con
 }
 
 template<>
-float ShiftedGridPlanner<2>::min_rhs_decreased_diag_neighbor(const Node &sp, const Node &s, Node &bptr) {
+float ShiftedGridPlanner<2>::min_rhs_decreased_diag_neighbor(const Node &sp, const Node &s, Node &bptr) const {
     auto ccn = grid.ccw_neighbor(sp, s);
     auto cn = grid.cw_neighbor(sp, s);
     auto valid1 = ccn.has_value();
@@ -344,7 +344,7 @@ float ShiftedGridPlanner<2>::min_rhs_decreased_diag_neighbor(const Node &sp, con
 }
 
 template<int O>
-bool ShiftedGridPlanner<O>::end_condition() {
+bool ShiftedGridPlanner<O>::end_condition() const {
     // We need to check expansion until all 4 corners of start cell
     // used early stop from D* LITE
     auto top_key = priority_queue.top_key();
@@ -374,7 +374,7 @@ bool ShiftedGridPlanner<O>::end_condition() {
 template<int O>
 float ShiftedGridPlanner<O>::compute_optimal_cost(const Node &n,
                                                   const Node &p_a,
-                                                  const Node &p_b) {
+                                                  const Node &p_b) const {
     float ga, gb;
     ga = map.get_g(p_a);
     gb = map.get_g(p_b);
@@ -385,7 +385,7 @@ float ShiftedGridPlanner<O>::compute_optimal_cost(const Node &n,
 template<int O>
 float ShiftedGridPlanner<O>::compute_optimal_cost(const Node &n,
                                                   const Node &p_a,
-                                                  const Node &p_b, float ga, float gb) {
+                                                  const Node &p_b, float ga, float gb) const {
 
     Position p(n);
     std::vector<Position> positions;
@@ -424,7 +424,7 @@ float ShiftedGridPlanner<O>::compute_optimal_cost(const Node &n,
 
 // p must be aligned with p_1, p_1 aligned with p_2, p and P_2 diagonal neighbors
 template<int O>
-void ShiftedGridPlanner<O>::fill_traversal_costs(TraversalParams &t) {
+void ShiftedGridPlanner<O>::fill_traversal_costs(TraversalParams &t) const {
     Cell cell_ind_c;
 
     if (t.p0.x == t.p1.x) {

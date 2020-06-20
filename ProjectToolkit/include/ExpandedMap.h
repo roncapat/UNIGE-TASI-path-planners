@@ -1,22 +1,25 @@
-#ifndef RONCAPAT_GLOBAL_PLANNERS_EXPANDEDMAP_H
-#define RONCAPAT_GLOBAL_PLANNERS_EXPANDEDMAP_H
+#ifndef RONCAPAT_PLANNER_TOOLKIT_EXPANDEDMAP_H
+#define RONCAPAT_PLANNER_TOOLKIT_EXPANDEDMAP_H
 
 #include <robin_hood.h>
 #include "Macros.h"
 
-template <typename> struct tag {};
+template<typename>
+struct tag {};
 
 template<typename ElemType_, typename InfoType_>
 using hashmap_ = robin_hood::unordered_node_map<ElemType_, std::tuple<float, float, InfoType_>>;
-
 template<typename ElemType_, typename InfoType_>
 class ExpandedMap {
  public:
   typedef ElemType_ ElemType;
   typedef InfoType_ InfoType;
+  using nodeptr = robin_hood::pair<const ElemType_, std::tuple<float, float, InfoType>> *;
+  using const_nodeptr = robin_hood::pair<const ElemType_, std::tuple<float, float, InfoType>> const *;
+ private:
   using iterator = typename hashmap_<ElemType_, InfoType_>::iterator;
   using const_iterator = typename hashmap_<ElemType_, InfoType_>::const_iterator;
-
+ public:
   ExpandedMap() = default;
   ExpandedMap(unsigned int x,
               unsigned int y,
@@ -29,63 +32,72 @@ class ExpandedMap {
   }
 
   inline bool check_bucket_existence(int id) const {
-      return (id >= 0 and id < (signed)buckets.size());
+      return (id >= 0 and id < (signed) buckets.size());
   }
   unsigned char bits; /* tile size: 2^bits * 2^bits */
   unsigned char dim_x, dim_y;
  public:
   const InfoType NULLINFO = InfoType{};
-
-  iterator find_or_init(const ElemType &n);
-
-  iterator insert_or_assign(const ElemType &s, float g, float rhs);
-
-  optional<iterator> find(const ElemType &n);
-
+  nodeptr find_or_init(const ElemType &n);
+  nodeptr insert_or_assign(const ElemType &s, float g, float rhs);
+  optional<nodeptr> find(const ElemType &n);
   size_t size();
-
   void init(unsigned int x, unsigned int y, unsigned char bits);
   void clear() noexcept;
-
   float get_g(const ElemType &s) const;
   float get_rhs(const ElemType &s) const;
-  float get_interp_rhs(const Node &s) const {return get_interp_rhs(s, tag<ElemType>());};
+  float get_interp_rhs(const Node &s) const;
   std::pair<float, float> get_g_rhs(const ElemType &s) const;
-
   bool consistent(const ElemType &s);
  private:
   float get_interp_rhs(const Node &s, tag<Node>) const;
   float get_interp_rhs(const Node &s, tag<Cell>) const;
 };
 
+/* this checks if we are dealing with a "const iterator" or a "raw pointer to a const" */
+/* iterator_traits are specialized in the standard to play nicely also with raw pointers */
 template<typename IT>
-using is_const_iterator =
-std::is_const<typename std::remove_reference<typename std::iterator_traits<IT>::reference>::type>;
+using refers_to_const = std::is_const<typename std::remove_reference<typename std::iterator_traits<IT>::reference>::type>;
 
-template<class iterator>
-static inline auto ELEM(const iterator &map_it) -> typename std::add_lvalue_reference<const decltype((map_it)->first)>::type;
+/* shorthand for SFINAE selection of the read-only accessor variant */
+template<typename IT>
+using use_for_refs_to_const = std::enable_if<refers_to_const<IT>::value, int>;
 
-template<typename iterator, typename std::enable_if<not is_const_iterator<iterator>::value, int>::type = 0>
-static inline float &G(const iterator &map_it);
+/* shorthand for SFINAE selection of the read-write accessor variant */
+template<typename IT>
+using use_for_refs_to_mutable = std::enable_if<not refers_to_const<IT>::value, int>;
 
-template<typename iterator, typename std::enable_if<is_const_iterator<iterator>::value, int>::type = 0>
-static inline const float &G(const iterator &map_it);
 
-template<typename iterator, typename std::enable_if<not is_const_iterator<iterator>::value, int>::type = 0>
-static inline float &RHS(const iterator &map_it);
+template<typename T>
+using const_ref = std::add_lvalue_reference<const T>;
 
-template<typename iterator, typename std::enable_if<is_const_iterator<iterator>::value, int>::type = 0>
-static inline const float &RHS(const iterator &map_it);
+template<typename T>
+using mut_ref = std::add_lvalue_reference<T>;
 
-template<typename iterator, typename std::enable_if<not is_const_iterator<iterator>::value, int>::type = 0>
-static inline auto INFO(const iterator &map_it) -> typename std::add_lvalue_reference<decltype(std::get<2>((map_it)->second))>::type;
+template<class nodeptr>
+static inline auto ELEM(const nodeptr &it) -> typename const_ref<decltype((it)->first)>::type;
 
-template<typename iterator, typename std::enable_if<is_const_iterator<iterator>::value, int>::type = 0>
-static inline auto INFO(const iterator &map_it) -> typename std::add_lvalue_reference<const decltype(std::get<2>((map_it)->second))>::type;
+template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type = 0>
+static inline float &G(const nodeptr &it);
 
-template<class iterator>
-static inline bool CONSISTENT(const iterator &map_it);
+template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type = 0>
+static inline const float &G(const nodeptr &it);
+
+template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type = 0>
+static inline float &RHS(const nodeptr &it);
+
+template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type = 0>
+static inline const float &RHS(const nodeptr &it);
+
+template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type = 0>
+static inline auto INFO(const nodeptr &it) -> typename mut_ref<decltype(std::get<2>((it)->second))>::type;
+
+template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type = 0>
+static inline auto INFO(const nodeptr &it) -> typename const_ref<decltype(std::get<2>((it)->second))>::type;
+
+template<class nodeptr>
+static inline bool CONSISTENT(const nodeptr &it);
 
 #include "impl/ExpandedMap_impl.h"
 
-#endif //RONCAPAT_GLOBAL_PLANNERS_EXPANDEDMAP_H
+#endif //RONCAPAT_PLANNER_TOOLKIT_EXPANDEDMAP_H

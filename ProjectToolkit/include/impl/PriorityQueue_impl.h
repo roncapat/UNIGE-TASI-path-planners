@@ -36,22 +36,22 @@ void PriorityQueue<K,T>::pop() {
 }
 
 template<typename K, typename T>
-const typename PriorityQueue<K,T>::Key& PriorityQueue<K,T>::top_key() {
+const typename PriorityQueue<K,T>::Key& PriorityQueue<K,T>::top_key() const{
     return queue.top().key;
 }
 
 template<typename K, typename T>
-const typename PriorityQueue<K,T>::Value& PriorityQueue<K,T>::top_value() {
+const typename PriorityQueue<K,T>::Value& PriorityQueue<K,T>::top_value() const{
     return queue.top().elem;
 }
 
 template<typename K, typename T>
-int PriorityQueue<K,T>::size() {
+int PriorityQueue<K,T>::size() const{
     return queue.size();
 }
 
 template<typename K, typename T>
-bool PriorityQueue<K,T>::empty() {
+bool PriorityQueue<K,T>::empty() const{
     return queue.empty();
 }
 

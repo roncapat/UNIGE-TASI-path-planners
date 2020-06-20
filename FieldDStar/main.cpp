@@ -43,7 +43,6 @@ int main(int _argc, char **_argv) {
     priomax.sched_priority=sched_get_priority_max(SCHED_FIFO);
 
     ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &priomax);
-    std::cout << ret << std::endl;
     if (ret != 0)
         std::cout << "No privileges for setting maximum scheduling priority" << std::endl;
 

@@ -57,10 +57,10 @@ class PriorityQueue {
   void insert(const Value &n, const Key &k);
   void clear();
   void pop();
-  const Key& top_key();
-  const Value& top_value();
-  int size();
-  bool empty();
+  const Key& top_key() const;
+  const Value& top_value() const;
+  int size() const;
+  bool empty() const;
 };
 #include "impl/PriorityQueue_impl.h"
 #endif /* PRIORITYQUEUE_H */

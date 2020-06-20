@@ -38,42 +38,42 @@ protected:
 
     void plan();
 
-    Key calculate_key(const Cell &s, float g, float rhs);
+    Key calculate_key(const Cell &s, float g, float rhs) const;
 
 private:
     std::vector<Cell> start_nodes;
 
-    float min_rhs(const Cell &c);
+    float min_rhs(const Cell &c) const;
 
-    float min_rhs(const Cell &p, std::pair<Cell, Cell> &bptrs);
+    float min_rhs(const Cell &p, std::pair<Cell, Cell> &bptrs) const;
 
-    bool end_condition();
+    bool end_condition() const;
 
-    Key calculate_key(const Cell &s);
+    Key calculate_key(const Cell &s) const;
 
-    Key calculate_key(const Cell &s, float cost_so_far);
+    Key calculate_key(const Cell &s, float cost_so_far) const;
 
     void update_cell(const Cell &cell);
 
-    std::pair<Cell, float> best_cell(const Cell &a, const Cell &b);
+    std::pair<Cell, float> best_cell(const Cell &a, const Cell &b) const;
 
-    float min_rhs_decreased_neighbor(const Cell &c, const Cell &nbr, std::pair<Cell, Cell> &bptrs);
+    float min_rhs_decreased_neighbor(const Cell &c, const Cell &nbr, std::pair<Cell, Cell> &bptrs) const;
 
     std::pair<float, std::pair<Cell, Cell>>
-    compute_optimal_cost(Cell &ca1, Cell &cb1, float ga1, float gb1, float tau, float h);
+    compute_optimal_cost(Cell &ca1, Cell &cb1, float ga1, float gb1, float tau, float h) const;
 };
 
 template<>
 void DFMPlanner<0>::plan();
 
 template<>
-float DFMPlanner<0>::min_rhs(const Cell &);
+float DFMPlanner<0>::min_rhs(const Cell &) const;
 
 template<>
 void DFMPlanner<1>::plan();
 
 template<>
-float DFMPlanner<1>::min_rhs(const Cell &, std::pair<Cell, Cell> &bptrs);
+float DFMPlanner<1>::min_rhs(const Cell &, std::pair<Cell, Cell> &bptrs) const;
 
 #include "DynamicFastMarching_impl.h"
 

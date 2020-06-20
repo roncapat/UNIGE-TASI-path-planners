@@ -171,12 +171,6 @@ PathAdditions LinearInterpolationPathExtractor<E, T>::getPathAdditions(const Pos
     PathAdditions min_pa = {};
     PathAdditions temp_pa;
     float lookahead_cost;
-#ifdef VERBOSE_EXTRACTION
-    if (lookahead and not do_lookahead)
-        std::cout << "\t";
-        std::cout << "p     " << std::to_string(p.x) << ", " << std::to_string(p.y)
-              << (isVertex(p) ? " (Corner)" : " (Edge)") << std::endl << std::endl;
-#endif
 
     for (const auto &edge : grid.consecutive_neighbors(p)) {
         float cur_step_cost = INFINITY;
@@ -185,20 +179,6 @@ PathAdditions LinearInterpolationPathExtractor<E, T>::getPathAdditions(const Pos
             temp_pa = traversalFromCorner(p, edge.first, edge.second, cur_step_cost);
         else
             temp_pa = traversalFromEdge(p, edge.first, edge.second, cur_step_cost);
-
-#ifdef VERBOSE_EXTRACTION
-        if (lookahead and not do_lookahead) std::cout << "\t";
-        std::cout << "X:" << p_a.x << ", Y:" << p_a.y
-                  << ", G:" << expanded_map.get_g(p_a.castToNode()) << ", RHS:" << expanded_map.get_interp_rhs(p_a.castToNode()) << " | "
-                  << "X:" << p_b.x << ", Y:" << p_b.y
-                  << ", G:" << expanded_map.get_g(p_b.castToNode()) << ", RHS:" << expanded_map.get_interp_rhs(p_b.castToNode())
-                  << " || cost: " << temp_pa.cost_to_goal << std::endl;
-        for (auto addition: temp_pa.steps) {
-            if (lookahead and not do_lookahead) std::cout << "\t";
-            std::cout << "step  " << std::to_string(addition.x) << ", " << std::to_string(addition.y) << std::endl;
-        }
-        std::cout << std::endl;
-#endif
 
         if (temp_pa.steps.empty()) continue;
 
@@ -209,9 +189,6 @@ PathAdditions LinearInterpolationPathExtractor<E, T>::getPathAdditions(const Pos
         if (do_lookahead and not grid.is_valid_vertex(temp_pa.steps.back())) {
             lookahead_cost = getPathAdditions(temp_pa.steps.back(), false, dummy).cost_to_goal;
             if (lookahead_cost > temp_pa.cost_to_goal) { // Lookahead test failed
-#ifdef VERBOSE_EXTRACTION
-                std::cout << "Lookahead test failed" << std::endl;
-#endif
                 continue;
             }
         }

@@ -108,7 +108,7 @@ public:
         goal_set = true;
     }
 
-    void enqueue_if_inconsistent(typename Map::iterator it) {
+    void enqueue_if_inconsistent(typename Map::nodeptr it) {
         if (not CONSISTENT(it))
             priority_queue.insert_or_update(ELEM(it), calculate_key(ELEM(it), G(it), RHS(it)));
         else
@@ -137,8 +137,8 @@ protected:
         static_cast<Derived *>(this)->plan();
     }
 
-    Key calculate_key(const MapElem_ &s, float g, float rhs) {
-        return static_cast<Derived *>(this)->calculate_key(s, g, rhs);
+    Key calculate_key(const MapElem_ &s, float g, float rhs) const {
+        return static_cast<const Derived *>(this)->calculate_key(s, g, rhs);
     }
 
 public:
