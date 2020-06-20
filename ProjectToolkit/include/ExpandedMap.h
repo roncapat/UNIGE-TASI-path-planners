@@ -41,14 +41,14 @@ class ExpandedMap {
   nodeptr find_or_init(const ElemType &n);
   nodeptr insert_or_assign(const ElemType &s, float g, float rhs);
   optional<nodeptr> find(const ElemType &n);
-  size_t size();
+  size_t size() const;
   void init(unsigned int x, unsigned int y, unsigned char bits);
   void clear() noexcept;
   float get_g(const ElemType &s) const;
   float get_rhs(const ElemType &s) const;
   float get_interp_rhs(const Node &s) const;
   std::pair<float, float> get_g_rhs(const ElemType &s) const;
-  bool consistent(const ElemType &s);
+  bool consistent(const ElemType &s) const;
  private:
   float get_interp_rhs(const Node &s, tag<Node>) const;
   float get_interp_rhs(const Node &s, tag<Cell>) const;

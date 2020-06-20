@@ -26,6 +26,9 @@ void FieldDPlanner<0>::plan() {
     //TODO check initial point for traversability
 
     int expanded = 0;
+    start_nodes_it.clear();
+    for (const auto &node: start_nodes)
+        start_nodes_it.push_back(map.find_or_init(node));
     while ((not priority_queue.empty()) and not end_condition()) {
         // Pop head of queue
         Node s = priority_queue.top_value();
@@ -68,6 +71,9 @@ void FieldDPlanner<1>::plan() {
     //TODO check initial point for traversability
     Node bptr;
     int expanded = 0;
+    start_nodes_it.clear();
+    for (const auto &node: start_nodes)
+        start_nodes_it.push_back(map.find_or_init(node));
     while ((not priority_queue.empty()) and not end_condition()) {
         // Pop head of queue
         Node s = priority_queue.top_value();
@@ -230,13 +236,11 @@ bool FieldDPlanner<O>::end_condition() const {
         std::cout << g << " " << rhs << " " << key.first << std::endl;
     }
 */
-    for (auto &node: start_nodes) {
-        float g, rhs;
-        std::tie(g, rhs) = map.get_g_rhs(node);
-        auto key = calculate_key(node, g, rhs);
-        if (rhs != INFINITY and key.first != INFINITY) {
+    for (auto &node_it: start_nodes_it) {
+        auto key = calculate_key(ELEM(node_it), G(node_it), RHS(node_it));
+        if (RHS(node_it) != INFINITY and key.first != INFINITY) {
             max_start_key = std::max(max_start_key, key);
-            if (rhs > g)
+            if (RHS(node_it) > G(node_it))
                 return false; //Start node underconsistent
         }
     }

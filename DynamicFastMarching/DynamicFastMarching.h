@@ -41,7 +41,7 @@ protected:
     Key calculate_key(const Cell &s, float g, float rhs) const;
 
 private:
-    std::vector<Cell> start_nodes;
+    typename decltype(map)::nodeptr start_cell_it;
 
     float min_rhs(const Cell &c) const;
 

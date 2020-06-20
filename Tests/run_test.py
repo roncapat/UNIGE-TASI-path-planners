@@ -10,13 +10,13 @@ from noise import pnoise2
 from simulator.run_simulator import *  # TODO reorganize code
 
 planners = {
-    #"FD_0": {"path": "build/FD_0_no_heur/field_d_planner_0_no_heur", "type": "n"},
-    #"FD_1": {"path": "build/FD_1_no_heur/field_d_planner_1_no_heur", "type": "n"},
-    #"SGDFM_0": {"path": "build/SGDFM_0_no_heur/shifted_grid_planner_0_no_heur", "type": "n"},
-    #"SGDFM_1": {"path": "build/SGDFM_1_no_heur/shifted_grid_planner_1_no_heur", "type": "n"},
-    #"SGDFM_2": {"path": "build/SGDFM_2_no_heur/shifted_grid_planner_2_no_heur", "type": "n"},
-    #"DFM_1": {"path": "build/DFM_1/dfm_planner_1", "type": "c"},
+    "FD_0": {"path": "build/FD_0_no_heur/field_d_planner_0_no_heur", "type": "n"},
+    "FD_1": {"path": "build/FD_1_no_heur/field_d_planner_1_no_heur", "type": "n"},
+    "SGDFM_0": {"path": "build/SGDFM_0_no_heur/shifted_grid_planner_0_no_heur", "type": "n"},
+    "SGDFM_1": {"path": "build/SGDFM_1_no_heur/shifted_grid_planner_1_no_heur", "type": "n"},
+    "SGDFM_2": {"path": "build/SGDFM_2_no_heur/shifted_grid_planner_2_no_heur", "type": "n"},
     "DFM_0": {"path": "build/DFM_0/dfm_planner_0", "type": "c"},
+    "DFM_1": {"path": "build/DFM_1/dfm_planner_1", "type": "c"},
 }
 
 cspace_diam = 1
@@ -25,7 +25,7 @@ pipe_out = os.path.abspath("build/pipe_2")
 gui = 1
 tof = 0
 outpath = "Results"
-upscale = 2
+upscale = 3
 use_heuristic = False
 cmap = cm.winter
 
@@ -77,7 +77,7 @@ rock_aboundance_h = np.zeros((height, width), np.uint8)
 for planner in planners:
     print("[SIMULATOR] Launching %s planner" % planner)
     label = planner
-    perf_args = ["perf", "record", "--call-graph", "dwarf", "-o", "/mnt/sdb/perf_" + planner + ".data"]
+    perf_args = ["sudo", "perf", "record", "--call-graph", "dwarf", "-o", "/mnt/sdb/perf_" + planner + ".data"]
     prog_args = [planners[planner]["path"], mapfile, 100, 100, 1000 * upscale - 100, 1000 * upscale - 100, 1, pipe_out,
                  pipe_in, 1, 0, outpath]
     perf_args.extend(prog_args)

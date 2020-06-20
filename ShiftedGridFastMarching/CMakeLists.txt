@@ -29,6 +29,6 @@ target_link_libraries(shifted_grid_planner_${OPT_LVL}_${HEUR} pthread)
 target_link_libraries(shifted_grid_planner_${OPT_LVL}_${HEUR} ProjectToolkit)
 target_link_libraries(shifted_grid_planner_${OPT_LVL}_${HEUR} robin_hood)
 
-#add_custom_command(TARGET shifted_grid_planner_${OPT_LVL}_${HEUR}
-#                   POST_BUILD
-#                   COMMAND sudo setcap 'cap_sys_nice=eip' "${CMAKE_CURRENT_BINARY_DIR}/shifted_grid_planner_${OPT_LVL}_${HEUR}")
+add_custom_command(TARGET shifted_grid_planner_${OPT_LVL}_${HEUR}
+                   POST_BUILD
+                   COMMAND sudo setcap 'cap_sys_nice=eip' "${CMAKE_CURRENT_BINARY_DIR}/shifted_grid_planner_${OPT_LVL}_${HEUR}")

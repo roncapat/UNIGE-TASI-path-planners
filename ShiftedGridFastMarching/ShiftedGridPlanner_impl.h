@@ -20,6 +20,9 @@ void ShiftedGridPlanner<0>::plan() {
     //TODO check initial point for traversability
 
     int expanded = 0;
+    start_nodes_it.clear();
+    for (const auto &node: start_nodes)
+        start_nodes_it.push_back(map.find_or_init(node));
     while ((not priority_queue.empty()) and not end_condition()) {
         // Pop head of queue
         Node s = priority_queue.top_value();
@@ -62,6 +65,9 @@ void ShiftedGridPlanner<1>::plan() {
     //TODO check initial point for traversability
     Node bptr;
     int expanded = 0;
+    start_nodes_it.clear();
+    for (const auto &node: start_nodes)
+        start_nodes_it.push_back(map.find_or_init(node));
     while ((not priority_queue.empty()) and not end_condition()) {
         // Pop head of queue
         Node s = priority_queue.top_value();
@@ -110,6 +116,9 @@ void ShiftedGridPlanner<2>::plan() {
 
     Node bptr;
     int expanded = 0;
+    start_nodes_it.clear();
+    for (const auto &node: start_nodes)
+        start_nodes_it.push_back(map.find_or_init(node));
     while ((not priority_queue.empty()) and not end_condition()) {
         // Pop head of queue
         Node s = priority_queue.top_value();

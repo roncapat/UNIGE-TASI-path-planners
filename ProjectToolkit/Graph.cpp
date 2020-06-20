@@ -262,6 +262,7 @@ float Graph::get_cost(const Cell &ind) const {
     if (!is_valid(ind))
         return INFINITY;
     auto cost = map_[ind.x * width_ + ind.y];
+    assert(cost>0);
     return (cost >= occupancy_threshold_uchar_) ? INFINITY : (float) cost;
 }
 

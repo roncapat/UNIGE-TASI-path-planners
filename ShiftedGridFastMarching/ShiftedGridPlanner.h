@@ -43,6 +43,7 @@ class ShiftedGridPlanner
 
  private:
   std::vector<Node> start_nodes;
+  std::vector<typename decltype(map)::nodeptr> start_nodes_it;
 
   float compute_optimal_cost(const Node &n, const Node &p_a, const Node &p_b, float ga, float gb) const;
 

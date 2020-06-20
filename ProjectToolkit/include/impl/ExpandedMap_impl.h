@@ -8,11 +8,11 @@ ExpandedMap<E, I>::find_or_init(const ElemType &n) {
     auto idx = get_bucket_idx(n);
     assert(check_bucket_existence(idx));
     auto it = buckets[idx].find(n);
-    bool ret;
     if (it == buckets[idx].end()) { // Init node if not yet considered
-        std::tie(it, ret) = buckets[idx].emplace(n, std::make_tuple(INFINITY, INFINITY, NULLINFO));
-        assert(ret);
-        (void) ret;
+        bool ok;
+        std::tie(it, ok) = buckets[idx].emplace(n, std::make_tuple(INFINITY, INFINITY, NULLINFO));
+        assert(ok);
+        (void) ok;
     }
     return &(*it);
 }
@@ -25,8 +25,8 @@ ExpandedMap<E, I>::insert_or_assign(const ElemType &s, float g, float rhs) {
     assert(check_bucket_existence(idx));
     auto it = buckets[idx].find(s);
     if (it != buckets[idx].end()) {
-        std::get<0>(it->second) = g;
-        std::get<1>(it->second) = rhs;
+        G(it) = g;
+        RHS(it) = rhs;
         return &(*it);
     } else {
         bool ok;
@@ -87,7 +87,7 @@ ExpandedMap<ElemType_, InfoType_>::ExpandedMap(const unsigned int x, const unsig
     init(x, y, bits);
 }
 template<typename E, typename I>
-optional<typename ExpandedMap<E, I>::nodeptr> ExpandedMap<E, I>::find(const E &n) {
+optional<typename ExpandedMap<E, I>::nodeptr> ExpandedMap<E, I>::find(const E &n){
     auto idx = get_bucket_idx(n);
     if (idx == -1 or idx >= (signed) buckets.size()) return {};
     auto it = buckets[idx].find(n);
@@ -97,7 +97,7 @@ optional<typename ExpandedMap<E, I>::nodeptr> ExpandedMap<E, I>::find(const E &n
 }
 
 template<typename E, typename I>
-size_t ExpandedMap<E, I>::size() {
+size_t ExpandedMap<E, I>::size() const {
     size_t size = 0;
     for (auto b : buckets) size += b.size();
     return size;
@@ -117,7 +117,7 @@ void ExpandedMap<E, I>::init(unsigned int x, unsigned int y, unsigned char bits)
         buckets.emplace_back();
 }
 template<typename ElemType_, typename InfoType_>
-bool ExpandedMap<ElemType_, InfoType_>::consistent(const ElemType &s) {
+bool ExpandedMap<ElemType_, InfoType_>::consistent(const ElemType &s) const {
     float g, rhs;
     std::tie(g, rhs) = get_g_rhs(s);
     return g == rhs;
@@ -133,33 +133,33 @@ auto ELEM(const nodeptr &it) -> typename const_ref<decltype((it)->first)>::type 
 }
 //const auto &ELEM(const nodeptr &it) { return (it)->first; } //C++17
 
-template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type >
+template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type>
 float &G(const nodeptr &it) {
     return std::get<0>((it)->second);
 }
 
-template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type >
+template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type>
 const float &G(const nodeptr &it) {
     return std::get<0>((it)->second);
 }
 
-template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type >
+template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type>
 float &RHS(const nodeptr &it) {
     return std::get<1>((it)->second);
 }
 
-template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type >
+template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type>
 const float &RHS(const nodeptr &it) {
     return std::get<1>((it)->second);
 }
 
-template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type >
+template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type>
 auto INFO(const nodeptr &it) -> typename mut_ref<decltype(std::get<2>((it)->second))>::type {
     return std::get<2>((it)->second);
 }
 //auto &INFO(const nodeptr &it) { return std::get<2>((it)->second); } //C++17
 
-template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type >
+template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type>
 auto INFO(const nodeptr &it) -> typename const_ref<decltype(std::get<2>((it)->second))>::type {
     return std::get<2>((it)->second);
 }
