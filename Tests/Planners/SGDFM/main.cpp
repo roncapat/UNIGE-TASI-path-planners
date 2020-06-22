@@ -160,8 +160,8 @@ int main(int _argc, char **_argv) {
             for (auto b: planner.map.buckets) {
                 for (const auto &expanded : b) {
                     const Node &exp = expanded.first;
-                    float g, rhs;
-                    std::tie(g, rhs, std::ignore) = expanded.second;
+                    float g = std::get<0>(expanded.second);
+                    float rhs = std::get<1>(expanded.second);
                     out_fifo.write((char *) &(exp.x), 4);
                     out_fifo.write((char *) &(exp.y), 4);
                     out_fifo.write((char *) &(g), 4);

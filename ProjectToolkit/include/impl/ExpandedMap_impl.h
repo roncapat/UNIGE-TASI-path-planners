@@ -9,12 +9,8 @@ ExpandedMap<E, I>::find_or_init(const ElemType &n) {
     assert(check_bucket_existence(idx));
     auto it = buckets[idx].find(n);
     if (it == buckets[idx].end()) { // Init node if not yet considered
-        bool ok;
-        std::tie(it, ok) = buckets[idx].emplace(n, std::make_tuple(INFINITY, INFINITY, NULLINFO));
-        assert(ok);
-        (void) ok;
-    }
-    return &(*it);
+        return insert(n, INFINITY, INFINITY, idx);
+    } else return &(*it);
 }
 
 template<typename E, typename I>
@@ -28,13 +24,31 @@ ExpandedMap<E, I>::insert_or_assign(const ElemType &s, float g, float rhs) {
         G(it) = g;
         RHS(it) = rhs;
         return &(*it);
-    } else {
-        bool ok;
-        std::tie(it, ok) = buckets[idx].emplace(s, std::make_tuple(g, rhs, NULLINFO));
-        assert(ok);
-        (void) ok;
-        return &(*it);
-    }
+    } else return insert(s, g, rhs, idx);
+}
+
+template<typename E, typename I>
+template<typename U>
+typename ExpandedMap<E, I>::template resolvedType<std::is_same<U, void>::value, typename ExpandedMap<E, I>::nodeptr>
+ExpandedMap<E, I>::insert(const ElemType &s, float g, float rhs, const int bucket_idx) {
+    iterator it;
+    bool ok;
+    std::tie(it, ok) = buckets[bucket_idx].emplace(s, std::make_tuple(g, rhs));
+    assert(ok);
+    (void) ok;
+    return &(*it);
+}
+
+template<typename E, typename I>
+template<typename U>
+typename ExpandedMap<E, I>::template resolvedType<not std::is_same<U, void>::value, typename ExpandedMap<E, I>::nodeptr>
+ExpandedMap<E, I>::insert(const ElemType &s, float g, float rhs, const int bucket_idx) {
+    iterator it;
+    bool ok;
+    std::tie(it, ok) = buckets[bucket_idx].emplace(s, std::make_tuple(g, rhs, I()));
+    assert(ok);
+    (void) ok;
+    return &(*it);
 }
 
 template<typename E, typename I>
@@ -87,7 +101,7 @@ ExpandedMap<ElemType_, InfoType_>::ExpandedMap(const unsigned int x, const unsig
     init(x, y, bits);
 }
 template<typename E, typename I>
-optional<typename ExpandedMap<E, I>::nodeptr> ExpandedMap<E, I>::find(const E &n){
+optional<typename ExpandedMap<E, I>::nodeptr> ExpandedMap<E, I>::find(const E &n) {
     auto idx = get_bucket_idx(n);
     if (idx == -1 or idx >= (signed) buckets.size()) return {};
     auto it = buckets[idx].find(n);

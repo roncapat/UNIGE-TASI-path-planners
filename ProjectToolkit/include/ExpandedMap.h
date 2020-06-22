@@ -7,24 +7,28 @@
 template<typename>
 struct tag {};
 
-template<typename ElemType_, typename InfoType_>
-using hashmap_ = robin_hood::unordered_node_map<ElemType_, std::tuple<float, float, InfoType_>>;
+struct empty {};
+
 template<typename ElemType_, typename InfoType_>
 class ExpandedMap {
+  using value_ = typename std::conditional<std::is_same<InfoType_, void>::value,
+                                           std::tuple<float, float>,
+                                           std::tuple<float, float, InfoType_>>::type;
+  using hashmap_ = robin_hood::unordered_node_map<ElemType_, value_>;
  public:
   typedef ElemType_ ElemType;
   typedef InfoType_ InfoType;
-  using nodeptr = robin_hood::pair<const ElemType_, std::tuple<float, float, InfoType>> *;
-  using const_nodeptr = robin_hood::pair<const ElemType_, std::tuple<float, float, InfoType>> const *;
+  using nodeptr = robin_hood::pair<const ElemType_, value_> *;
+  using const_nodeptr = robin_hood::pair<const ElemType_, value_> const *;
  private:
-  using iterator = typename hashmap_<ElemType_, InfoType_>::iterator;
-  using const_iterator = typename hashmap_<ElemType_, InfoType_>::const_iterator;
+  using iterator = typename hashmap_::iterator;
+  using const_iterator = typename hashmap_::const_iterator;
  public:
   ExpandedMap() = default;
   ExpandedMap(unsigned int x,
               unsigned int y,
               unsigned char bits /* tile size: 2^bits * 2^bits */);
-  std::vector<hashmap_<ElemType_, InfoType_>> buckets;
+  std::vector<hashmap_> buckets;
  private:
   inline int get_bucket_idx(const ElemType &s) const {
       if (s.x < 0 or s.y < 0) return -1;
@@ -37,7 +41,6 @@ class ExpandedMap {
   unsigned char bits; /* tile size: 2^bits * 2^bits */
   unsigned char dim_x, dim_y;
  public:
-  const InfoType NULLINFO = InfoType{};
   nodeptr find_or_init(const ElemType &n);
   nodeptr insert_or_assign(const ElemType &s, float g, float rhs);
   optional<nodeptr> find(const ElemType &n);
@@ -52,6 +55,12 @@ class ExpandedMap {
  private:
   float get_interp_rhs(const Node &s, tag<Node>) const;
   float get_interp_rhs(const Node &s, tag<Cell>) const;
+  template<bool cond, typename U>
+  using resolvedType = typename std::enable_if<cond, U>::type;
+  template<typename U = InfoType_>
+  resolvedType<std::is_same<U, void>::value, nodeptr> insert(const ElemType &s, float g, float rhs, int bucket_idx);
+  template<typename U = InfoType_>
+  resolvedType<not std::is_same<U, void>::value, nodeptr> insert(const ElemType &s, float g, float rhs, int bucket_idx);
 };
 
 /* this checks if we are dealing with a "const iterator" or a "raw pointer to a const" */

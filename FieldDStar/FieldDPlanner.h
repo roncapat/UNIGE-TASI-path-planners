@@ -16,54 +16,63 @@
 #include "ReplannerBase.h"
 
 template<int OptimizationLevel>
-class FieldDPlanner : public ReplannerBase<FieldDPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>> {
+class FieldDPlanner : public ReplannerBase<FieldDPlanner<OptimizationLevel>,
+                                           Node,
+                                           typename std::conditional<OptimizationLevel == 0,
+                                                            void,
+                                                            Node>::type,
+                                           std::pair<float, float>> {
  public:
-    typedef ReplannerBase<FieldDPlanner<OptimizationLevel>, Node, Node, std::pair<float, float>> Base;
-    friend Base;
-    typedef typename Base::Key Key;
-    typedef typename Base::Queue Queue;
-    typedef typename Base::Map Map;
-    using Base::grid;
-    using Base::priority_queue;
-    using Base::map;
-public:
-    FieldDPlanner() = default;
+  typedef ReplannerBase<FieldDPlanner<OptimizationLevel>,
+                        Node,
+                        typename std::conditional<OptimizationLevel == 0,
+                                         void,
+                                         Node>::type,
+                        std::pair<float, float>> Base;
+  friend Base;
+  typedef typename Base::Key Key;
+  typedef typename Base::Queue Queue;
+  typedef typename Base::Map Map;
+  using Base::grid;
+  using Base::priority_queue;
+  using Base::map;
+ public:
+  FieldDPlanner() = default;
 
-    void set_start(const Position &pos);
+  void set_start(const Position &pos);
 
-protected:
-    void init();
+ protected:
+  void init();
 
-    void update();
+  void update();
 
-    void plan();
+  void plan();
 
-    Key calculate_key(const Node &s, float g, float rhs) const;
+  Key calculate_key(const Node &s, float g, float rhs) const;
 
+ private:
+  std::vector<Node> start_nodes;
+  std::vector<typename decltype(map)::nodeptr> start_nodes_it;
 
-private:
-    std::vector<Node> start_nodes;
-    std::vector<typename decltype(map)::nodeptr> start_nodes_it;
+  float compute_optimal_cost(const Node &n, const Node &p_a, const Node &p_b, float ga, float gb) const;
 
-    float compute_optimal_cost(const Node &n, const Node &p_a, const Node &p_b, float ga, float gb) const;
+  float compute_optimal_cost(const Node &n, const Node &p_a, const Node &p_b) const;
 
-    float compute_optimal_cost(const Node &n, const Node &p_a, const Node &p_b) const;
+  bool end_condition() const;
 
-    bool end_condition() const;
+  Key calculate_key(const Node &s) const;
 
-    Key calculate_key(const Node &s) const;
+  Key calculate_key(const Node &s, float cost_so_far) const;
 
-    Key calculate_key(const Node &s, float cost_so_far) const;
+  float min_rhs(const Node &s) const;
 
-    float min_rhs(const Node &s) const;
+  float min_rhs(const Node &s, Node &bptr) const;
 
-    float min_rhs(const Node &s, Node &bptr) const;
+  float min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr) const;
 
-    float min_rhs_decreased_neighbor(const Node &sp, const Node &s, Node &bptr) const;
+  void fill_traversal_costs(TraversalParams &t) const;
 
-    void fill_traversal_costs(TraversalParams &t) const;
-
-    void update_node(const Node &node);
+  void update_node(const Node &node);
 };
 
 template<>
