@@ -14,16 +14,16 @@ else(NOT DEFINED NO_HEURISTIC)
     set(HEUR "heur")
 endif ()
 
-include_directories(SYSTEM ../RobinHoodHashMap/src/include)
-include_directories(SYSTEM ../TartanLlamaOptional/include)
-include_directories(SYSTEM ../BoostHeap)
-include_directories(include)
-include_directories( ../PathExtraction)
-include_directories(../ProjectToolkit/include)
+include_directories(SYSTEM ../../../RobinHoodHashMap/src/include)
+include_directories(SYSTEM ../../../TartanLlamaOptional/include)
+include_directories(SYSTEM ../../../BoostHeap)
+include_directories(../../../FieldDStar)
+include_directories( ../../../PathExtraction)
+include_directories(../../../ProjectToolkit/include)
 
 add_executable(field_d_planner_${OPT_LVL}_${HEUR}
-               FieldDPlanner_impl.h
                main.cpp)
+
 target_link_libraries(field_d_planner_${OPT_LVL}_${HEUR} gcov)
 target_link_libraries(field_d_planner_${OPT_LVL}_${HEUR} pthread)
 target_link_libraries(field_d_planner_${OPT_LVL}_${HEUR} ProjectToolkit)
