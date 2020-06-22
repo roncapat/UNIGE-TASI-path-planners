@@ -9,6 +9,22 @@ struct tag {};
 
 struct empty {};
 
+template<typename A, typename B>
+constexpr bool is_same_v() {return std::is_same<A,B>::value;}
+
+template <typename A>
+constexpr bool is_void_v() {return std::is_void<A>::value;}
+
+template<bool cond, typename U>
+using enable_if_t = typename std::enable_if<cond, U>::type;
+
+template<typename V, typename U>
+using enable_if_void_t = enable_if_t<is_void_v<V>(), U>;
+
+template<typename V, typename U>
+using enable_if_not_void_t = enable_if_t<not is_void_v<V>(), U>;
+
+
 template<typename ElemType_, typename InfoType_>
 class ExpandedMap {
   using value_ = typename std::conditional<std::is_same<InfoType_, void>::value,
@@ -55,12 +71,10 @@ class ExpandedMap {
  private:
   float get_interp_rhs(const Node &s, tag<Node>) const;
   float get_interp_rhs(const Node &s, tag<Cell>) const;
-  template<bool cond, typename U>
-  using resolvedType = typename std::enable_if<cond, U>::type;
   template<typename U = InfoType_>
-  resolvedType<std::is_same<U, void>::value, nodeptr> insert(const ElemType &s, float g, float rhs, int bucket_idx);
+  enable_if_void_t<U, nodeptr> insert(const ElemType &s, float g, float rhs, int bucket_idx);
   template<typename U = InfoType_>
-  resolvedType<not std::is_same<U, void>::value, nodeptr> insert(const ElemType &s, float g, float rhs, int bucket_idx);
+  enable_if_not_void_t<U, nodeptr> insert(const ElemType &s, float g, float rhs, int bucket_idx);
 };
 
 /* this checks if we are dealing with a "const iterator" or a "raw pointer to a const" */
@@ -70,11 +84,11 @@ using refers_to_const = std::is_const<typename std::remove_reference<typename st
 
 /* shorthand for SFINAE selection of the read-only accessor variant */
 template<typename IT>
-using use_for_refs_to_const = std::enable_if<refers_to_const<IT>::value, int>;
+using use_for_refs_to_const_t = enable_if_t<refers_to_const<IT>::value, int>;
 
 /* shorthand for SFINAE selection of the read-write accessor variant */
 template<typename IT>
-using use_for_refs_to_mutable = std::enable_if<not refers_to_const<IT>::value, int>;
+using use_for_refs_to_mutable_t = enable_if_t<not refers_to_const<IT>::value, int>;
 
 
 template<typename T>
@@ -86,22 +100,22 @@ using mut_ref = std::add_lvalue_reference<T>;
 template<class nodeptr>
 static inline auto ELEM(const nodeptr &it) -> typename const_ref<decltype((it)->first)>::type;
 
-template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type = 0>
+template<typename nodeptr, use_for_refs_to_mutable_t<nodeptr> = 0>
 static inline float &G(const nodeptr &it);
 
-template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type = 0>
+template<typename nodeptr, use_for_refs_to_const_t<nodeptr> = 0>
 static inline const float &G(const nodeptr &it);
 
-template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type = 0>
+template<typename nodeptr, use_for_refs_to_mutable_t<nodeptr> = 0>
 static inline float &RHS(const nodeptr &it);
 
-template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type = 0>
+template<typename nodeptr, use_for_refs_to_const_t<nodeptr> = 0>
 static inline const float &RHS(const nodeptr &it);
 
-template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type = 0>
+template<typename nodeptr, use_for_refs_to_mutable_t<nodeptr> = 0>
 static inline auto INFO(const nodeptr &it) -> typename mut_ref<decltype(std::get<2>((it)->second))>::type;
 
-template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type = 0>
+template<typename nodeptr, use_for_refs_to_const_t<nodeptr> = 0>
 static inline auto INFO(const nodeptr &it) -> typename const_ref<decltype(std::get<2>((it)->second))>::type;
 
 template<class nodeptr>

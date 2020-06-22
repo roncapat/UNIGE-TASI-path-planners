@@ -29,7 +29,7 @@ ExpandedMap<E, I>::insert_or_assign(const ElemType &s, float g, float rhs) {
 
 template<typename E, typename I>
 template<typename U>
-typename ExpandedMap<E, I>::template resolvedType<std::is_same<U, void>::value, typename ExpandedMap<E, I>::nodeptr>
+enable_if_void_t<U, typename ExpandedMap<E, I>::nodeptr>
 ExpandedMap<E, I>::insert(const ElemType &s, float g, float rhs, const int bucket_idx) {
     iterator it;
     bool ok;
@@ -41,7 +41,7 @@ ExpandedMap<E, I>::insert(const ElemType &s, float g, float rhs, const int bucke
 
 template<typename E, typename I>
 template<typename U>
-typename ExpandedMap<E, I>::template resolvedType<not std::is_same<U, void>::value, typename ExpandedMap<E, I>::nodeptr>
+enable_if_not_void_t<U, typename ExpandedMap<E, I>::nodeptr>
 ExpandedMap<E, I>::insert(const ElemType &s, float g, float rhs, const int bucket_idx) {
     iterator it;
     bool ok;
@@ -147,33 +147,33 @@ auto ELEM(const nodeptr &it) -> typename const_ref<decltype((it)->first)>::type 
 }
 //const auto &ELEM(const nodeptr &it) { return (it)->first; } //C++17
 
-template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type>
+template<typename nodeptr, use_for_refs_to_mutable_t<nodeptr>>
 float &G(const nodeptr &it) {
     return std::get<0>((it)->second);
 }
 
-template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type>
+template<typename nodeptr, use_for_refs_to_const_t<nodeptr>>
 const float &G(const nodeptr &it) {
     return std::get<0>((it)->second);
 }
 
-template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type>
+template<typename nodeptr, use_for_refs_to_mutable_t<nodeptr>>
 float &RHS(const nodeptr &it) {
     return std::get<1>((it)->second);
 }
 
-template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type>
+template<typename nodeptr, use_for_refs_to_const_t<nodeptr>>
 const float &RHS(const nodeptr &it) {
     return std::get<1>((it)->second);
 }
 
-template<typename nodeptr, typename use_for_refs_to_mutable<nodeptr>::type>
+template<typename nodeptr, use_for_refs_to_mutable_t<nodeptr>>
 auto INFO(const nodeptr &it) -> typename mut_ref<decltype(std::get<2>((it)->second))>::type {
     return std::get<2>((it)->second);
 }
 //auto &INFO(const nodeptr &it) { return std::get<2>((it)->second); } //C++17
 
-template<typename nodeptr, typename use_for_refs_to_const<nodeptr>::type>
+template<typename nodeptr, use_for_refs_to_const_t<nodeptr>>
 auto INFO(const nodeptr &it) -> typename const_ref<decltype(std::get<2>((it)->second))>::type {
     return std::get<2>((it)->second);
 }
