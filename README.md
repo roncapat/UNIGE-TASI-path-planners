@@ -49,15 +49,15 @@ The path extractors feature a custom path extraction technique, inspired by
 ([Michael W. Otte and Greg Grudic](https://ieeexplore.ieee.org/document/5354775)).
 
 ## Repository content
-The repository holds implementations for the 3 planners, as long as a support library.
+The repository holds implementations for the 3 planners, as long as a support library and a path extraction algorithm.
 
 Relevant files are in folders [FieldDStar](FieldDStar), [DynamicFastMarching](DynamicFastMarching),
-[ShiftedGridFastMarching](ShiftedGridFastMarching), [ProjectToolkit](ProjectToolkit).
+[ShiftedGridFastMarching](ShiftedGridFastMarching), [PathExtraction](PathExtraction) and [ProjectToolkit](ProjectToolkit).
 
-In particular, in each planner folder reside a rought implementation of a path extractor. The three
-implementations are pretty similar, and a future refactor will bring a unified version outside of the planner folders.
+The [Tests/Planners](Tests/Planners) folder also host demo applications that work in conjunction with 
+the [run_test.py](Tests/run_test.py) comparative benchmark.
 
-The planner folders also host a demo application the works in conjunction with a test procedure in development.
+Alternative sources and CMakeLists for a basic RTEMS build have an extension prefix \*.rtems.\*
 
 ## Build and run
 To build the demo and run tests:
