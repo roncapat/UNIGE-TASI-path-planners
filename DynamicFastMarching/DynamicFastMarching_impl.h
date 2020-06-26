@@ -144,8 +144,14 @@ typename DFMPlanner<O>::Key DFMPlanner<O>::calculate_key(const Cell &s, float g,
 }
 
 template<int O>
-typename DFMPlanner<O>::Key DFMPlanner<O>::calculate_key(const Cell &, float cost_so_far) const {
+typename DFMPlanner<O>::Key DFMPlanner<O>::calculate_key(const Cell &s, float cost_so_far) const {
+#ifdef NO_HEURISTIC
+    (void)s;
     return cost_so_far;
+#else
+    auto dist = grid.start_cell_.distance(s);
+    return {cost_so_far + this->heuristic_multiplier * dist, cost_so_far};
+#endif
 }
 
 template<>

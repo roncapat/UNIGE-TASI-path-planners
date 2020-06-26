@@ -38,6 +38,7 @@ add_subdirectory(Tests/Planners/FDSTAR FD_1_no_heur)
 set(NO_HEURISTIC 0)
 add_subdirectory(Tests/Planners/FDSTAR FD_1_heur)
 set(OPT_LVL 0)
+set(NO_HEURISTIC 1) # up to now DFM only works with no heuristic reliably
 add_subdirectory(Tests/Planners/DFM DFM_0)
 set(OPT_LVL 1)
 add_subdirectory(Tests/Planners/DFM DFM_1)

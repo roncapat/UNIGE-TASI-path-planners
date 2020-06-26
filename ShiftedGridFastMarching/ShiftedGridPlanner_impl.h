@@ -248,7 +248,7 @@ template<int O>
 typename ShiftedGridPlanner<O>::Key ShiftedGridPlanner<O>::calculate_key(const Node &s, const float cost_so_far) const {
     (void) s;
     #ifdef NO_HEURISTIC
-    return {cost_so_far, cost_so_far};
+    return cost_so_far;
     #else
     auto dist = grid.start_pos_.distance(s);
     return {cost_so_far + this->heuristic_multiplier * dist, cost_so_far};
@@ -357,26 +357,31 @@ bool ShiftedGridPlanner<O>::end_condition() const {
     // We need to check expansion until all 4 corners of start cell
     // used early stop from D* LITE
     auto top_key = priority_queue.top_key();
+    #ifdef NO_HEURISTIC //TODO refactor this stuff, macros are ugly as hell
+    Key max_start_key = 0;
+    #else
     Key max_start_key = {0, 0};
-/*
-    std::cout << std::endl;
-    for (auto &node: start_nodes) {
-        auto[g, rhs] = map.get_g_rhs(node);
-        auto key = calculate_key(node, g, rhs);
-        std::cout << g << " " << rhs << " " << key.first << std::endl;
-    }
-*/
-    for (auto &node: start_nodes) {
-        float g, rhs;
-        std::tie(g, rhs) = map.get_g_rhs(node);
-        auto key = calculate_key(node, g, rhs);
-        if (rhs != INFINITY and key.first != INFINITY) {
+    #endif
+
+    for (auto &node_it: start_nodes_it) {
+        auto key = calculate_key(ELEM(node_it), G(node_it), RHS(node_it));
+        #ifdef NO_HEURISTIC
+        auto k = key;
+        #else
+        auto k = key.first;
+        #endif
+
+        if (RHS(node_it) != INFINITY and k != INFINITY) {
             max_start_key = std::max(max_start_key, key);
-            if (rhs > g)
+            if (RHS(node_it) > G(node_it))
                 return false; //Start node underconsistent
         }
     }
+    #ifdef NO_HEURISTIC
+    if (max_start_key == 0) return false; //Start node not reached
+    #else
     if (max_start_key.first == 0) return false; //Start node not reached
+    #endif
     return max_start_key <= top_key; //Start node surpassed
 }
 

@@ -15,20 +15,27 @@
 #include "InterpolatedTraversal.h"
 #include "ReplannerBase.h"
 
+// TODO maybe use template bool instead of macros
+#ifdef NO_HEURISTIC
+using key_type = float;
+#else
+using key_type = std::pair<float, float>;
+#endif
+
+using elem_type = Node;
+template<int OptimizationLevel>
+using info_type = typename std::conditional<OptimizationLevel == 0, void, Node>::type;
+
 template<int OptimizationLevel>
 class FieldDPlanner : public ReplannerBase<FieldDPlanner<OptimizationLevel>,
-                                           Node,
-                                           typename std::conditional<OptimizationLevel == 0,
-                                                            void,
-                                                            Node>::type,
-                                           std::pair<float, float>> {
+                                           elem_type,
+                                           info_type<OptimizationLevel>,
+                                           key_type> {
  public:
   typedef ReplannerBase<FieldDPlanner<OptimizationLevel>,
-                        Node,
-                        typename std::conditional<OptimizationLevel == 0,
-                                         void,
-                                         Node>::type,
-                        std::pair<float, float>> Base;
+                        elem_type,
+                        info_type<OptimizationLevel>,
+                        key_type> Base;
   friend Base;
   typedef typename Base::Key Key;
   typedef typename Base::Queue Queue;
