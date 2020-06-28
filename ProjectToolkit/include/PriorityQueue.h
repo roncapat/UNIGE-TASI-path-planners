@@ -36,7 +36,7 @@ class PriorityQueue {
   typedef boost::heap::mutable_<true> MutableOption;
   typedef boost::heap::fibonacci_heap<ElemType, CompareOption, MutableOption> QueueType;
   QueueType queue;
-  robin_hood::unordered_node_map<Value, typename QueueType::handle_type> handles;
+  robin_hood::unordered_flat_map<Value, typename QueueType::handle_type> handles;
 
  public:
   typedef typename QueueType::handle_type HandleType;
