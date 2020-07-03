@@ -55,6 +55,11 @@ def send_int(pipe, val):
     pipe.flush()
 
 
+def send_float(pipe, val):
+    pipe.write(struct.pack('f', float(val)))  # reply with 0
+    pipe.flush()
+
+
 def send_patch(pipe, data, pos):
     pipe.write(struct.pack('iiii', *pos, *data.shape))
     pipe.write(data.tobytes())  # patch
@@ -128,7 +133,6 @@ def main():
     gui = bool(int(sys.argv[7]))
     tof = bool(int(sys.argv[8]))
     outpath = sys.argv[9]
-
 
     p_out = open(pipe_out, 'wb')
     p_in = open(pipe_in, 'rb')
@@ -272,8 +276,6 @@ def main():
     if out is not None:
         out.write(dbgview)
         out.release()
-
-
 
     p_in.close()
     send_byte(p_out, 2)

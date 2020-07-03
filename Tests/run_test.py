@@ -6,16 +6,16 @@ from matplotlib import patches
 from matplotlib import cm
 from matplotlib.path import Path
 from noise import pnoise2
-
+import socket
 from simulator.run_simulator import *  # TODO reorganize code
 
 planners = {
-    "FD_0": {"path": "build/FD_0_no_heur/field_d_planner_0_no_heur", "type": "n"},
-    "FD_1": {"path": "build/FD_1_no_heur/field_d_planner_1_no_heur", "type": "n"},
-    "SGDFM_0": {"path": "build/SGDFM_0_no_heur/shifted_grid_planner_0_no_heur", "type": "n"},
-    "SGDFM_1": {"path": "build/SGDFM_1_no_heur/shifted_grid_planner_1_no_heur", "type": "n"},
-    "SGDFM_2": {"path": "build/SGDFM_2_no_heur/shifted_grid_planner_2_no_heur", "type": "n"},
-    "DFM_0": {"path": "build/DFM_0/dfm_planner_0", "type": "c"},
+    #"FD_0": {"path": "build/FD_0_no_heur/field_d_planner_0_no_heur", "type": "n"},
+    #"FD_1": {"path": "build/FD_1_no_heur/field_d_planner_1_no_heur", "type": "n"},
+    #"SGDFM_0": {"path": "build/SGDFM_0_no_heur/shifted_grid_planner_0_no_heur", "type": "n"},
+    #"SGDFM_1": {"path": "build/SGDFM_1_no_heur/shifted_grid_planner_1_no_heur", "type": "n"},
+    #"SGDFM_2": {"path": "build/SGDFM_2_no_heur/shifted_grid_planner_2_no_heur", "type": "n"},
+    #"DFM_0": {"path": "build/DFM_0/dfm_planner_0", "type": "c"},
     "DFM_1": {"path": "build/DFM_1/dfm_planner_1", "type": "c"},
 }
 
@@ -78,8 +78,7 @@ for planner in planners:
     print("[SIMULATOR] Launching %s planner" % planner)
     label = planner
     perf_args = ["perf", "record", "--call-graph", "dwarf", "-o", "/mnt/sdb/perf_" + planner + ".data"]
-    prog_args = [planners[planner]["path"], mapfile, 100, 100, 1000 * upscale - 100, 1000 * upscale - 100, 1, pipe_out,
-                 pipe_in, 1, 0, outpath]
+    prog_args = [planners[planner]["path"], pipe_out, pipe_in]
     perf_args.extend(prog_args)
     str_args = [str(x) for x in perf_args]
     print(' '.join(str_args))
@@ -104,6 +103,11 @@ for planner in planners:
     cspace = cv2.dilate(data_l, kernel)  # FIXME dilate only patch?
     min_cost = cv2.minMaxLoc(cspace)[0]
     send_map(p_out, cspace)
+    send_float(p_out, 100) #startx
+    send_float(p_out, 100) #starty
+    send_float(p_out, 1000 * upscale - 100) #endx
+    send_float(p_out, 1000 * upscale - 100) #endy
+    send_byte(p_out, 0) #tof
     send_int(p_out, int(min_cost))
 
     prev_path = []

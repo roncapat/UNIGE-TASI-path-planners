@@ -1,9 +1,15 @@
 
 #include <PriorityQueue.h>
+#include <algorithm>
+#include <functional>
+#include <set>
+#include <utility>
+#include "Graph.h"
 
 template<typename K, typename T>
 void PriorityQueue<K,T>::insert(const Value &n, const Key &k) {
-    handles[n] = queue.emplace(n, k);
+    assert(handles.find(n) == handles.end());
+    handles[n] = queue.emplace(ElemType{n, k});
 }
 
 template<typename K, typename T>
@@ -25,7 +31,7 @@ template<typename K, typename T>
 void PriorityQueue<K,T>::insert_or_update(const Value &n, const Key &k) {
     auto h_it = handles.find(n);
     if (h_it != handles.end()) {
-        queue.update(h_it->second, ElemType(n, k));
+        queue.update(h_it->second, ElemType{n, k});
     } else insert(n, k);
 }
 
@@ -60,3 +66,23 @@ void PriorityQueue<K,T>::swap(PriorityQueue<K,T> &other) {
     queue.swap(other.queue);
     handles.swap(other.handles);
 }
+
+template<typename K, typename T>
+typename PriorityQueue<K,T>::IteratorType PriorityQueue<K,T>::begin() {
+    return queue.begin();
+};
+
+template<typename K, typename T>
+typename PriorityQueue<K,T>::IteratorType PriorityQueue<K,T>::end() {
+    return queue.end();
+};
+
+template<typename K, typename T>
+typename PriorityQueue<K,T>::OrderedIteratorType PriorityQueue<K,T>::ordered_begin() {
+    return queue.ordered_begin();
+};
+
+template<typename K, typename T>
+typename PriorityQueue<K,T>::OrderedIteratorType PriorityQueue<K,T>::ordered_end() {
+    return queue.ordered_end();
+};

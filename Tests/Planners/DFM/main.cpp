@@ -13,22 +13,14 @@
 #endif
 
 int main(int _argc, char **_argv) {
-    if (_argc < 12) {
+    if (_argc < 3) {
         std::cerr << "Missing required argument." << std::endl;
         std::cerr << "Usage:" << std::endl;
-        std::cerr << "\t" << _argv[0] << " <mapfile> <from_x> <from_y> <to_x> <to_y> "
-                                         "<cspace> <fifo_in> <fifo_out> <gui> <tof> <outpath>"
-                  << std::endl;
+        std::cerr << "\t" << _argv[0] << "<fifo_in> <fifo_out>" << std::endl;
         return 1;
     }
-
-    auto from_x = std::stof(_argv[2]);
-    auto from_y = std::stof(_argv[3]);
-    auto to_x = std::stof(_argv[4]);
-    auto to_y = std::stof(_argv[5]);
-    auto fifo_in = _argv[7];
-    auto fifo_out = _argv[8];
-    bool tof = bool(std::stoi(_argv[10]));
+    auto fifo_in = _argv[1];
+    auto fifo_out = _argv[2];
 
     Position next_point, goal;
     float next_step_cost = 0;
@@ -49,6 +41,7 @@ int main(int _argc, char **_argv) {
     char ack = -1;
     long size;
     int32_t width = 0, height = 0, top = 0, left = 0, min = 0;
+    float from_x=0, from_y=0, to_x=0, to_y=0; bool tof=false;
     std::ifstream in__fifo{fifo_in, std::ios::in | std::ios::binary};
     std::ofstream out_fifo{fifo_out, std::ios::out | std::ios::binary};
 
@@ -66,11 +59,16 @@ int main(int _argc, char **_argv) {
     size = width * height;
     std::shared_ptr<uint8_t[]> data(new uint8_t[size], std::default_delete<uint8_t[]>());
     in__fifo.read((char *) data.get(), size); //Receive image
+    in__fifo.read((char*)&from_x, 4);
+    in__fifo.read((char*)&from_y, 4);
+    in__fifo.read((char*)&to_x, 4);
+    in__fifo.read((char*)&to_y, 4);
+    in__fifo.read((char*)&tof, 1);
     in__fifo.read((char *) &min, 4); //Receive heuristic hint
+
 
     next_point.x = from_x;
     next_point.y = from_y;
-
     goal.x = to_x;
     goal.y = to_y;
 
