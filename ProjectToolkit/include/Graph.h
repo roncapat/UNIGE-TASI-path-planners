@@ -19,7 +19,7 @@ typedef std::pair<Node, Node> Edge;
 
 class Graph {
  public:
-  std::shared_ptr<uint8_t[]> map_;
+  std::shared_ptr<uint8_t> map_;
   std::vector<Cell> updated_cells_;
 
   Cell start_cell_, goal_cell_;
@@ -37,8 +37,8 @@ class Graph {
 
   void set_occupancy_threshold(float occupancy_threshold);
 
-  void init(std::shared_ptr<uint8_t[]> image, int width, int length);
-  void update(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h);
+  void init(std::shared_ptr<uint8_t> image, int width, int length);
+  void update(const std::shared_ptr<uint8_t> &patch, int x, int y, int w, int h);
 
   float get_cost(const Cell &ind) const;
 

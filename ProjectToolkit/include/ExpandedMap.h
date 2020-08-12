@@ -7,13 +7,11 @@
 template<typename>
 struct tag {};
 
-struct empty {};
-
 template<typename A, typename B>
-constexpr bool is_same_v() {return std::is_same<A,B>::value;}
+constexpr bool is_same_v() { return std::is_same<A, B>::value; }
 
-template <typename A>
-constexpr bool is_void_v() {return std::is_void<A>::value;}
+template<typename A>
+constexpr bool is_void_v() { return std::is_void<A>::value; }
 
 template<bool cond, typename U>
 using enable_if_t = typename std::enable_if<cond, U>::type;
@@ -24,16 +22,15 @@ using enable_if_void_t = enable_if_t<is_void_v<V>(), U>;
 template<typename V, typename U>
 using enable_if_not_void_t = enable_if_t<not is_void_v<V>(), U>;
 
-
 template<typename ElemType_, typename InfoType_>
 class ExpandedMap {
-  using value_ = typename std::conditional<std::is_same<InfoType_, void>::value,
+  using value_ = typename std::conditional<is_void_v<InfoType_>(),
                                            std::tuple<float, float>,
                                            std::tuple<float, float, InfoType_>>::type;
   using hashmap_ = robin_hood::unordered_node_map<ElemType_, value_>;
  public:
-  typedef ElemType_ ElemType;
-  typedef InfoType_ InfoType;
+  using ElemType = ElemType_;
+  using InfoType = InfoType_;
   using nodeptr = robin_hood::pair<const ElemType_, value_> *;
   using const_nodeptr = robin_hood::pair<const ElemType_, value_> const *;
  private:
@@ -41,9 +38,7 @@ class ExpandedMap {
   using const_iterator = typename hashmap_::const_iterator;
  public:
   ExpandedMap() = default;
-  ExpandedMap(unsigned int x,
-              unsigned int y,
-              unsigned char bits /* tile size: 2^bits * 2^bits */);
+  ExpandedMap(unsigned int x, unsigned int y, unsigned char bits);
   std::vector<hashmap_> buckets;
  private:
   inline int get_bucket_idx(const ElemType &s) const {

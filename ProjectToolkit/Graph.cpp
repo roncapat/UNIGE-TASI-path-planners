@@ -19,7 +19,7 @@ void Graph::set_occupancy_threshold(float occupancy_threshold) {
     occupancy_threshold_uchar_ = occupancy_threshold * 255.0f;
 }
 
-void Graph::init(std::shared_ptr<uint8_t[]> image, int width, int length) {
+void Graph::init(std::shared_ptr<uint8_t> image, int width, int length) {
     length_ = length;
     width_ = width;
     flength_ = static_cast<float>(length);
@@ -32,7 +32,7 @@ uint8_t &Graph::get(int x, int y) {
     return map_.get()[x * width_ + y];
 }
 
-void Graph::update(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h) {
+void Graph::update(const std::shared_ptr<uint8_t> &patch, int x, int y, int w, int h) {
     updated_cells_.clear();
     assert(x >= 0);
     assert(y >= 0);
@@ -261,7 +261,7 @@ optional<Node> Graph::cw_neighbor(const Node &s, const Node &s_prime) const {
 float Graph::get_cost(const Cell &ind) const {
     if (!is_valid(ind))
         return INFINITY;
-    auto cost = map_[ind.x * width_ + ind.y];
+    auto cost = map_.get()[ind.x * width_ + ind.y];
     assert(cost>0);
     return (cost >= occupancy_threshold_uchar_) ? INFINITY : (float) cost;
 }

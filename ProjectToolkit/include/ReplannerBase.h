@@ -34,7 +34,6 @@ public:
     typedef MapInfo_ Info;
     typedef PriorityQueue<Key, MapElem_> Queue;
     typedef ExpandedMap<MapElem_, MapInfo_> Map;
-public:
     float u_time = 0, p_time = 0;
 
     void reset() {
@@ -83,14 +82,14 @@ public:
         heuristic_multiplier = mult;
     }
 
-    void set_map(const std::shared_ptr<uint8_t[]> &new_map, int w, int h) {
+    void set_map(const std::shared_ptr<uint8_t> &new_map, int w, int h) {
         grid.init(new_map, w, h);
         initialize_graph = false;
     }
 
-    void patch_map(const std::shared_ptr<uint8_t[]> &patch, int x, int y, int w, int h) {
-        grid.update(patch, x, y, w, h);
-    }
+  void patch_map(const std::shared_ptr<uint8_t> &patch, int x, int y, int w, int h) {
+      grid.update(patch, x, y, w, h);
+  }
 
     void set_start(const Position &pos) {
         grid.set_start(pos);
