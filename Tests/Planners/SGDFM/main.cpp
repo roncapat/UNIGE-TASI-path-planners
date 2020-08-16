@@ -79,7 +79,7 @@ int main(int _argc, char **_argv) {
     std::cout << "[PLANNER]   Size: [" << width << ", " << height << "]" << std::endl;
 
     size = width * height;
-    std::shared_ptr<uint8_t[]> data(new uint8_t[size], std::default_delete<uint8_t[]>());
+    std::shared_ptr<uint8_t> data(new uint8_t[size], std::default_delete<uint8_t[]>());
     in__fifo.read((char *) data.get(), size); //Receive image
     in__fifo.read((char *) &min, 4); //Receive heuristic hint
 
@@ -121,7 +121,7 @@ int main(int _argc, char **_argv) {
         std::cout << "[PLANNER]   New patch: position [" << top << ", " << left
                   << "], shape [" << width << ", " << height << "]" << std::endl;
         size = width * height;
-        std::shared_ptr<uint8_t[]> patch(new uint8_t[size], std::default_delete<uint8_t[]>());
+        std::shared_ptr<uint8_t> patch(new uint8_t[size], std::default_delete<uint8_t[]>());
         in__fifo.read((char *) patch.get(), size); //Receive image
         planner.patch_map(patch, top, left, width, height);
         in__fifo.read((char *) &min, 4); //Receive heuristic hint
