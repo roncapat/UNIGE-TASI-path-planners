@@ -1,6 +1,12 @@
 # UNIGE-TASI Path Planners
 ![C/C++ CI](https://github.com/roncapat/UNIGE-TASI-path-planners/workflows/C/C++%20CI/badge.svg)
 
+## Credits
+If you use this software, please cite the associated [Master Thesis on ResearchGate](https://www.researchgate.net/publication/348732289_Evaluation_and_Implementation_of_Modern_Path_Planning_Algorithms_for_Planetary_Exploration_Rovers).
+
+It is also a good reference on the design choices of this software package.
+
+## Content
 This repository contains three dynamic path planners (replanners):
 * FD* - Field D*
 * MS-DFM - Multistencil Dynamic Fast Marching
