@@ -108,7 +108,7 @@ void DFMPlanner<O>::update() {
     for (const Cell &cell : grid.updated_cells_)
         update_cell(cell);
     this->num_nodes_updated = grid.updated_cells_.size();
-    //std::cout << num_cells_updated << " cells updated" << std::endl;
+    //std::cout << this->num_cells_updated << " cells updated" << std::endl;
 }
 
 template<>

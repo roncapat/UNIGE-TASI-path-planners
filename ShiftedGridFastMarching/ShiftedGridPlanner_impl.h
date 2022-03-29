@@ -191,7 +191,7 @@ void ShiftedGridPlanner<O>::update() {
         update_node(s);
 
     this->num_nodes_updated = to_update.size();
-    //std::cout << num_nodes_updated << " nodes updated" << std::endl;
+    //std::cout << this->num_nodes_updated << " nodes updated" << std::endl;
 }
 
 template<>
