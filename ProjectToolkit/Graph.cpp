@@ -29,6 +29,7 @@ void Graph::init(std::shared_ptr<uint8_t> image, int width, int length) {
 }
 
 uint8_t &Graph::get(int x, int y) {
+    assert(is_valid(Cell(x, y)));
     return map_.get()[x * width_ + y];
 }
 
